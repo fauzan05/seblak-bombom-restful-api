@@ -24,6 +24,7 @@ Berawal dari sebuah keisengan ngoding, dan kebetulan teman sendiri sedang membut
 
 
 # Installation
+Please install/add packages in the root directory project first below :
 
 Install Framework Go Fiber
 
@@ -47,8 +48,15 @@ go get github.com/go-playground/validator/v10
 Install Go Migrate
 
 ```
-go get github.com/golang-migrate/migrate
+go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+<!-- type 'migrate' without '' to check if migration mysql has been installed -->
 ```
+If mysql in migration has been installed, you must have to set GOPATH so it can be call the command with 'migrate' in terminal. You can check this post to understand how to add GOPATH :
+https://stackoverflow.com/questions/21499337/cannot-set-gopath-on-mac-osx
+
+After you typing 'migrate' without '', it will shown Database drivers : stub, mysql like below :
+![alt text](<Screenshot 2024-03-26 at 20.38.04.png>)
+
 
 Install Viper
 
@@ -77,3 +85,32 @@ go get -u github.com/go-sql-driver/mysql
 
 
 # Database Table Structure
+
+# Go Migrate Command
+
+To make a migration :
+```
+migrate create -ext sql -dir database/migrations create_table_xxx
+```
+
+To run a migrations :
+```
+// run migration
+migrate -database "mysql://root@tcp(localhost:3306)/database_name" -path database/migrations up
+
+// rollback migration
+migrate -database "mysql://root@tcp(localhost:3306)/database_name" -path database/migrations down
+```
+
+To remove dirty :
+```
+// V is a version of dirty column
+migrate -path database/migrations -database "mysql://root@tcp(localhost:3306)/database_name" force V
+```
+
+To migrate 1 step :
+
+```
+// 1 is a how many step do you wanna
+migrate -database "mysql://root@tcp(localhost:3306)/database_name" -path database/migrations up 1
+```

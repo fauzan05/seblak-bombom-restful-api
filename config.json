@@ -1,0 +1,44 @@
+{
+    "app" : {
+        "name" : "seblak bombom",
+        "version" : "1.0.0",
+        "author" : "fauzan nur hidayat"
+    },
+    "web" : {
+        "prefork" : false,
+        "port" : 8000
+    },
+    "log" : {
+        "level" : 6
+    },
+    "database" : {
+        "prod" : {
+            "type" : "mysql",
+            "name" : "seblak_bombom",
+            "show_sql" : true,
+            "host" : "localhost",
+            "port" : 3306,
+            "username" : "root",
+            "password" : "",
+            "pool" : {
+                "idle" : 10,
+                "max" : 100,
+                "lifetime" : 300
+            }
+        },
+        "test" : {
+            "type" : "mysql",
+            "name" : "seblak_bombom_test",
+            "show_sql" : true,
+            "host" : "localhost",
+            "port" : 3306,
+            "username" : "root",
+            "password" : "",
+            "pool" : {
+                "idle" : 10,
+                "max" : 100,
+                "lifetime" : 300
+            }
+        }
+    }
+}
