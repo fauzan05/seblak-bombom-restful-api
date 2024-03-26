@@ -1,0 +1,12 @@
+CREATE TABLE products (
+    id INTEGER AUTO_INCREMENT,
+    category_id INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    price INTEGER NOT NULL, 
+    stock INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (category_id) REFERENCES categories (id)
+) ENGINE = InnoDB;
