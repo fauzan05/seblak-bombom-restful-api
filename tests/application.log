@@ -1,0 +1,8 @@
+time="2024-03-27T19:20:02+07:00" level=error msg="ada error"
+time="2024-03-27T19:26:06+07:00" level=error msg="ada error"
+time="2024-03-27T19:26:46+07:00" level=error msg="ada error"
+time="2024-03-27T19:37:12+07:00" level=error msg="tidak dapat membagi dengan nol"
+time="2024-03-28T03:18:21+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/internal/config/gorm.go:26 dial tcp :0: connect: can't assign requested address]"
+time="2024-03-28T03:22:24+07:00" level=error msg="Config File \"config\" Not Found in \"[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests /Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests/database]\""
+time="2024-03-28T04:00:44+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests/database/query_test.go:31 Error 1146 (42S02): Table 'seblak_bombom_test.users' doesn't exist 1.230746 0 SELECT count(*) FROM `users` WHERE email = ?]"
+time="2024-03-28T04:01:38+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests/database/query_test.go:31 1.581177 1 SELECT count(*) FROM `users` WHERE email = ?]"

@@ -1,0 +1,96 @@
+package config
+
+import (
+	"fmt"
+	"seblak-bombom-restful-api/internal/helper"
+	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
+
+func NewDatabaseProd(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
+	username := viper.GetString("database.prod.username")
+	password := viper.GetString("database.prod.password")
+	host := viper.GetString("database.prod.host")
+	port := viper.GetInt("database.prod.port")
+	database_name := viper.GetString("database.prod.name")
+	idleConnection := viper.GetInt("database.prod.pool.idle")
+	maxConnection := viper.GetInt("database.prod.pool.max")
+	maxLifeTimeConnection := viper.GetInt("database.prod.pool.lifetime")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database_name)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
+			SlowThreshold:             time.Second * 5,
+			Colorful:                  false,
+			IgnoreRecordNotFoundError: true,
+			ParameterizedQueries:      true,
+			LogLevel:                  logger.Info,
+		}),
+	})
+	
+	if err != nil {
+		log.Fatalf("failed to connect database : %v", err)
+	}
+	
+	connection, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to connect database : %v", err)
+	}
+
+	connection.SetMaxIdleConns(idleConnection)
+	connection.SetMaxOpenConns(maxConnection)
+	connection.SetConnMaxLifetime(time.Second * time.Duration(maxLifeTimeConnection))
+
+	return db
+}
+
+func NewDatabaseTest(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
+	username := viper.GetString("database.test.username")
+	password := viper.GetString("database.test.password")
+	host := viper.GetString("database.test.host")
+	port := viper.GetInt("database.test.port")
+	database_name := viper.GetString("database.test.name")
+	idleConnection := viper.GetInt("database.test.pool.idle")
+	maxConnection := viper.GetInt("database.test.pool.max")
+	maxLifeTimeConnection := viper.GetInt("database.test.pool.lifetime")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database_name)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
+			SlowThreshold:             time.Second * 5,
+			Colorful:                  false,
+			IgnoreRecordNotFoundError: true,
+			ParameterizedQueries:      true,
+			LogLevel:                  logger.Info,
+		}),
+	})
+	
+	if err != nil {
+		log.Fatalf("failed to connect database : %v", err)
+	}
+	
+	connection, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to connect database : %v", err)
+	}
+
+	connection.SetMaxIdleConns(idleConnection)
+	connection.SetMaxOpenConns(maxConnection)
+	connection.SetConnMaxLifetime(time.Second * time.Duration(maxLifeTimeConnection))
+
+	return db
+}
+
+type logrusWriter struct {
+	Logger *logrus.Logger
+}
+
+func (l *logrusWriter) Printf(message string, args ...interface{}) {
+	l.Logger.Tracef(message, args...)
+	helper.SaveToLogInfo(args)
+}
