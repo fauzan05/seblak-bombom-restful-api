@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 
@@ -64,11 +65,9 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 
 func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {
 	request := new(model.GetUserByTokenRequest)
-	err := ctx.BodyParser(request)
-	if err != nil {
-		c.Log.Warnf("Token isn't valid : %+v", err)
-		return err
-	}
+	// tangkap token dari header
+	result := ctx.GetReqHeaders()
+	request.Token = result["Authorization"][0]
 
 	response, err := c.UseCase.GetUserByToken(ctx.Context(), request)
 	if err != nil {

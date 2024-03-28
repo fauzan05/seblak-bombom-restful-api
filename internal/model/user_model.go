@@ -37,5 +37,5 @@ type UserTokenResponse struct {
 }
 
 type GetUserByTokenRequest struct {
-	Token string `json:"token" validate:"required"`
+	Token string ` validate:"required"`
 }

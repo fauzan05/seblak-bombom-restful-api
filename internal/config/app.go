@@ -2,6 +2,7 @@ package config
 
 import (
 	"seblak-bombom-restful-api/internal/delivery/http"
+	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/delivery/route"
 	"seblak-bombom-restful-api/internal/repository"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -32,10 +33,12 @@ func Bootstrap(config *BootstrapConfig) {
 	userController := http.NewUserController(userUseCase, config.Log)
 
 	// setup middleware
+	authMiddleware := middleware.NewAuth(userUseCase)
 
 	routeConfig := route.RouteConfig{
 		App: config.App,
 		UserController: userController,
+		AuthMiddleware: authMiddleware,
 	}
 	routeConfig.Setup()
 }
