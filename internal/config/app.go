@@ -24,9 +24,9 @@ type BootstrapConfig struct {
 func Bootstrap(config *BootstrapConfig) {
 	// setup repositories
 	userRepository := repository.NewUserRepository(config.Log)
-
+	tokenRepository := repository.NewTokenRepository(config.Log)
 	// setup use case
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -38,5 +38,4 @@ func Bootstrap(config *BootstrapConfig) {
 		UserController: userController,
 	}
 	routeConfig.Setup()
-	
 }

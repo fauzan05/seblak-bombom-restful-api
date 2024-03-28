@@ -20,7 +20,22 @@ type RegisterUserRequest struct {
 	Password  string `json:"password" validate:"required,max=100"`
 }
 
+type VerifyUserRequest struct {
+	Token string `json:"token" validate:"required"`
+}
+
 type LoginUserRequst struct {
 	Email    string `json:"email" validate:"required,max=100"`
 	Password string `json:"password" validate:"required,max=100"`
+}
+
+type UserTokenResponse struct {
+	Token      string    `json:"token,omitempty"`
+	ExpiryDate time.Time `json:"expiry_date,omitempty"`
+	CreatedAt  time.Time `json:"created_at,omitempty"`
+	UpdatedAt  time.Time `json:"updated_at,omitempty"`
+}
+
+type GetUserByTokenRequest struct {
+	Token string `json:"token" validate:"required"`
 }

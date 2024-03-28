@@ -6,6 +6,7 @@ use seblak_bombom_test;
 
 select * from users;
 select * from addresses;
+select * from tokens;
 show create table users;
 show create table addresses;
 

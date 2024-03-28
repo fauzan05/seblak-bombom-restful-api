@@ -82,6 +82,12 @@ Install Mysql Driver
 go get -u github.com/go-sql-driver/mysql
 ```
 
+Install UUID
+
+```
+go get github.com/google/uuid
+```
+
 
 
 # Database Table Structure

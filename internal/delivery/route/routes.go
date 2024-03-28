@@ -17,4 +17,6 @@ func (c *RouteConfig) Setup() {
 
 func (c *RouteConfig) SetupGuestRoute() {
 	c.App.Post("/api/users", c.UserController.Register)
+	c.App.Post("/api/users/login", c.UserController.Login)
+	c.App.Get("/api/users/current", c.UserController.GetCurrent)
 }

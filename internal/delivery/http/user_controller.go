@@ -34,5 +34,51 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(model.ApiResponse[*model.UserResponse]{Data: response})
+	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.UserResponse]{
+		Code: 201,
+		Status: "Success to register an user",
+		Data: response,
+	})
+}
+
+func (c *UserController) Login(ctx *fiber.Ctx) error {
+	request := new(model.LoginUserRequst)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to login : %+v", err)
+		return err
+	}
+
+	response, err := c.UseCase.Login(ctx.Context(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to login : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserTokenResponse]{
+		Code: 200,
+		Status: "Success to login",
+		Data: response,
+	})
+}
+
+func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {
+	request := new(model.GetUserByTokenRequest)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Token isn't valid : %+v", err)
+		return err
+	}
+
+	response, err := c.UseCase.GetUserByToken(ctx.Context(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to login user : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
+		Code: 200,
+		Status: "Success to get user data",
+		Data: response,
+	})
 }
