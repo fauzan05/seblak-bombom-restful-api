@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 

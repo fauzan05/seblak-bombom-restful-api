@@ -142,7 +142,11 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
-
+	expiredDate := token.ExpiryDate
+	if expiredDate.Before(time.Now()) {
+		c.Log.Warn("Token is expired")
+		return nil, fiber.ErrUnauthorized
+	}
 	user := new(entity.User)
 	if err := c.UserRepository.FindUserById(tx, user, token.UserId); err != nil {
 		c.Log.Warnf("User not found : %+v", err)
