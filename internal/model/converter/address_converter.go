@@ -13,7 +13,7 @@ func AddressToResponse(address *entity.Address) *model.AddressResponse {
 		CompleteAddress: address.CompleteAddress,
 		GoogleMapLink: address.GoogleMapLink,
 		IsMain: address.IsMain,
-		CreatedAt: address.Created_At,
-		UpdatedAt: address.Updated_At,
+		CreatedAt: address.Created_At.Format("2006-01-02 15:04:05"),
+		UpdatedAt: address.Updated_At.Format("2006-01-02 15:04:05"),
 	}
 }

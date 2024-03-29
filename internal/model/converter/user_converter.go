@@ -20,8 +20,8 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		Email:     user.Email,
 		Phone:     user.Phone,
 		Addresses: addresses,
-		CreatedAt: user.Created_At,
-		UpdatedAt: user.Updated_At,
+		CreatedAt: user.Created_At.Format("2006-01-02 15:04:05"),
+		UpdatedAt: user.Updated_At.Format("2006-01-02 15:04:05"),
 	}
 }
 
@@ -29,7 +29,7 @@ func UserTokenToResponse(token *entity.Token) *model.UserTokenResponse {
 	return &model.UserTokenResponse{
 		Token:      token.Token,
 		ExpiryDate: token.ExpiryDate,
-		CreatedAt:  token.Created_At,
-		UpdatedAt:  token.Updated_At,
+		CreatedAt:  token.Created_At.Format("2006-01-02 15:04:05"),
+		UpdatedAt:  token.Updated_At.Format("2006-01-02 15:04:05"),
 	}
 }

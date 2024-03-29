@@ -26,5 +26,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Use(c.AuthMiddleware)
 	c.App.Get("/api/users/current", c.UserController.GetCurrent)
+	c.App.Patch("/api/users/current", c.UserController.Update)
+	c.App.Patch("/api/users/current/password", c.UserController.UpdatePassword)
 	c.App.Post("/api/users/current/addresses", c.AddressController.Add)
 }

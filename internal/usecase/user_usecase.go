@@ -137,20 +137,20 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	token := new(entity.Token)
-	if err := c.TokenRepository.FindUserByToken(tx, token, request.Token); err != nil {
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Token is not included in header : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindUserByToken(tx, user, request.Token); err != nil {
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
-	expiredDate := token.ExpiryDate
+	expiredDate := user.Token.ExpiryDate
 	if expiredDate.Before(time.Now()) {
 		c.Log.Warn("Token is expired")
 		return nil, fiber.ErrUnauthorized
-	}
-	user := new(entity.User)
-	if err := c.UserRepository.FindUserByIdWithAddress(tx, user, token.UserId); err != nil {
-		c.Log.Warnf("User not found : %+v", err)
-		return nil, fiber.ErrNotFound
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -158,4 +158,87 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 		return nil, fiber.ErrInternalServerError
 	}
 	return converter.UserToResponse(user), nil
+}
+
+func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest, token *model.GetUserByTokenRequest) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	// tidak perlu melakukan validasi terhadap token expired karena sudah di handle oleh middleware auth
+	user := new(entity.User)
+	if err := c.UserRepository.FindUserByToken(tx, user, token.Token); err != nil {
+		c.Log.Warnf("Token isn't valid : %+v", err)
+		return nil, fiber.ErrUnauthorized
+	}
+	totalCount, err := c.UserRepository.CheckEmailIsExists(tx, user.Email, request.Email)
+	if err != nil {
+		c.Log.Warnf("Cannot count email is exists : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	
+	if totalCount > 0 {
+		c.Log.Warnf("Email has already exists : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	user.Email = request.Email
+	user.Name.FirstName = request.FirstName
+	user.Name.LastName = request.LastName
+	user.Phone = request.Phone
+	
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed to update data user : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	return converter.UserToResponse(user), nil
+}
+
+func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateUserPasswordRequest, token *model.GetUserByTokenRequest) (bool, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return false, fiber.ErrBadRequest
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindUserByToken(tx, user, token.Token); err != nil {
+		c.Log.Warnf("Token isn't valid : %+v", err)
+		return false, fiber.ErrUnauthorized
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.OldPassword)); err != nil {
+		c.Log.Warnf("Old Password is wrong : %+v", err)
+		return false, fiber.ErrUnauthorized
+	}
+
+	newPasswordRequest, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.Log.Warnf("Failed to generate bcrypt hash : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+	user.Password = string(newPasswordRequest)
+
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed to update data user : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+	return true, nil
+
 }

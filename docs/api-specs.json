@@ -337,6 +337,67 @@
                 }
             }
         },
+        "/api/users/current/password": {
+            "patch": {
+                "tags": [
+                    "User API"
+                ],
+                "description": "Update current user password",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "old_password": {
+                                        "type": "string"
+                                    },
+                                    "new_password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirm": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success update user password",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/users/logout": {
             "delete": {
                 "description": "Logout user",
@@ -442,9 +503,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "user_id": {
-                                        "type": "integer"
-                                    },
                                     "regency": {
                                         "type": "string"
                                     },

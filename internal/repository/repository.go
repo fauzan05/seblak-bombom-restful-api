@@ -1,6 +1,10 @@
 package repository
 
-import "gorm.io/gorm"
+import (
+	"seblak-bombom-restful-api/internal/entity"
+
+	"gorm.io/gorm"
+)
 
 type Repository[T any] struct {
 	DB *gorm.DB
@@ -18,8 +22,14 @@ func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) err
 	return db.Where("user_id = ?", userId).First(token).Error
 }
 
-func (r *Repository[T]) FindUserByToken(db *gorm.DB, token *T, token_code string) error {
-	return db.Where("token = ?", token_code).Find(token).Error
+func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string) error {
+	token := new(entity.Token)
+	// temukan data user_id
+	tokenWithUser := db.Where("token = ?", token_code).Joins("User").Find(&token).Error
+	if tokenWithUser != nil {
+		return tokenWithUser //return errornya
+	}
+	return db.Where("id = ?", token.UserId).Preload("Token").Preload("Addresses").Find(user).Error
 }
 
 func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
@@ -28,6 +38,12 @@ func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 
 func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error {
 	return db.Where("email = ?", email).First(entity).Error
+}
+
+func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string,requestEmail string) (int64, error) {
+	var total int64
+	err :=  db.Where("email = ? AND email != ?", requestEmail, currentEmail).Count(&total).Error
+	return total, err
 }
 
 func (r *Repository[T]) FindUserById(db *gorm.DB, entity *T, userId uint64) error {

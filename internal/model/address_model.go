@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 type AddressResponse struct {
 	ID              uint64    `json:"id,omitempty"`
 	Regency         string    `json:"regency,omitempty"`
@@ -9,8 +7,8 @@ type AddressResponse struct {
 	CompleteAddress string    `json:"complete_address,omitempty"`
 	GoogleMapLink   string    `json:"google_map_link,omitempty"`
 	IsMain          bool      `json:"is_main,omitempty"`
-	CreatedAt       time.Time `json:"created_at,omitempty"`
-	UpdatedAt       time.Time `json:"updated_at,omitempty"`
+	CreatedAt       string `json:"created_at,omitempty"`
+	UpdatedAt       string `json:"updated_at,omitempty"`
 }
 
 type AddressCreateRequest struct {

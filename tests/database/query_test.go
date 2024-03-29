@@ -92,10 +92,15 @@ func TestGetUserByToken(t *testing.T) {
 	user := new(entity.User)
 	token := new(entity.Token)
 	token_code := "417313b7-ea06-4e7f-81ed-927ee23ff86c"
-	result := db.Model(&user).Where("token = ?", token_code).Association("Token").Find(&token)
-	fmt.Println(result)
-	// fmt.Println(user)
-	fmt.Println(token)
+	result := db.Where("token = ?", token_code).Joins("User").Find(&token)
+	assert.Nil(t, result.Error)
+	result = db.Where("id = ?", token.UserId).Preload("Token").Preload("Addresses").Find(&user)
+	assert.Nil(t, result.Error)
+
+	fmt.Println(user.Token.Token)
+	for _, v := range user.Addresses {
+		fmt.Println(v)	
+	}
 }
 
 func TestGetUserWithAddress(t *testing.T) {
