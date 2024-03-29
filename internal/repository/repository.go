@@ -15,7 +15,7 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 }
 
 func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) error {
-	return db.Where("user_id = ?", userId).Find(token).Error
+	return db.Where("user_id = ?", userId).First(token).Error
 }
 
 func (r *Repository[T]) FindUserByToken(db *gorm.DB, token *T, token_code string) error {
@@ -32,6 +32,10 @@ func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error 
 
 func (r *Repository[T]) FindUserById(db *gorm.DB, entity *T, userId uint64) error {
 	return db.Where("id = ?", userId).First(entity).Error
+}
+
+func (r *Repository[T]) FindUserByIdWithAddress(db *gorm.DB, entity *T, userId uint64) error {
+	return db.Where("id = ?", userId).Preload("Addresses").Find(entity).Error
 }
 
 func (r *Repository[T]) UserCountByEmail(db *gorm.DB, entity *T, email string) (int64, error) {

@@ -58,6 +58,16 @@ func TestCreateNewUser(t *testing.T) {
 			UserId: 1,
 			ExpiryDate: oneHours,
 		},
+		Addresses: []entity.Address{
+			{
+				UserId: 1,
+				Regency: "Kebumen",
+				SubDistrict: "Pejagoan",
+				CompleteAddress: "Jl tembana-peniron km.12, Dukuh jetis, Desa Peniron RT01/05, Kecamatan Pejagoan, Kabupaten Kebumen, Provinsi Jawa Tengah 54361",
+				GoogleMapLink: "https://maps.app.goo.gl/UBRaYVdBxkUDkHMW7",
+				IsMain: true,
+			},
+		},
 	}
 	result := db.Create(&user)
 	assert.Nil(t, result.Error)
@@ -86,4 +96,13 @@ func TestGetUserByToken(t *testing.T) {
 	fmt.Println(result)
 	// fmt.Println(user)
 	fmt.Println(token)
+}
+
+func TestGetUserWithAddress(t *testing.T) {
+	var user []entity.User
+	findUser := db.Where("id = ?", 2).Find(&user)
+	assert.Nil(t, findUser.Error)
+	result := db.Preload("Addresses").Find(&user)
+	assert.Nil(t, result.Error)
+	fmt.Println(user)
 }
