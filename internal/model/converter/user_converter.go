@@ -17,11 +17,11 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 	}
 }
 
-func UserTokenToResponse(user *entity.User) *model.UserTokenResponse {
+func UserTokenToResponse(token *entity.Token) *model.UserTokenResponse {
 	return &model.UserTokenResponse{
-		Token:      user.Token.Token,
-		ExpiryDate: user.Token.ExpiryDate,
-		CreatedAt:  user.Token.Created_At,
-		UpdatedAt:  user.Token.Updated_At,
+		Token:      token.Token,
+		ExpiryDate: token.ExpiryDate,
+		CreatedAt:  token.Created_At,
+		UpdatedAt:  token.Updated_At,
 	}
 }

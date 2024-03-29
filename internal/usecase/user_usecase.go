@@ -130,7 +130,7 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequst)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.UserTokenToResponse(user), nil
+	return converter.UserTokenToResponse(token), nil
 }
 
 func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUserByTokenRequest) (*model.UserResponse, error) {
