@@ -26,18 +26,20 @@ func Bootstrap(config *BootstrapConfig) {
 	// setup repositories
 	userRepository := repository.NewUserRepository(config.Log)
 	tokenRepository := repository.NewTokenRepository(config.Log)
+	addressRepository := repository.NewAddressRepository(config.Log)
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository)
-
+	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
-
+	addressController := http.NewAddressController(addressUseCase, config.Log)
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
 
 	routeConfig := route.RouteConfig{
 		App: config.App,
 		UserController: userController,
+		AddressController: addressController,
 		AuthMiddleware: authMiddleware,
 	}
 	routeConfig.Setup()

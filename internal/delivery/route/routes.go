@@ -9,6 +9,7 @@ import (
 type RouteConfig struct {
 	App *fiber.App
 	UserController *http.UserController
+	AddressController *http.AddressController
 	AuthMiddleware fiber.Handler
 }
 
@@ -25,4 +26,5 @@ func (c *RouteConfig) SetupGuestRoute() {
 func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Use(c.AuthMiddleware)
 	c.App.Get("/api/users/current", c.UserController.GetCurrent)
+	c.App.Post("/api/users/current/addresses", c.AddressController.Add)
 }

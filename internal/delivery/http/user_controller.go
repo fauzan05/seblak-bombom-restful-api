@@ -24,7 +24,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 	request := new(model.RegisterUserRequest)
 	err := ctx.BodyParser(request)
 	if err != nil {
-		c.Log.Warnf("Failed to register new user : %+v", err)
+		c.Log.Warnf("Cannot parse data : %+v", err)
 		return err
 	}
 
@@ -45,7 +45,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	request := new(model.LoginUserRequst)
 	err := ctx.BodyParser(request)
 	if err != nil {
-		c.Log.Warnf("Failed to login : %+v", err)
+		c.Log.Warnf("Cannot parse data : %+v", err)
 		return err
 	}
 
