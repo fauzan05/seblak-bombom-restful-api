@@ -28,7 +28,7 @@ func NewViper() *viper.Viper {
 var db = config.NewDatabaseTest(NewViper(), config.NewLogger(NewViper()))
 func TestCountEmailUser(t *testing.T) {
 	var total int64
-	err := db.Model(&entity.User{}).Where("email = ?", "fauzannurhidayat8@gmail.com").Count(&total).Error	
+	err := db.Model(&entity.User{}).Where("email = ?", "fauzannurhidayat8@gmail.com").Count(&total).Error
 	assert.Nil(t, err)
 	fmt.Println(total)
 }
@@ -77,7 +77,7 @@ func TestRelation(t *testing.T) {
 	user := new(entity.User)
 	userResult := db.First(&user)
 	assert.Nil(t, userResult.Error)
-	
+
 	// var token entity.Token
 	fmt.Println(user)
 	// result := db.Where("user_id = ?", 2).First(&token).Error
@@ -99,7 +99,7 @@ func TestGetUserByToken(t *testing.T) {
 
 	fmt.Println(user.Token.Token)
 	for _, v := range user.Addresses {
-		fmt.Println(v)	
+		fmt.Println(v)
 	}
 }
 

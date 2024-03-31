@@ -116,3 +116,4 @@ time="2024-03-30T04:55:55+07:00" level=info msg="[/Users/fauzannurhidayat/Docume
 time="2024-03-30T04:55:55+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests/database/query_test.go:97 1.888146 1 SELECT * FROM `addresses` WHERE `addresses`.`user_id` = ?]"
 time="2024-03-30T04:55:55+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests/database/query_test.go:97 6.16759 1 SELECT * FROM `tokens` WHERE `tokens`.`user_id` = ?]"
 time="2024-03-30T04:55:55+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests/database/query_test.go:97 22.071415 1 SELECT * FROM `users` WHERE id = ?]"
+time="2024-03-31T19:59:31+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/tests/database/query_test.go:38 10.267959 1 SELECT * FROM `users` ORDER BY `users`.`id` LIMIT ?]"

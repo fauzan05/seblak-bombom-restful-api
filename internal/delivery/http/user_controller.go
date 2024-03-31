@@ -9,13 +9,13 @@ import (
 )
 
 type UserController struct {
-	Log *logrus.Logger
+	Log     *logrus.Logger
 	UseCase *usecase.UserUseCase
 }
 
 func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger) *UserController {
 	return &UserController{
-		Log: logger,
+		Log:     logger,
 		UseCase: useCase,
 	}
 }
@@ -35,9 +35,9 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.UserResponse]{
-		Code: 201,
+		Code:   201,
 		Status: "Success to register an user",
-		Data: response,
+		Data:   response,
 	})
 }
 
@@ -56,9 +56,9 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserTokenResponse]{
-		Code: 200,
+		Code:   200,
 		Status: "Success to login",
-		Data: response,
+		Data:   response,
 	})
 }
 
@@ -75,9 +75,9 @@ func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
-		Code: 200,
+		Code:   200,
 		Status: "Success to get user data",
-		Data: response,
+		Data:   response,
 	})
 }
 
@@ -102,9 +102,9 @@ func (c *UserController) Update(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
-		Code: 200,
+		Code:   200,
 		Status: "Success to update user data",
-		Data: response,
+		Data:   response,
 	})
 }
 
@@ -129,9 +129,53 @@ func (c *UserController) UpdatePassword(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
-		Code: 200,
+		Code:   200,
 		Status: "Success to update user password",
-		Data: response,
+		Data:   response,
 	})
+}
 
+func (c *UserController) Logout(ctx *fiber.Ctx) error {
+	tokenRequest := new(model.GetUserByTokenRequest)
+	// tangkap token dari header
+	result := ctx.GetReqHeaders()
+	tokenRequest.Token = result["Authorization"][0]
+
+	response, err := c.UseCase.Logout(ctx.Context(), tokenRequest)
+	if err != nil {
+		c.Log.Warnf("Failed to delete user token : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
+		Code:   200,
+		Status: "Success to delete user token",
+		Data:   response,
+	})
+}
+
+func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
+	tokenRequest := new(model.GetUserByTokenRequest)
+	// tangkap token dari header
+	result := ctx.GetReqHeaders()
+	tokenRequest.Token = result["Authorization"][0]
+
+	// ambil data form update
+	dataRequest := new(model.DeleteCurrentUserRequest)
+	if err := ctx.BodyParser(dataRequest); err != nil {
+		c.Log.Warnf("Cannot parse data : %+v", err)
+		return err
+	}
+
+	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), dataRequest, tokenRequest)
+	if err != nil {
+		c.Log.Warnf("Failed to delete current user : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
+		Code:   200,
+		Status: "Success to delete current user",
+		Data:   response,
+	})
 }

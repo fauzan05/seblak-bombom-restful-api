@@ -28,7 +28,7 @@ func Bootstrap(config *BootstrapConfig) {
 	tokenRepository := repository.NewTokenRepository(config.Log)
 	addressRepository := repository.NewAddressRepository(config.Log)
 	// setup use case
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)

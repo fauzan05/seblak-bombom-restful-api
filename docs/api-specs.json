@@ -388,7 +388,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/UserResponse"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -1203,14 +1203,6 @@
                         "schema": {
                             "type": "string"
                         }
-                    },
-                    {
-                        "name": "productId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "requestBody": {
@@ -1341,7 +1333,7 @@
                         }
                     },
                     {
-                        "name": "categoryId",
+                        "name": "imageId",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -1910,6 +1902,9 @@
                         "items": {
                             "$ref": "#/components/schemas/AddressResponse"
                         }
+                    },
+                    "role": {
+                        "type": "string"
                     },
                     "created_at": {
                         "type": "string"

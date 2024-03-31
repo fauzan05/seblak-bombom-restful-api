@@ -18,3 +18,7 @@ type AddressCreateRequest struct {
 	GoogleMapLink   string `json:"google_map_link" validate:"required"`
 	IsMain          bool   `json:"is_main" validate:"required"`
 }
+
+type AddressDeleteRequest struct {
+	IdAddress uint64 `json:"-" validate:"required"`
+}

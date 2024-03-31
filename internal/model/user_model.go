@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+	"time"
+)
 
 type UserResponse struct {
 	ID        uint64            `json:"id,omitempty"`
@@ -9,6 +12,7 @@ type UserResponse struct {
 	Email     string            `json:"email,omitempty"`
 	Phone     string            `json:"phone,omitempty"`
 	Addresses []AddressResponse `json:"addresses,omitempty"`
+	Role      helper.Status     `json:"role,omitempty"`
 	CreatedAt string            `json:"created_at,omitempty"`
 	UpdatedAt string            `json:"updated_at,omitempty"`
 }
@@ -26,10 +30,10 @@ type VerifyUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	FirstName       string `json:"first_name" validate:"required,max=100"`
-	LastName        string `json:"last_name" validate:"required,max=100"`
-	Email           string `json:"email" validate:"required,max=100"`
-	Phone           string `json:"phone" validate:"required,max=50"`
+	FirstName string `json:"first_name" validate:"required,max=100"`
+	LastName  string `json:"last_name" validate:"required,max=100"`
+	Email     string `json:"email" validate:"required,max=100"`
+	Phone     string `json:"phone" validate:"required,max=50"`
 }
 
 type UpdateUserPasswordRequest struct {
@@ -51,5 +55,9 @@ type UserTokenResponse struct {
 }
 
 type GetUserByTokenRequest struct {
-	Token string ` validate:"required"`
+	Token string `json:"-" validate:"required"`
+}
+
+type DeleteCurrentUserRequest struct {
+	OldPassword string `json:"old_password" validate:"required"`
 }

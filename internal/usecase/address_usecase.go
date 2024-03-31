@@ -69,3 +69,27 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 
 	return converter.AddressToResponse(address), nil
 }
+
+// func (c *AddressUseCase) Delete(ctx context.Context, request *model.AddressDeleteRequest, token *model.GetUserByTokenRequest) (bool, error) {
+// 	tx := c.DB.WithContext(ctx).Begin()
+// 	defer tx.Rollback()
+
+// 	if err := c.Validate.Struct(request); err != nil {
+// 		c.Log.Warnf("Invalid request body : %+v", err)
+// 		return false, fiber.ErrBadRequest
+// 	}
+
+// 	newUser := new(entity.User)
+// 	if err := c.UserRepository.FindUserByToken(tx, newUser, token.Token); err != nil {
+// 		c.Log.Warnf("Can't find user by token : %+v", err)
+// 		return false, fiber.ErrInternalServerError
+// 	}
+
+// 	newAddress := new(entity.Address)
+// 	if err := c.AddressRepository.DeleteAllAddressByUserId(tx, newAddress, newUser.ID); err.Error != nil {
+// 		c.Log.Warnf("Can't delete all address by user id : %+v", err)
+// 		return false, fiber.ErrInternalServerError
+// 	}
+	
+
+// }

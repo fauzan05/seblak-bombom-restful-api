@@ -11,7 +11,7 @@ type Repository[T any] struct {
 }
 
 func (r *Repository[T]) Create(db *gorm.DB, entity *T) error {
-	return db.Create(entity).Error
+	return db.Create(&entity).Error
 }
 
 func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
@@ -19,7 +19,7 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 }
 
 func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) error {
-	return db.Where("user_id = ?", userId).First(token).Error
+	return db.Where("user_id = ?", userId).First(&token).Error
 }
 
 func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string) error {
@@ -36,8 +36,13 @@ func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 	return db.Delete(entity).Error
 }
 
+func(c *Repository[T]) DeleteToken(db *gorm.DB, entity *T, token string) *gorm.DB {
+	result := db.Where("token = ?", token).Delete(&entity)
+	return result
+}
+
 func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error {
-	return db.Where("email = ?", email).First(entity).Error
+	return db.Where("email = ?", email).First(&entity).Error
 }
 
 func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string,requestEmail string) (int64, error) {
@@ -47,15 +52,20 @@ func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string,requ
 }
 
 func (r *Repository[T]) FindUserById(db *gorm.DB, entity *T, userId uint64) error {
-	return db.Where("id = ?", userId).First(entity).Error
+	return db.Where("id = ?", userId).First(&entity).Error
 }
 
 func (r *Repository[T]) FindUserByIdWithAddress(db *gorm.DB, entity *T, userId uint64) error {
-	return db.Where("id = ?", userId).Preload("Addresses").Find(entity).Error
+	return db.Where("id = ?", userId).Preload("Addresses").Find(&entity).Error
 }
 
 func (r *Repository[T]) UserCountByEmail(db *gorm.DB, entity *T, email string) (int64, error) {
 	var total int64
 	err := db.Model(new(T)).Where("email = ?", email).Count(&total).Error
 	return total, err
+}
+
+func (r *Repository[T]) DeleteAllAddressByUserId(db *gorm.DB, entity *T, userId uint64) *gorm.DB {
+	result := db.Where("user_id = ?", userId).Delete(&entity)
+	return result
 }

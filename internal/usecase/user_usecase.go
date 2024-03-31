@@ -22,16 +22,18 @@ type UserUseCase struct {
 	Validate        *validator.Validate
 	UserRepository  *repository.UserRepository
 	TokenRepository *repository.TokenRepository
+	AddressRepository *repository.AddressRepository
 }
 
 func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
-	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository) *UserUseCase {
+	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository, addressRepository *repository.AddressRepository) *UserUseCase {
 	return &UserUseCase{
 		DB:              db,
 		Log:             log,
 		Validate:        validate,
 		UserRepository:  userRepository,
 		TokenRepository: tokenRepository,
+		AddressRepository: addressRepository,
 	}
 }
 
@@ -180,7 +182,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 		c.Log.Warnf("Cannot count email is exists : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
-	
+
 	if totalCount > 0 {
 		c.Log.Warnf("Email has already exists : %+v", err)
 		return nil, fiber.ErrBadRequest
@@ -190,7 +192,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 	user.Name.FirstName = request.FirstName
 	user.Name.LastName = request.LastName
 	user.Phone = request.Phone
-	
+
 	if err := c.UserRepository.Update(tx, user); err != nil {
 		c.Log.Warnf("Failed to update data user : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -240,5 +242,73 @@ func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateU
 		return false, fiber.ErrInternalServerError
 	}
 	return true, nil
+}
 
+func (c *UserUseCase) Logout(ctx context.Context, token *model.GetUserByTokenRequest) (bool, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	newToken := new(entity.Token)
+	result := c.TokenRepository.DeleteToken(tx, newToken, token.Token)
+	if result.RowsAffected == 0{
+		c.Log.Warnf("Can't delete token : %+v", result.Error)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	return true, nil
+}
+
+func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.DeleteCurrentUserRequest, token *model.GetUserByTokenRequest) (bool, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return false, fiber.ErrBadRequest
+	}
+
+	newUser := new(entity.User)
+	if err := c.UserRepository.FindUserByToken(tx, newUser, token.Token); err != nil {
+		c.Log.Warnf("Can't find user by token : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(newUser.Password), []byte(request.OldPassword)); err != nil {
+		c.Log.Warnf("Old Password is wrong : %+v", err)
+		return false, fiber.ErrUnauthorized
+	}
+
+	// hapus token terlebih dahulu
+	newToken := new(entity.Token)
+	deleteToken := c.TokenRepository.DeleteToken(tx, newToken, token.Token)
+	if deleteToken.RowsAffected == 0 {
+		c.Log.Warnf("Can't delete token : %+v", deleteToken.Error)
+		return false, fiber.ErrInternalServerError
+	}
+
+	// hapus address terlebih dahulu
+	newAddress := new(entity.Address)
+	if err := c.AddressRepository.DeleteAllAddressByUserId(tx, newAddress, newUser.ID); err.Error != nil {
+		c.Log.Warnf("Can't delete addresses by user id : %+v", err.Error)
+		return false, fiber.ErrInternalServerError
+	}
+
+	// lalu hapus usernya
+	if err := c.UserRepository.Delete(tx, newUser); err != nil {
+		c.Log.Warnf("Can't delete current user : %+v", deleteToken.Error)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	return true, nil
 }
