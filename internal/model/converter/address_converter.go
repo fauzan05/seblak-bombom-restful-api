@@ -20,8 +20,6 @@ func AddressToResponse(address *entity.Address) *model.AddressResponse {
 
 func AddressesToResponse(addresses *[]model.AddressResponse) *[]model.AddressResponse {
 	getAddresses := make([]model.AddressResponse, len(*addresses))
-		for i, address := range	*addresses {
-			getAddresses[i]	= address
-		}
+	copy(getAddresses, *addresses)
 	return &getAddresses
 }

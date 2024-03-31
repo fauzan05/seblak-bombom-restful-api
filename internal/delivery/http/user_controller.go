@@ -23,8 +23,7 @@ func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger) *Use
 
 func (c *UserController) Register(ctx *fiber.Ctx) error {
 	request := new(model.RegisterUserRequest)
-	err := ctx.BodyParser(request)
-	if err != nil {
+	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
 		return err
 	}
@@ -140,7 +139,7 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,
-		Status: "Success to delete user token",
+		Status: "Success to logout",
 		Data:   response,
 	})
 }

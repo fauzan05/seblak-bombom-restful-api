@@ -5,6 +5,7 @@ import (
 	"seblak-bombom-restful-api/internal/config"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
+	"strconv"
 	"testing"
 	"time"
 
@@ -110,4 +111,23 @@ func TestGetUserWithAddress(t *testing.T) {
 	result := db.Preload("Addresses").Find(&user)
 	assert.Nil(t, result.Error)
 	fmt.Println(user)
+}
+
+func TestCreateNewCategory(t *testing.T) {
+	for i := 0; i < 5; i++ {
+		category := &entity.Category{
+			Name: "Category " + strconv.Itoa(i),
+			Description: "Description " + strconv.Itoa(i),
+		}
+		db.Create(&category)
+	}
+}
+
+func TestFindAllCategories(t *testing.T) {
+	categories := new([]entity.Category)
+	result := db.Find(&categories)
+	assert.Nil(t, result.Error)
+	for _, v := range *categories {
+		fmt.Println(v)
+	}
 }

@@ -73,3 +73,7 @@ func (r *Repository[T]) DeleteAllAddressByUserId(db *gorm.DB, entity *T, userId 
 	result := db.Where("user_id = ?", userId).Delete(&entity)
 	return result
 }
+
+func (r *Repository[T]) FindAll(db *gorm.DB, entities *[]T) error {
+	return db.Find(&entities).Error
+}

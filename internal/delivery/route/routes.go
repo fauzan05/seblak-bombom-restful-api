@@ -10,6 +10,7 @@ type RouteConfig struct {
 	App               *fiber.App
 	UserController    *http.UserController
 	AddressController *http.AddressController
+	CategoryController *http.CategoryController
 	AuthMiddleware    fiber.Handler
 }
 
@@ -38,4 +39,13 @@ func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Get("/api/addresses/:addressId", c.AddressController.Get)
 	c.App.Put("/api/addresses/:addressId", c.AddressController.Update)
 	c.App.Delete("/api/addresses/:addressId", c.AddressController.Remove)
+
+	// Category
+	c.App.Post("/api/categories", c.CategoryController.Create)
+	c.App.Get("/api/categories/:categoryId", c.CategoryController.Get)
+	c.App.Get("/api/categories", c.CategoryController.GetAll)
+	c.App.Put("/api/categories/:categoryId", c.CategoryController.Edit)
+	c.App.Delete("/api/categories/:categoryId", c.CategoryController.Remove)
+	
+
 }
