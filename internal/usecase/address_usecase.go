@@ -70,26 +70,90 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 	return converter.AddressToResponse(address), nil
 }
 
-// func (c *AddressUseCase) Delete(ctx context.Context, request *model.AddressDeleteRequest, token *model.GetUserByTokenRequest) (bool, error) {
-// 	tx := c.DB.WithContext(ctx).Begin()
-// 	defer tx.Rollback()
+func (c *AddressUseCase) GetAll(user *model.UserResponse)(*[]model.AddressResponse, error) {
+	return converter.AddressesToResponse(&user.Addresses), nil
+}
 
-// 	if err := c.Validate.Struct(request); err != nil {
-// 		c.Log.Warnf("Invalid request body : %+v", err)
-// 		return false, fiber.ErrBadRequest
-// 	}
+func (c *AddressUseCase) GetById(ctx context.Context, request *model.GetAddressRequest) (*model.AddressResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
 
-// 	newUser := new(entity.User)
-// 	if err := c.UserRepository.FindUserByToken(tx, newUser, token.Token); err != nil {
-// 		c.Log.Warnf("Can't find user by token : %+v", err)
-// 		return false, fiber.ErrInternalServerError
-// 	}
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request query params : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
 
-// 	newAddress := new(entity.Address)
-// 	if err := c.AddressRepository.DeleteAllAddressByUserId(tx, newAddress, newUser.ID); err.Error != nil {
-// 		c.Log.Warnf("Can't delete all address by user id : %+v", err)
-// 		return false, fiber.ErrInternalServerError
-// 	}
-	
+	newAddress := new(entity.Address)
+	newAddress.ID = request.ID
+	if err := c.AddressRepository.FindById(tx, newAddress); err != nil {
+		c.Log.Warnf("Failed find address by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
 
-// }
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.AddressToResponse(newAddress), nil
+}
+
+func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressRequest) (*model.AddressResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	newAddress := new(entity.Address)
+	newAddress.ID = request.ID
+	newAddress.UserId = request.UserId
+	newAddress.Regency = request.Regency
+	newAddress.SubDistrict = request.Subdistrict
+	newAddress.CompleteAddress = request.CompleteAddress
+	newAddress.GoogleMapLink = request.GoogleMapLink
+	newAddress.IsMain = request.IsMain
+
+	if err := c.AddressRepository.Update(tx, newAddress); err != nil {
+		c.Log.Warnf("Failed edit address by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := c.AddressRepository.FindById(tx, newAddress); err != nil {
+		c.Log.Warnf("Failed find updated address by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.AddressToResponse(newAddress), nil
+}
+
+func (c *AddressUseCase) Delete(ctx context.Context, request *model.DeleteAddressRequest) (bool, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return false, fiber.ErrBadRequest
+	}
+
+	newAddress := new(entity.Address)
+	newAddress.ID = request.ID
+	if err := c.AddressRepository.Delete(tx, newAddress); err != nil {
+		c.Log.Warnf("Can't delete address by id : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	return true, nil
+}

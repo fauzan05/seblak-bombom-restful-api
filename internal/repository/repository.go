@@ -36,6 +36,10 @@ func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 	return db.Delete(entity).Error
 }
 
+func (r *Repository[T]) FindById(db *gorm.DB, entity *T) error {
+	return db.First(&entity).Error
+}
+
 func(c *Repository[T]) DeleteToken(db *gorm.DB, entity *T, token string) *gorm.DB {
 	result := db.Where("token = ?", token).Delete(&entity)
 	return result
@@ -47,12 +51,12 @@ func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error 
 
 func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string,requestEmail string) (int64, error) {
 	var total int64
-	err :=  db.Where("email = ? AND email != ?", requestEmail, currentEmail).Count(&total).Error
+	err :=  db.Model(&entity.User{}).Where("email = ? AND email != ?", requestEmail, currentEmail).Count(&total).Error
 	return total, err
 }
 
 func (r *Repository[T]) FindUserById(db *gorm.DB, entity *T, userId uint64) error {
-	return db.Where("id = ?", userId).First(&entity).Error
+	return db.Where("id = ?", userId).Preload("Token").Preload("Addresses").Find(&entity).Error
 }
 
 func (r *Repository[T]) FindUserByIdWithAddress(db *gorm.DB, entity *T, userId uint64) error {

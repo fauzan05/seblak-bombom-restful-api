@@ -21,7 +21,11 @@ func NewAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 		}
 
 		userUseCase.Log.Debugf("User : %+v", auth.Email)
-		// c.Locals("auth", auth)
+		c.Locals("auth", auth)
 		return c.Next()
 	}
+}
+
+func GetUserId(ctx *fiber.Ctx) *model.UserResponse {
+	return ctx.Locals("auth").(*model.UserResponse)
 }

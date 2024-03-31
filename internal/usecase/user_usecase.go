@@ -162,7 +162,7 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 	return converter.UserToResponse(user), nil
 }
 
-func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest, token *model.GetUserByTokenRequest) (*model.UserResponse, error) {
+func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest, currentUser *model.UserResponse) (*model.UserResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -171,13 +171,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 		return nil, fiber.ErrBadRequest
 	}
 
-	// tidak perlu melakukan validasi terhadap token expired karena sudah di handle oleh middleware auth
-	user := new(entity.User)
-	if err := c.UserRepository.FindUserByToken(tx, user, token.Token); err != nil {
-		c.Log.Warnf("Token isn't valid : %+v", err)
-		return nil, fiber.ErrUnauthorized
-	}
-	totalCount, err := c.UserRepository.CheckEmailIsExists(tx, user.Email, request.Email)
+	totalCount, err := c.UserRepository.CheckEmailIsExists(tx, currentUser.Email, request.Email)
 	if err != nil {
 		c.Log.Warnf("Cannot count email is exists : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -188,6 +182,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 		return nil, fiber.ErrBadRequest
 	}
 
+	user := new(entity.User)
 	user.Email = request.Email
 	user.Name.FirstName = request.FirstName
 	user.Name.LastName = request.LastName
@@ -205,7 +200,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 	return converter.UserToResponse(user), nil
 }
 
-func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateUserPasswordRequest, token *model.GetUserByTokenRequest) (bool, error) {
+func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateUserPasswordRequest, user *model.UserResponse) (bool, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -214,13 +209,13 @@ func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateU
 		return false, fiber.ErrBadRequest
 	}
 
-	user := new(entity.User)
-	if err := c.UserRepository.FindUserByToken(tx, user, token.Token); err != nil {
+	newUser:= new(entity.User)
+	if err := c.UserRepository.FindUserById(tx, newUser, user.ID); err != nil {
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return false, fiber.ErrUnauthorized
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.OldPassword)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(newUser.Password), []byte(request.OldPassword)); err != nil {
 		c.Log.Warnf("Old Password is wrong : %+v", err)
 		return false, fiber.ErrUnauthorized
 	}
@@ -230,9 +225,9 @@ func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateU
 		c.Log.Warnf("Failed to generate bcrypt hash : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
-	user.Password = string(newPasswordRequest)
+	newUser.Password = string(newPasswordRequest)
 
-	if err := c.UserRepository.Update(tx, user); err != nil {
+	if err := c.UserRepository.Update(tx, newUser); err != nil {
 		c.Log.Warnf("Failed to update data user : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
@@ -263,7 +258,7 @@ func (c *UserUseCase) Logout(ctx context.Context, token *model.GetUserByTokenReq
 	return true, nil
 }
 
-func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.DeleteCurrentUserRequest, token *model.GetUserByTokenRequest) (bool, error) {
+func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.DeleteCurrentUserRequest, user *model.UserResponse) (bool, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -274,7 +269,7 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 	}
 
 	newUser := new(entity.User)
-	if err := c.UserRepository.FindUserByToken(tx, newUser, token.Token); err != nil {
+	if err := c.UserRepository.FindUserById(tx, newUser, user.ID); err != nil {
 		c.Log.Warnf("Can't find user by token : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
@@ -286,7 +281,7 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 
 	// hapus token terlebih dahulu
 	newToken := new(entity.Token)
-	deleteToken := c.TokenRepository.DeleteToken(tx, newToken, token.Token)
+	deleteToken := c.TokenRepository.DeleteToken(tx, newToken, newUser.Token.Token)
 	if deleteToken.RowsAffected == 0 {
 		c.Log.Warnf("Can't delete token : %+v", deleteToken.Error)
 		return false, fiber.ErrInternalServerError

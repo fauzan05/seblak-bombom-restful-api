@@ -25,10 +25,17 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Use(c.AuthMiddleware)
+	// User
 	c.App.Get("/api/users/current", c.UserController.GetCurrent)
 	c.App.Patch("/api/users/current", c.UserController.Update)
 	c.App.Delete("/api/users/logout", c.UserController.Logout)
 	c.App.Delete("/api/users/current", c.UserController.RemoveAccount)
 	c.App.Patch("/api/users/current/password", c.UserController.UpdatePassword)
+	
+	// Address
 	c.App.Post("/api/users/current/addresses", c.AddressController.Add)
+	c.App.Get("/api/users/current/addresses", c.AddressController.GetAll)
+	c.App.Get("/api/addresses/:addressId", c.AddressController.Get)
+	c.App.Put("/api/addresses/:addressId", c.AddressController.Update)
+	c.App.Delete("/api/addresses/:addressId", c.AddressController.Remove)
 }

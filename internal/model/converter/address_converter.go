@@ -17,3 +17,11 @@ func AddressToResponse(address *entity.Address) *model.AddressResponse {
 		UpdatedAt: address.Updated_At.Format("2006-01-02 15:04:05"),
 	}
 }
+
+func AddressesToResponse(addresses *[]model.AddressResponse) *[]model.AddressResponse {
+	getAddresses := make([]model.AddressResponse, len(*addresses))
+		for i, address := range	*addresses {
+			getAddresses[i]	= address
+		}
+	return &getAddresses
+}
