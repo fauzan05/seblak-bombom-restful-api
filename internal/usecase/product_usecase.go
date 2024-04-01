@@ -132,6 +132,11 @@ func (c *ProductUseCase) Update(ctx context.Context, request *model.UpdateProduc
 		return nil, fiber.ErrInternalServerError
 	}
 
+	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
+		c.Log.Warnf("Failed get product from database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -154,6 +159,11 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 	newProduct.ID = request.ID
 	if err := c.ProductRepository.Delete(tx, newProduct); err != nil {
 		c.Log.Warnf("Failed delete product by id : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
 

@@ -26,6 +26,6 @@ func NewAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 	}
 }
 
-func GetUserId(ctx *fiber.Ctx) *model.UserResponse {
+func GetCurrentUser(ctx *fiber.Ctx) *model.UserResponse {
 	return ctx.Locals("auth").(*model.UserResponse)
 }

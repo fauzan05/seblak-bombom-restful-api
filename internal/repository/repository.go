@@ -33,14 +33,14 @@ func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string)
 }
 
 func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
-	return db.Delete(entity).Error
+	return db.Delete(&entity).Error
 }
 
 func (r *Repository[T]) FindById(db *gorm.DB, entity *T) error {
 	return db.First(&entity).Error
 }
 
-func(c *Repository[T]) DeleteToken(db *gorm.DB, entity *T, token string) *gorm.DB {
+func (c *Repository[T]) DeleteToken(db *gorm.DB, entity *T, token string) *gorm.DB {
 	result := db.Where("token = ?", token).Delete(&entity)
 	return result
 }
@@ -49,9 +49,9 @@ func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error 
 	return db.Where("email = ?", email).First(&entity).Error
 }
 
-func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string,requestEmail string) (int64, error) {
+func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string, requestEmail string) (int64, error) {
 	var total int64
-	err :=  db.Model(&entity.User{}).Where("email = ? AND email != ?", requestEmail, currentEmail).Count(&total).Error
+	err := db.Model(&entity.User{}).Where("email = ? AND email != ?", requestEmail, currentEmail).Count(&total).Error
 	return total, err
 }
 
@@ -80,9 +80,8 @@ func (r *Repository[T]) FindAll(db *gorm.DB, entities *[]T) error {
 
 func (r *Repository[T]) FindWithJoins(db *gorm.DB, entity *T, join string) error {
 	return db.Joins(join).Find(&entity).Error
-} 
+}
 
 func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) error {
 	return db.Joins(join).Find(&entity).Error
 }
-

@@ -11,13 +11,13 @@ import (
 )
 
 type AddressController struct {
-	Log *logrus.Logger
+	Log     *logrus.Logger
 	UseCase *usecase.AddressUseCase
 }
 
 func NewAddressController(useCase *usecase.AddressUseCase, logger *logrus.Logger) *AddressController {
 	return &AddressController{
-		Log: logger,
+		Log:     logger,
 		UseCase: useCase,
 	}
 }
@@ -40,14 +40,14 @@ func (c *AddressController) Add(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.AddressResponse]{
-		Code: 201,
+		Code:   201,
 		Status: "Success to add new address",
-		Data: response,
+		Data:   response,
 	})
 }
 
 func (c *AddressController) GetAll(ctx *fiber.Ctx) error {
-	auth := middleware.GetUserId(ctx)
+	auth := middleware.GetCurrentUser(ctx)
 	response, err := c.UseCase.GetAll(auth)
 	if err != nil {
 		c.Log.Warnf("Failed to register user : %+v", err)
@@ -98,11 +98,11 @@ func (c *AddressController) Update(ctx *fiber.Ctx) error {
 		return err
 	}
 	// ambil data current user dari auth
-	auth := middleware.GetUserId(ctx)
+	auth := middleware.GetCurrentUser(ctx)
 
 	addressRequest.ID = uint64(addressId)
 	addressRequest.UserId = auth.ID
-	
+
 	response, err := c.UseCase.Edit(ctx.Context(), addressRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to edit address : %+v", err)

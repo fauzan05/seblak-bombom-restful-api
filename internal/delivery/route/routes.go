@@ -13,11 +13,13 @@ type RouteConfig struct {
 	CategoryController *http.CategoryController
 	ProductController  *http.ProductController
 	AuthMiddleware     fiber.Handler
+	RoleMiddleware     fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
 	c.SetupGuestRoute()
 	c.SetupAuthRoute()
+	c.SetupAuthAdminRoute()
 }
 
 func (c *RouteConfig) SetupGuestRoute() {
@@ -26,32 +28,43 @@ func (c *RouteConfig) SetupGuestRoute() {
 }
 
 func (c *RouteConfig) SetupAuthRoute() {
-	c.App.Use(c.AuthMiddleware)
+	api := c.App.Group("/api")
+	auth := api.Use(c.AuthMiddleware)
+
 	// User
-	c.App.Get("/api/users/current", c.UserController.GetCurrent)
-	c.App.Patch("/api/users/current", c.UserController.Update)
-	c.App.Delete("/api/users/logout", c.UserController.Logout)
-	c.App.Delete("/api/users/current", c.UserController.RemoveAccount)
-	c.App.Patch("/api/users/current/password", c.UserController.UpdatePassword)
+	auth.Get("/users/current", c.UserController.GetCurrent)
+	auth.Patch("/users/current", c.UserController.Update)
+	auth.Delete("/users/logout", c.UserController.Logout)
+	auth.Delete("/users/current", c.UserController.RemoveAccount)
+	auth.Patch("/users/current/password", c.UserController.UpdatePassword)
 
 	// Address
-	c.App.Post("/api/users/current/addresses", c.AddressController.Add)
-	c.App.Get("/api/users/current/addresses", c.AddressController.GetAll)
-	c.App.Get("/api/addresses/:addressId", c.AddressController.Get)
-	c.App.Put("/api/addresses/:addressId", c.AddressController.Update)
-	c.App.Delete("/api/addresses/:addressId", c.AddressController.Remove)
+	auth.Post("/users/current/addresses", c.AddressController.Add)
+	auth.Get("/users/current/addresses", c.AddressController.GetAll)
+	auth.Get("/addresses/:addressId", c.AddressController.Get)
+	auth.Put("/addresses/:addressId", c.AddressController.Update)
+	auth.Delete("/addresses/:addressId", c.AddressController.Remove)
 
 	// Category
-	c.App.Post("/api/categories", c.CategoryController.Create)
-	c.App.Get("/api/categories/:categoryId", c.CategoryController.Get)
-	c.App.Get("/api/categories", c.CategoryController.GetAll)
-	c.App.Put("/api/categories/:categoryId", c.CategoryController.Edit)
-	c.App.Delete("/api/categories/:categoryId", c.CategoryController.Remove)
+	auth.Get("/categories/:categoryId", c.CategoryController.Get)
+	auth.Get("/categories", c.CategoryController.GetAll)
 
 	// Product
-	c.App.Post("/api/products", c.ProductController.Create)
-	c.App.Get("/api/products", c.ProductController.GetAll)
-	c.App.Get("/api/products/:productId", c.ProductController.Get)
-	c.App.Put("/api/products/:productId", c.ProductController.Edit)
-	c.App.Delete("/api/products/:productId", c.ProductController.Remove)
+	auth.Get("/products", c.ProductController.GetAll)
+	auth.Get("/products/:productId", c.ProductController.Get)
+}
+
+func (c *RouteConfig) SetupAuthAdminRoute() {
+	api := c.App.Group("/api")
+	auth := api.Use(c.AuthMiddleware, c.RoleMiddleware)
+
+	// category
+	auth.Post("/categories", c.CategoryController.Create)
+	auth.Put("/categories/:categoryId", c.CategoryController.Edit)
+	auth.Delete("/categories/:categoryId", c.CategoryController.Remove)
+
+	// Product
+	auth.Post("/products", c.ProductController.Create)
+	auth.Put("/products/:productId", c.ProductController.Edit)
+	auth.Delete("/products/:productId", c.ProductController.Remove)
 }

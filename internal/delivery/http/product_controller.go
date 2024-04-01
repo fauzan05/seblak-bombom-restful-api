@@ -10,13 +10,13 @@ import (
 )
 
 type ProductController struct {
-	Log *logrus.Logger
+	Log     *logrus.Logger
 	UseCase *usecase.ProductUseCase
 }
 
 func NewProductController(useCase *usecase.ProductUseCase, logger *logrus.Logger) *ProductController {
 	return &ProductController{
-		Log: logger,
+		Log:     logger,
 		UseCase: useCase,
 	}
 }
@@ -85,7 +85,12 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Failed to convert product id : %+v", err)
 		return err
 	}
+
 	productRequest := new(model.UpdateProductRequest)
+	if err := ctx.BodyParser(productRequest); err != nil {
+		c.Log.Warnf("Cannot parse data : %+v", err)
+		return err
+	}
 	productRequest.ID = uint64(productId)
 
 	response, err := c.UseCase.Update(ctx.Context(), productRequest)

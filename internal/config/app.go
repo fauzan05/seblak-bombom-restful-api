@@ -35,23 +35,25 @@ func Bootstrap(config *BootstrapConfig) {
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository)
-	
+
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
-	
+
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
+	roleMiddleware := middleware.NewRole(userUseCase)
 
 	routeConfig := route.RouteConfig{
-		App: config.App,
-		UserController: userController,
-		AddressController: addressController,
+		App:                config.App,
+		UserController:     userController,
+		AddressController:  addressController,
 		CategoryController: categoryController,
-		ProductController: productController,
-		AuthMiddleware: authMiddleware,
+		ProductController:  productController,
+		AuthMiddleware:     authMiddleware,
+		RoleMiddleware:     roleMiddleware,
 	}
 	routeConfig.Setup()
 }

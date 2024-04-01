@@ -67,7 +67,7 @@ func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {
 	// tangkap token dari header
 	result := ctx.GetReqHeaders()
 	request.Token = result["Authorization"][0]
-	response := middleware.GetUserId(ctx)
+	response := middleware.GetCurrentUser(ctx)
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
 		Code:   200,
@@ -85,7 +85,7 @@ func (c *UserController) Update(ctx *fiber.Ctx) error {
 		return err
 	}
 	// ambil data current user dari auth
-	auth := middleware.GetUserId(ctx)
+	auth := middleware.GetCurrentUser(ctx)
 
 	response, err := c.UseCase.Update(ctx.Context(), dataRequest, auth)
 	if err != nil {
@@ -110,7 +110,7 @@ func (c *UserController) UpdatePassword(ctx *fiber.Ctx) error {
 	}
 
 	// ambil data current user dari auth
-	auth := middleware.GetUserId(ctx)
+	auth := middleware.GetCurrentUser(ctx)
 
 	response, err := c.UseCase.UpdatePassword(ctx.Context(), dataRequest, auth)
 	if err != nil {
@@ -153,7 +153,7 @@ func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 	}
 
 	// ambil data current user dari auth
-	auth := middleware.GetUserId(ctx)
+	auth := middleware.GetCurrentUser(ctx)
 
 	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), dataRequest, auth)
 	if err != nil {

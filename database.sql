@@ -8,7 +8,7 @@ select * from users;
 select count(*) from users where first_name != "Rudi";
 select * from addresses;
 select * from tokens;
-
+select * from products;
 delete from tokens where id = 1;
 show create table users;
 show create table addresses;
