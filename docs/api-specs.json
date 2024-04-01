@@ -1338,8 +1338,14 @@
                                 "items": {
                                     "type": "object",
                                     "properties": {
-                                        "image_id": {
+                                        "id": {
                                             "type": "integer"
+                                        },
+                                        "product_id": {
+                                            "type": "integer"
+                                        },
+                                        "file_name": {
+                                            "type": "string"
                                         },
                                         "position": {
                                             "type": "integer"
