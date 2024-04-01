@@ -15,7 +15,7 @@ func (r *Repository[T]) Create(db *gorm.DB, entity *T) error {
 }
 
 func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
-	return db.Save(entity).Error
+	return db.Save(&entity).Error
 }
 
 func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) error {
@@ -77,3 +77,12 @@ func (r *Repository[T]) DeleteAllAddressByUserId(db *gorm.DB, entity *T, userId 
 func (r *Repository[T]) FindAll(db *gorm.DB, entities *[]T) error {
 	return db.Find(&entities).Error
 }
+
+func (r *Repository[T]) FindWithJoins(db *gorm.DB, entity *T, join string) error {
+	return db.Joins(join).Find(&entity).Error
+} 
+
+func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) error {
+	return db.Joins(join).Find(&entity).Error
+}
+

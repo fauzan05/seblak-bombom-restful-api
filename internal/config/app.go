@@ -28,14 +28,20 @@ func Bootstrap(config *BootstrapConfig) {
 	tokenRepository := repository.NewTokenRepository(config.Log)
 	addressRepository := repository.NewAddressRepository(config.Log)
 	categoryRepository := repository.NewCategoryRepository(config.Log)
+	productRepository := repository.NewProductRepository(config.Log)
+
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
+	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository)
+	
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
+	productController := http.NewProductController(productUseCase, config.Log)
+	
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
 
@@ -44,6 +50,7 @@ func Bootstrap(config *BootstrapConfig) {
 		UserController: userController,
 		AddressController: addressController,
 		CategoryController: categoryController,
+		ProductController: productController,
 		AuthMiddleware: authMiddleware,
 	}
 	routeConfig.Setup()

@@ -7,11 +7,12 @@ import (
 )
 
 type RouteConfig struct {
-	App               *fiber.App
-	UserController    *http.UserController
-	AddressController *http.AddressController
+	App                *fiber.App
+	UserController     *http.UserController
+	AddressController  *http.AddressController
 	CategoryController *http.CategoryController
-	AuthMiddleware    fiber.Handler
+	ProductController  *http.ProductController
+	AuthMiddleware     fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -32,7 +33,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Delete("/api/users/logout", c.UserController.Logout)
 	c.App.Delete("/api/users/current", c.UserController.RemoveAccount)
 	c.App.Patch("/api/users/current/password", c.UserController.UpdatePassword)
-	
+
 	// Address
 	c.App.Post("/api/users/current/addresses", c.AddressController.Add)
 	c.App.Get("/api/users/current/addresses", c.AddressController.GetAll)
@@ -46,6 +47,11 @@ func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Get("/api/categories", c.CategoryController.GetAll)
 	c.App.Put("/api/categories/:categoryId", c.CategoryController.Edit)
 	c.App.Delete("/api/categories/:categoryId", c.CategoryController.Remove)
-	
 
+	// Product
+	c.App.Post("/api/products", c.ProductController.Create)
+	c.App.Get("/api/products", c.ProductController.GetAll)
+	c.App.Get("/api/products/:productId", c.ProductController.Get)
+	c.App.Put("/api/products/:productId", c.ProductController.Edit)
+	c.App.Delete("/api/products/:productId", c.ProductController.Remove)
 }

@@ -160,7 +160,6 @@ func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Failed to delete current user : %+v", err)
 		return err
 	}
-
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,
 		Status: "Success to delete current user",
