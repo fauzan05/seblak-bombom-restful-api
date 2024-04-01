@@ -71,4 +71,6 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 
 	// image
 	auth.Post("/images", c.ImageController.Creates)
+	auth.Put("/images", c.ImageController.EditPosition)
+	auth.Delete("/images/:imageId", c.ImageController.Remove)
 }

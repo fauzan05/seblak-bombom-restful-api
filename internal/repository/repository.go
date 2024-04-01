@@ -22,6 +22,7 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(&entity).Error
 }
 
+
 func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) error {
 	return db.Where("user_id = ?", userId).First(&token).Error
 }
