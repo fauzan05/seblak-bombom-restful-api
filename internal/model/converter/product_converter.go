@@ -13,6 +13,7 @@ func ProductToResponse(product *entity.Product) *model.ProductResponse {
 		Description: product.Description,
 		Price:       product.Price,
 		Stock:       product.Stock,
+		Images:      *ImagesToResponse(&product.Images),
 		CreatedAt:   product.Created_At.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   product.Updated_At.Format("2006-01-02 15:04:05"),
 	}

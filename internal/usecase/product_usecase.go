@@ -78,7 +78,7 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ID
-	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
+	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
 		c.Log.Warnf("Failed get product from database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -96,7 +96,7 @@ func (c *ProductUseCase) GetAll(ctx context.Context) (*[]model.ProductResponse, 
 	defer tx.Rollback()
 
 	newProducts := new([]entity.Product)
-	if err := c.ProductRepository.FindAllWithJoins(tx, newProducts, "Category"); err != nil {
+	if err := c.ProductRepository.FindAllWith2Preloads(tx, newProducts, "Category", "Images"); err != nil {
 		c.Log.Warnf("Failed get all products from database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}

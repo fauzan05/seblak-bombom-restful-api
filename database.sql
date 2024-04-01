@@ -9,6 +9,7 @@ select count(*) from users where first_name != "Rudi";
 select * from addresses;
 select * from tokens;
 select * from products;
+select * from images;
 delete from tokens where id = 1;
 show create table users;
 show create table addresses;

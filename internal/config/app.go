@@ -29,18 +29,21 @@ func Bootstrap(config *BootstrapConfig) {
 	addressRepository := repository.NewAddressRepository(config.Log)
 	categoryRepository := repository.NewCategoryRepository(config.Log)
 	productRepository := repository.NewProductRepository(config.Log)
+	imageRepository := repository.NewImageRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository)
+	imageUseCase := usecase.NewImageUseCase(config.DB, config.Log, config.Validate, imageRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
+	imageController := http.NewImageController(imageUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -52,6 +55,7 @@ func Bootstrap(config *BootstrapConfig) {
 		AddressController:  addressController,
 		CategoryController: categoryController,
 		ProductController:  productController,
+		ImageController:    imageController,
 		AuthMiddleware:     authMiddleware,
 		RoleMiddleware:     roleMiddleware,
 	}

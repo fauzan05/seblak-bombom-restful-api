@@ -836,6 +836,14 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                     {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {

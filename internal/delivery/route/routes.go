@@ -12,6 +12,7 @@ type RouteConfig struct {
 	AddressController  *http.AddressController
 	CategoryController *http.CategoryController
 	ProductController  *http.ProductController
+	ImageController    *http.ImageController
 	AuthMiddleware     fiber.Handler
 	RoleMiddleware     fiber.Handler
 }
@@ -67,4 +68,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Post("/products", c.ProductController.Create)
 	auth.Put("/products/:productId", c.ProductController.Edit)
 	auth.Delete("/products/:productId", c.ProductController.Remove)
+
+	// image
+	auth.Post("/images", c.ImageController.Creates)
 }

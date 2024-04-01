@@ -13,6 +13,7 @@ type Product struct {
 	Created_At  time.Time `gorm:"column:created_at;autoCreateTime;<-:create"`
 	Updated_At  time.Time `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	Category    *Category `gorm:"foreignKey:category_id;references:id"`
+	Images      []Image   `gorm:"foreignKey:product_id;references:id"`
 }
 
 func (p *Product) TableName() string {

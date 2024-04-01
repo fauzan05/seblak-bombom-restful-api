@@ -14,6 +14,10 @@ func (r *Repository[T]) Create(db *gorm.DB, entity *T) error {
 	return db.Create(&entity).Error
 }
 
+func (r *Repository[T]) CreateInBatch(db *gorm.DB, entity *[]T) error {
+	return db.CreateInBatches(&entity, len(*entity)).Error
+}
+
 func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(&entity).Error
 }
@@ -82,6 +86,14 @@ func (r *Repository[T]) FindWithJoins(db *gorm.DB, entity *T, join string) error
 	return db.Joins(join).Find(&entity).Error
 }
 
+func (r *Repository[T]) FindWith2Preloads(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
+	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+}
+
 func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) error {
 	return db.Joins(join).Find(&entity).Error
+}
+
+func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 string, preload2 string) error {
+	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
 }
