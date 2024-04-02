@@ -30,6 +30,8 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryRepository := repository.NewCategoryRepository(config.Log)
 	productRepository := repository.NewProductRepository(config.Log)
 	imageRepository := repository.NewImageRepository(config.Log)
+	orderRepository := repository.NewOrderRepository(config.Log)
+	discountRepository := repository.NewDiscountRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
@@ -37,6 +39,8 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository)
 	imageUseCase := usecase.NewImageUseCase(config.DB, config.Log, config.Validate, imageRepository)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository)
+	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, config.Validate, discountRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -44,6 +48,8 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
 	imageController := http.NewImageController(imageUseCase, config.Log)
+	orderController := http.NewOrderController(orderUseCase, config.Log)
+	discountController := http.NewDiscountController(discountUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -56,6 +62,8 @@ func Bootstrap(config *BootstrapConfig) {
 		CategoryController: categoryController,
 		ProductController:  productController,
 		ImageController:    imageController,
+		OrderController:    orderController,
+		DiscountController: discountController,
 		AuthMiddleware:     authMiddleware,
 		RoleMiddleware:     roleMiddleware,
 	}

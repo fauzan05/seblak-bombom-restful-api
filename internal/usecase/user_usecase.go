@@ -17,22 +17,22 @@ import (
 )
 
 type UserUseCase struct {
-	DB              *gorm.DB
-	Log             *logrus.Logger
-	Validate        *validator.Validate
-	UserRepository  *repository.UserRepository
-	TokenRepository *repository.TokenRepository
+	DB                *gorm.DB
+	Log               *logrus.Logger
+	Validate          *validator.Validate
+	UserRepository    *repository.UserRepository
+	TokenRepository   *repository.TokenRepository
 	AddressRepository *repository.AddressRepository
 }
 
 func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository, addressRepository *repository.AddressRepository) *UserUseCase {
 	return &UserUseCase{
-		DB:              db,
-		Log:             log,
-		Validate:        validate,
-		UserRepository:  userRepository,
-		TokenRepository: tokenRepository,
+		DB:                db,
+		Log:               log,
+		Validate:          validate,
+		UserRepository:    userRepository,
+		TokenRepository:   tokenRepository,
 		AddressRepository: addressRepository,
 	}
 }
@@ -69,7 +69,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	user.Email = request.Email
 	user.Phone = request.Phone
 	user.Password = string(password)
-
+	user.Role = request.Role
 	if err := c.UserRepository.Create(tx, user); err != nil {
 		c.Log.Warnf("Failed create user into database : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -209,7 +209,7 @@ func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateU
 		return false, fiber.ErrBadRequest
 	}
 
-	newUser:= new(entity.User)
+	newUser := new(entity.User)
 	if err := c.UserRepository.FindUserById(tx, newUser, user.ID); err != nil {
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return false, fiber.ErrUnauthorized
@@ -245,7 +245,7 @@ func (c *UserUseCase) Logout(ctx context.Context, token *model.GetUserByTokenReq
 
 	newToken := new(entity.Token)
 	result := c.TokenRepository.DeleteToken(tx, newToken, token.Token)
-	if result.RowsAffected == 0{
+	if result.RowsAffected == 0 {
 		c.Log.Warnf("Can't delete token : %+v", result.Error)
 		return false, fiber.ErrInternalServerError
 	}

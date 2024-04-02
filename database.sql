@@ -10,9 +10,13 @@ select * from addresses;
 select * from tokens;
 select * from products;
 select * from images;
-delete from tokens where id = 1;
+select * from categories;
+
 show create table users;
 show create table addresses;
+
+delete from tokens where id = 1;
+
 
 drop table users;
 drop table addresses;

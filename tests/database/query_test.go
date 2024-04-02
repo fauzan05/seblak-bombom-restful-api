@@ -115,11 +115,15 @@ func TestGetUserWithAddress(t *testing.T) {
 
 func TestCreateNewCategory(t *testing.T) {
 	for i := 0; i < 5; i++ {
-		category := &entity.Category{
-			Name: "Category " + strconv.Itoa(i),
-			Description: "Description " + strconv.Itoa(i),
-		}
-		db.Create(&category)
+		newCategory := new(entity.Category)
+		// category := &entity.Category{
+		// 	Name: "Category " + strconv.Itoa(i),
+		// 	Description: "Description " + strconv.Itoa(i),
+		// }
+		newCategory.Name = "Category " + strconv.Itoa(i)
+		newCategory.Description = "Description " + strconv.Itoa(i)
+		db.Create(newCategory)
+		fmt.Println(newCategory.ID)
 	}
 }
 
@@ -131,3 +135,16 @@ func TestFindAllCategories(t *testing.T) {
 		fmt.Println(v)
 	}
 }
+
+func TestFindAndCountById(t *testing.T) {
+	newCategory := new(entity.Category)
+	newCategory.ID = uint64(5)
+	var count int64
+	result := db.Find(&newCategory).Count(&count)
+	assert.Nil(t, result.Error)
+	fmt.Println("Count : ", count)
+	fmt.Println(newCategory.ID)
+	fmt.Println(newCategory.Name)
+	fmt.Println(newCategory.Description)
+}
+

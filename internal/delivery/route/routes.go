@@ -13,6 +13,8 @@ type RouteConfig struct {
 	CategoryController *http.CategoryController
 	ProductController  *http.ProductController
 	ImageController    *http.ImageController
+	OrderController    *http.OrderController
+	DiscountController *http.DiscountController
 	AuthMiddleware     fiber.Handler
 	RoleMiddleware     fiber.Handler
 }
@@ -26,6 +28,8 @@ func (c *RouteConfig) Setup() {
 func (c *RouteConfig) SetupGuestRoute() {
 	c.App.Post("/api/users", c.UserController.Register)
 	c.App.Post("/api/users/login", c.UserController.Login)
+	c.App.Get("/api/discounts", c.DiscountController.GetAll)
+	c.App.Get("/api/discounts/:discountId", c.DiscountController.Get)
 }
 
 func (c *RouteConfig) SetupAuthRoute() {
@@ -73,4 +77,9 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Post("/images", c.ImageController.Creates)
 	auth.Put("/images", c.ImageController.EditPosition)
 	auth.Delete("/images/:imageId", c.ImageController.Remove)
+
+	// discount
+	auth.Post("/discounts", c.DiscountController.Create)
+	auth.Put("/discounts/:discountId", c.DiscountController.Update)
+	auth.Delete("/discounts/:discountId", c.DiscountController.Delete)
 }

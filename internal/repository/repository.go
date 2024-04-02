@@ -22,7 +22,6 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(&entity).Error
 }
 
-
 func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) error {
 	return db.Where("user_id = ?", userId).First(&token).Error
 }
@@ -43,6 +42,15 @@ func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 
 func (r *Repository[T]) FindById(db *gorm.DB, entity *T) error {
 	return db.First(&entity).Error
+}
+
+func (r *Repository[T]) FindAndCountById(db *gorm.DB, entity *T) (int64, error) {
+	var count int64
+	err := db.Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
 }
 
 func (c *Repository[T]) DeleteToken(db *gorm.DB, entity *T, token string) *gorm.DB {
@@ -97,4 +105,22 @@ func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) 
 
 func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 string, preload2 string) error {
 	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+}
+
+func (r *Repository[T]) CountDiscountByCode(db *gorm.DB, entity *T, discountCode string) (int64, error) {
+	var count int64
+	err := db.Where("code = ?", discountCode).Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
+func (r *Repository[T]) CountDiscountByCodeIsExist(db *gorm.DB, entity *T, currentCode string, requestCode string) (int64, error) {
+	var count int64
+	err := db.Where("code = ? AND code != ?",requestCode, currentCode ).Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
 }

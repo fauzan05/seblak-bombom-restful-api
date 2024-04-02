@@ -12,7 +12,7 @@ type User struct {
 	Email      string        `gorm:"column:email"`
 	Phone      string        `gorm:"column:phone"`
 	Password   string        `gorm:"column:password"`
-	Role       helper.Status `gorm:"column:role"`
+	Role       helper.Role `gorm:"column:role"`
 	Created_At time.Time     `gorm:"column:created_at;autoCreateTime;<-:create"`
 	Updated_At time.Time     `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	Token      Token         `gorm:"foreignKey:user_id;references:id"`
