@@ -25,13 +25,14 @@ type OrderUseCase struct {
 	CategoryRepository *repository.CategoryRepository
 	AddressRepository  *repository.AddressRepository
 	DiscountRepository *repository.DiscountRepository
+	DeliveryRepository *repository.DeliveryRepository
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
-	discountRepository *repository.DiscountRepository) *OrderUseCase {
-		return &OrderUseCase{
+	discountRepository *repository.DiscountRepository, deliveryRepository *repository.DeliveryRepository) *OrderUseCase {
+	return &OrderUseCase{
 		DB:                 db,
 		Log:                log,
 		Validate:           validate,
@@ -40,6 +41,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 		CategoryRepository: categoryRepository,
 		AddressRepository:  addressRepository,
 		DiscountRepository: discountRepository,
+		DeliveryRepository: deliveryRepository,
 	}
 }
 
@@ -55,6 +57,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	newOrder := new(entity.Order)
 	newProduct := new(entity.Product)
+
 	// temukan produk untuk memastikan ketersediaan
 	newProduct.ID = request.ProductId
 	count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
@@ -72,34 +75,18 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		c.Log.Warnf("Product out of stock : %+v", err)
 		return nil, fiber.ErrNotFound
 	}
-	
+
+	newProduct.Stock -= 1
+	if err := c.ProductRepository.Update(tx, newProduct); err != nil {
+		c.Log.Warnf("Failed to update stock of product : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
 	newOrder.ProductId = newProduct.ID
 	newOrder.ProductName = newProduct.Name
 	newOrder.ProductDescription = newProduct.Description
 	newOrder.Price = newProduct.Price
 	newOrder.Quantity = request.Quantity
-	newOrder.Amount = newProduct.Price * newOrder.Quantity
-
-	if request.DiscountCode != "" {
-		newDiscount := new(entity.Discount)
-		count, err := c.DiscountRepository.CountDiscountByCode(tx, newDiscount, request.DiscountCode) 
-		if err != nil {
-			c.Log.Warnf("Can't find discount by code : %+v", err)
-			return nil, fiber.ErrNotFound
-		}
-
-		// cek apakah diskonnya ada dan statusnya aktif (true)
-		if count > 0 && newDiscount.Status {
-			// cek apakah sudah kadaluarsa atau belum
-			if newDiscount.End.Before(time.Now()) {
-				if newDiscount.Type == helper.PERCENT {
-					newOrder.Amount -= newDiscount.Value / 100
-				} else {
-					newOrder.Amount -= newDiscount.Value
-				}
-			}
-		}
-	}
+	newOrder.Amount = newProduct.Price * float32(newOrder.Quantity)
 
 	// user/customer data
 	newOrder.UserId = request.UserId
@@ -110,30 +97,71 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	// payment
 	newOrder.PaymentMethod = request.PaymentMethod
-	newOrder.PaymentStatus = request.PaymentStatus
-	// newOrder.
+	newOrder.PaymentStatus = helper.PENDING_PAYMENT
 
-	newOrder.ProductName = request.ProductName
-	newOrder.ProductDescription = request.ProductDescription
-	newOrder.Price = request.Price
-	newOrder.Quantity = request.Quantity
-	newOrder.Amount = request.Amount
-	newOrder.DiscountValue = request.Amount
-	newOrder.DiscountType = request.DiscountType
-	newOrder.UserId = request.UserId
-	newOrder.FirstName = request.FirstName
-	newOrder.LastName = request.LastName
-	newOrder.Email = request.Email
-	newOrder.Phone = request.Phone
-	newOrder.PaymentMethod = request.PaymentMethod
-	newOrder.PaymentStatus = request.PaymentStatus
-	newOrder.DeliveryStatus = request.DeliveryStatus
-	newOrder.IsDelivery = request.IsDelivery
-	newOrder.DeliveryCost = request.DeliveryCost
-	newOrder.CategoryName = request.CategoryName
+	if newOrder.PaymentMethod == helper.ONLINE {
+		// jika pembayaran via online, fitur pengiriman "enabled"
+		newOrder.IsDelivery = request.IsDelivery
+		if newOrder.IsDelivery {
+			newDelivery := new(entity.Delivery)
+			if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
+				c.Log.Warnf("Can't find delivery settings : %+v", err)
+				return nil, fiber.ErrNotFound
+			}
+			newOrder.Distance = request.Distance
+			newOrder.DeliveryCost = newOrder.Distance / newDelivery.Distance * newDelivery.Cost
+			// jumlahkan semua total termasuk ongkir
+			newOrder.Amount += newOrder.DeliveryCost
+
+			// set status pengiriman
+			newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
+		}
+	} else if newOrder.PaymentMethod == helper.ONSITE {
+		// jika pembayaran via onsite, fitur pengiriman "enabled"
+		newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
+	}
+
+	if request.DiscountCode != "" {
+		newDiscount := new(entity.Discount)
+		count, err := c.DiscountRepository.CountDiscountByCode(tx, newDiscount, request.DiscountCode)
+		if err != nil {
+			c.Log.Warnf("Can't find discount by code : %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+
+		// cek apakah diskonnya ada dan statusnya aktif (true)
+		if count > 0 && newDiscount.Status {
+			// cek apakah sudah kadaluarsa atau belum
+			if newDiscount.End.After(time.Now()) {
+				if newDiscount.Type == helper.PERCENT {
+					newOrder.DiscountType = helper.PERCENT
+					discount := float32(newDiscount.Value) / float32(100)
+					afterDiscount := newOrder.Amount * discount
+					newOrder.Amount -= afterDiscount
+				} else if newDiscount.Type == helper.NOMINAL {
+					newOrder.DiscountType = helper.NOMINAL
+					newOrder.Amount -= newDiscount.Value
+				}
+			} else if newDiscount.End.Before(time.Now()) {
+				c.Log.Warnf("Discount has expired : %+v", err)
+				return nil, fiber.ErrBadRequest
+			}
+		} else if count > 0 && !newDiscount.Status {
+			c.Log.Warnf("Discount has disabled : %+v", err)
+			return nil, fiber.ErrBadRequest
+		}
+	} else if request.DiscountCode == "" {
+		// default nominal
+		newOrder.DiscountType = helper.NOMINAL
+	}
+
+	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
+		c.Log.Warnf("failed to find product with join category order : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	newOrder.CategoryName = newProduct.Category.Name
 	newOrder.CompleteAddress = request.CompleteAddress
 	newOrder.GoogleMapLink = request.GoogleMapLink
-	newOrder.Distance = request.Distance
 
 	if err := c.OrderRepository.Create(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to create new order : %+v", err)

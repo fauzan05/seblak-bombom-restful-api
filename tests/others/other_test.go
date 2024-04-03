@@ -31,3 +31,11 @@ func TestIncludeStringIntoTime(t *testing.T) {
 	// Tampilkan hasil unmarshal
 	fmt.Println("Created At:", waktu.CreatedAt)
 }
+
+func TestCalculateAmount(t *testing.T) {
+	total := float32(65000)
+	discount := float32(10) / float32(100)
+	afterDiscount := total * discount
+	result := total - afterDiscount
+	fmt.Println(result)
+}

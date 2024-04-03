@@ -33,6 +33,14 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	orderRequest.LastName = auth.LastName
 	orderRequest.Email = auth.Email
 	orderRequest.Phone = auth.Phone
+	// filter address yang dimana address is_main = true
+	for _, address := range auth.Addresses {
+		if address.IsMain {
+			orderRequest.CompleteAddress = address.CompleteAddress
+			orderRequest.GoogleMapLink = address.GoogleMapLink
+			break
+		}
+	}
 	
 	response, err := c.UseCase.Add(ctx.Context(), orderRequest)
 	if err != nil {

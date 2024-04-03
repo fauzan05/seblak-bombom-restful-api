@@ -40,6 +40,10 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// delivery
 	api.Get("/deliveries", c.DeliveryController.Get)
 
+	// Product
+	api.Get("/products", c.ProductController.GetAll)
+	api.Get("/products/:productId", c.ProductController.Get)
+
 }
 
 func (c *RouteConfig) SetupAuthRoute() {
@@ -60,9 +64,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Put("/addresses/:addressId", c.AddressController.Update)
 	auth.Delete("/addresses/:addressId", c.AddressController.Remove)
 
-	// Product
-	auth.Get("/products", c.ProductController.GetAll)
-	auth.Get("/products/:productId", c.ProductController.Get)
+	// order
+	auth.Post("/orders", c.OrderController.Create)
 }
 
 func (c *RouteConfig) SetupAuthAdminRoute() {

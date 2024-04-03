@@ -5,7 +5,7 @@ type ProductResponse struct {
 	Category    CategoryResponse `json:"category,omitempty"`
 	Name        string           `json:"name,omitempty"`
 	Description string           `json:"description,omitempty"`
-	Price       int              `json:"price,omitempty"`
+	Price       float32          `json:"price,omitempty"`
 	Stock       int              `json:"stock,omitempty"`
 	Images      []ImageResponse  `json:"images,omitempty"`
 	CreatedAt   string           `json:"created_at,omitempty"`
@@ -13,11 +13,11 @@ type ProductResponse struct {
 }
 
 type CreateProductRequest struct {
-	CategoryId  uint64 `json:"category_id" validate:"required"`
-	Name        string `json:"name" validate:"required,max=100"`
-	Description string `json:"description" validate:"required"`
-	Price       int    `json:"price" validate:"required"`
-	Stock       int    `json:"stock" validate:"required"`
+	CategoryId  uint64  `json:"category_id" validate:"required"`
+	Name        string  `json:"name" validate:"required,max=100"`
+	Description string  `json:"description" validate:"required"`
+	Price       float32 `json:"price" validate:"required"`
+	Stock       int     `json:"stock" validate:"required"`
 }
 
 type GetProductRequest struct {
@@ -25,12 +25,12 @@ type GetProductRequest struct {
 }
 
 type UpdateProductRequest struct {
-	ID          uint64 `json:"-" validate:"required"`
-	CategoryId  uint64 `json:"category_id" validate:"required"`
-	Name        string `json:"name" validate:"required,max=100"`
-	Description string `json:"description" validate:"required"`
-	Price       int    `json:"price" validate:"required"`
-	Stock       int    `json:"stock" validate:"required"`
+	ID          uint64  `json:"-" validate:"required"`
+	CategoryId  uint64  `json:"category_id" validate:"required"`
+	Name        string  `json:"name" validate:"required,max=100"`
+	Description string  `json:"description" validate:"required"`
+	Price       float32 `json:"price" validate:"required"`
+	Stock       int     `json:"stock" validate:"required"`
 }
 
 type DeleteProductRequest struct {

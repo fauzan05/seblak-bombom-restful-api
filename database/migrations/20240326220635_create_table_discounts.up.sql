@@ -2,7 +2,7 @@ CREATE TABLE discounts (
     id INTEGER AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     code VARCHAR(255) NOT NULL unique,
-    value INTEGER NOT NULL DEFAULT 0,
+    value FLOAT NOT NULL DEFAULT 0,
     type ENUM("percent", "nominal") NOT NULL DEFAULT "nominal",
     start TIMESTAMP NOT NULL,
     end TIMESTAMP NOT NULL,

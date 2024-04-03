@@ -11,10 +11,10 @@ type Order struct {
 	ProductId          uint64                `gorm:"column:product_id"`
 	ProductName        string                `gorm:"column:product_name"`
 	ProductDescription string                `gorm:"column:product_description"`
-	Price              int                   `gorm:"column:price"`
+	Price              float32               `gorm:"column:price"`
 	Quantity           int                   `gorm:"column:quantity"`
-	Amount             int                   `gorm:"column:amount"`
-	DiscountValue      int                   `gorm:"column:discount_value"`
+	Amount             float32               `gorm:"column:amount"`
+	DiscountValue      float32               `gorm:"column:discount_value"`
 	DiscountType       helper.DiscountType   `gorm:"column:discount_type"`
 	UserId             uint64                `gorm:"column:user_id"`
 	FirstName          string                `gorm:"column:first_name"`
@@ -25,11 +25,11 @@ type Order struct {
 	PaymentStatus      helper.PaymentStatus  `gorm:"column:payment_status"`
 	DeliveryStatus     helper.DeliveryStatus `gorm:"column:delivery_status"`
 	IsDelivery         bool                  `gorm:"column:is_delivery"`
-	DeliveryCost       int                   `gorm:"column:delivery_cost"`
+	DeliveryCost       float32               `gorm:"column:delivery_cost"`
 	CategoryName       string                `gorm:"column:category_name"`
 	CompleteAddress    string                `gorm:"column:complete_address"`
 	GoogleMapLink      string                `gorm:"column:google_map_link"`
-	Distance           int                   `gorm:"column:distance"`
+	Distance           float32               `gorm:"column:distance"`
 	Created_At         time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
 	Updated_At         time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }

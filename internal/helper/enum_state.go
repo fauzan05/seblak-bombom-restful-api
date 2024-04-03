@@ -20,6 +20,7 @@ const (
 	// delivery status
 	PREPARE_DELIVERY DeliveryStatus = "prepare"
 	ON_THE_WAY       DeliveryStatus = "on_the_way"
+	SENT             DeliveryStatus = "sent"
 	// discount type
 	PERCENT DiscountType = "percent"
 	NOMINAL DiscountType = "nominal"

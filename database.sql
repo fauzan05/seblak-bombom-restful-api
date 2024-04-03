@@ -11,6 +11,7 @@ select * from tokens;
 select * from products;
 select * from images;
 select * from categories;
+select * from orders;
 
 show create table users;
 show create table addresses;

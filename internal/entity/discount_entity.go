@@ -10,7 +10,7 @@ type Discount struct {
 	Name        string              `gorm:"column:name"`
 	Description string              `gorm:"column:description"`
 	Code        string              `gorm:"column:code"`
-	Value       int                 `gorm:"column:value"`
+	Value       float32             `gorm:"column:value"`
 	Type        helper.DiscountType `gorm:"column:type"`
 	Start       time.Time           `gorm:"column:start"`
 	End         time.Time           `gorm:"column:end"`
