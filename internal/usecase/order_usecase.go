@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -22,12 +24,14 @@ type OrderUseCase struct {
 	ProductRepository  *repository.ProductRepository
 	CategoryRepository *repository.CategoryRepository
 	AddressRepository  *repository.AddressRepository
+	DiscountRepository *repository.DiscountRepository
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
-	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository) *OrderUseCase {
-	return &OrderUseCase{
+	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
+	discountRepository *repository.DiscountRepository) *OrderUseCase {
+		return &OrderUseCase{
 		DB:                 db,
 		Log:                log,
 		Validate:           validate,
@@ -35,6 +39,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 		ProductRepository:  productRepository,
 		CategoryRepository: categoryRepository,
 		AddressRepository:  addressRepository,
+		DiscountRepository: discountRepository,
 	}
 }
 
@@ -50,6 +55,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	newOrder := new(entity.Order)
 	newProduct := new(entity.Product)
+	// temukan produk untuk memastikan ketersediaan
 	newProduct.ID = request.ProductId
 	count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
 	if err != nil {
@@ -74,9 +80,38 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	newOrder.Quantity = request.Quantity
 	newOrder.Amount = newProduct.Price * newOrder.Quantity
 
-	// if request.DiscountId > 0 {
-	// 	// if err := c
-	// }
+	if request.DiscountCode != "" {
+		newDiscount := new(entity.Discount)
+		count, err := c.DiscountRepository.CountDiscountByCode(tx, newDiscount, request.DiscountCode) 
+		if err != nil {
+			c.Log.Warnf("Can't find discount by code : %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+
+		// cek apakah diskonnya ada dan statusnya aktif (true)
+		if count > 0 && newDiscount.Status {
+			// cek apakah sudah kadaluarsa atau belum
+			if newDiscount.End.Before(time.Now()) {
+				if newDiscount.Type == helper.PERCENT {
+					newOrder.Amount -= newDiscount.Value / 100
+				} else {
+					newOrder.Amount -= newDiscount.Value
+				}
+			}
+		}
+	}
+
+	// user/customer data
+	newOrder.UserId = request.UserId
+	newOrder.FirstName = request.FirstName
+	newOrder.LastName = request.LastName
+	newOrder.Email = request.Email
+	newOrder.Phone = request.Phone
+
+	// payment
+	newOrder.PaymentMethod = request.PaymentMethod
+	newOrder.PaymentStatus = request.PaymentStatus
+	// newOrder.
 
 	newOrder.ProductName = request.ProductName
 	newOrder.ProductDescription = request.ProductDescription

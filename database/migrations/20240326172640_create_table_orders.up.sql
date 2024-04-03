@@ -7,7 +7,7 @@ CREATE TABLE orders (
     price INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
     amount INTEGER NOT NULL,
-    discount_value INTEGER NULL DEFAULT 0,
+    discount_value INTEGER NULL,
     discount_type ENUM("percent", "nominal") NOT NULL DEFAULT "nominal",
     user_id INTEGER NOT NULL,
     first_name VARCHAR(100) NOT NULL,

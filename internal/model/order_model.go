@@ -37,9 +37,9 @@ type CreateOrderRequest struct {
 	Price              int                   `json:"price" validate:"required"`
 	Quantity           int                   `json:"quantity" validate:"required"`
 	Amount             int                   `json:"amount" validate:"required"`
-	DiscountId         uint64                `json:"discount_id" validate:"required"`
-	DiscountValue      int                   `json:"discount_value" validate:"required"`
-	DiscountType       helper.DiscountType   `json:"discount_type" validate:"required"`
+	DiscountCode       string                `json:"discount_code"`
+	DiscountValue      int                   `json:"discount_value"`
+	DiscountType       helper.DiscountType   `json:"discount_type"`
 	UserId             uint64                `json:"user_id" validate:"required"`
 	FirstName          string                `json:"first_name" validate:"required"`
 	LastName           string                `json:"last_name" validate:"required"`

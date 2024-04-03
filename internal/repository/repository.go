@@ -26,6 +26,10 @@ func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) err
 	return db.Where("user_id = ?", userId).First(&token).Error
 }
 
+func (r *Repository[T]) FindFirst(db *gorm.DB, entity *T) error {
+	return db.First(&entity).Error
+}
+
 func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string) error {
 	token := new(entity.Token)
 	// temukan data user_id

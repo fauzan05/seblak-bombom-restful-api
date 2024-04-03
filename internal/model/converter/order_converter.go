@@ -13,7 +13,6 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		ProductName:        order.ProductName,
 		ProductDescription: order.ProductDescription,
 		Price:              order.Price,
-		Quantity:           order.Quantity,
 		Amount:             order.Amount,
 		DiscountValue:      order.DiscountValue,
 		DiscountType:       order.DiscountType,

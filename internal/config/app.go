@@ -32,6 +32,7 @@ func Bootstrap(config *BootstrapConfig) {
 	imageRepository := repository.NewImageRepository(config.Log)
 	orderRepository := repository.NewOrderRepository(config.Log)
 	discountRepository := repository.NewDiscountRepository(config.Log)
+	deliveryRepository := repository.NewDeliveryRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
@@ -39,8 +40,9 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository)
 	imageUseCase := usecase.NewImageUseCase(config.DB, config.Log, config.Validate, imageRepository)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountRepository)
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, config.Validate, discountRepository)
+	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -50,6 +52,7 @@ func Bootstrap(config *BootstrapConfig) {
 	imageController := http.NewImageController(imageUseCase, config.Log)
 	orderController := http.NewOrderController(orderUseCase, config.Log)
 	discountController := http.NewDiscountController(discountUseCase, config.Log)
+	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -64,6 +67,7 @@ func Bootstrap(config *BootstrapConfig) {
 		ImageController:    imageController,
 		OrderController:    orderController,
 		DiscountController: discountController,
+		DeliveryController: deliveryController,
 		AuthMiddleware:     authMiddleware,
 		RoleMiddleware:     roleMiddleware,
 	}

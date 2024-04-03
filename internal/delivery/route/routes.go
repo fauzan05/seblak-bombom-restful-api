@@ -15,6 +15,7 @@ type RouteConfig struct {
 	ImageController    *http.ImageController
 	OrderController    *http.OrderController
 	DiscountController *http.DiscountController
+	DeliveryController *http.DeliveryController
 	AuthMiddleware     fiber.Handler
 	RoleMiddleware     fiber.Handler
 }
@@ -26,10 +27,19 @@ func (c *RouteConfig) Setup() {
 }
 
 func (c *RouteConfig) SetupGuestRoute() {
-	c.App.Post("/api/users", c.UserController.Register)
-	c.App.Post("/api/users/login", c.UserController.Login)
-	c.App.Get("/api/discounts", c.DiscountController.GetAll)
-	c.App.Get("/api/discounts/:discountId", c.DiscountController.Get)
+	api := c.App.Group("/api")
+	api.Post("/users", c.UserController.Register)
+	api.Post("/users/login", c.UserController.Login)
+	api.Get("/discounts", c.DiscountController.GetAll)
+	api.Get("/discounts/:discountId", c.DiscountController.Get)
+
+	// Category
+	api.Get("/categories/:categoryId", c.CategoryController.Get)
+	api.Get("/categories", c.CategoryController.GetAll)
+
+	// delivery
+	api.Get("/deliveries", c.DeliveryController.Get)
+
 }
 
 func (c *RouteConfig) SetupAuthRoute() {
@@ -49,10 +59,6 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/addresses/:addressId", c.AddressController.Get)
 	auth.Put("/addresses/:addressId", c.AddressController.Update)
 	auth.Delete("/addresses/:addressId", c.AddressController.Remove)
-
-	// Category
-	auth.Get("/categories/:categoryId", c.CategoryController.Get)
-	auth.Get("/categories", c.CategoryController.GetAll)
 
 	// Product
 	auth.Get("/products", c.ProductController.GetAll)
@@ -82,4 +88,9 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Post("/discounts", c.DiscountController.Create)
 	auth.Put("/discounts/:discountId", c.DiscountController.Update)
 	auth.Delete("/discounts/:discountId", c.DiscountController.Delete)
+
+	// delivery
+	auth.Post("/deliveries", c.DeliveryController.Create)
+	auth.Put("/deliveries/:deliveryId", c.DeliveryController.Update)
+	auth.Delete("/deliveries/:deliveryId", c.DeliveryController.Remove)
 }
