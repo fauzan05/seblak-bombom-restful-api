@@ -11,8 +11,8 @@ type OrderResponse struct {
 	Price              string                `json:"price,omitempty"`
 	Quantity           int                   `json:"quantity,omitempty"`
 	Amount             string                `json:"amount,omitempty"`
-	DiscountValue      float32               `json:"discount_value,omitempty"`
 	DiscountType       helper.DiscountType   `json:"discount_type,omitempty"`
+	DiscountValue      float32               `json:"discount_value,omitempty"`
 	UserId             uint64                `json:"user_id,omitempty"`
 	FirstName          string                `json:"first_name,omitempty"`
 	LastName           string                `json:"last_name,omitempty"`

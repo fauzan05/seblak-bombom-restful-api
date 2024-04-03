@@ -327,7 +327,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -429,7 +429,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -712,7 +712,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -837,7 +837,7 @@
                             "type": "string"
                         }
                     },
-                     {
+                    {
                         "name": "categoryId",
                         "in": "path",
                         "required": true,
@@ -976,7 +976,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -1198,7 +1198,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -1421,7 +1421,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -1453,53 +1453,23 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "id": {
-                                        "type": "integer"
-                                    },
                                     "product_id": {
-                                        "type": "integer"
-                                    },
-                                    "product_name": {
-                                        "type": "string"
-                                    },
-                                    "product_description": {
-                                        "type": "string"
-                                    },
-                                    "price": {
                                         "type": "integer"
                                     },
                                     "quantity": {
                                         "type": "integer"
                                     },
-                                    "amount": {
+                                    "discount_code": {
+                                        "type": "string"
+                                    },
+                                    "payment_method": {
+                                        "type": "string"
+                                    },
+                                    "is_delivery": {
+                                        "type": "boolean"
+                                    },
+                                    "distance": {
                                         "type": "integer"
-                                    },
-                                    "user_id": {
-                                        "type": "integer"
-                                    },
-                                    "first_name": {
-                                        "type": "string"
-                                    },
-                                    "last_name": {
-                                        "type": "string"
-                                    },
-                                    "email": {
-                                        "type": "string"
-                                    },
-                                    "phone": {
-                                        "type": "string"
-                                    },
-                                    "status": {
-                                        "type": "string"
-                                    },
-                                    "category_name": {
-                                        "type": "string"
-                                    },
-                                    "complete_address": {
-                                        "type": "string"
-                                    },
-                                    "google_map_link": {
-                                        "type": "string"
                                     }
                                 }
                             }
@@ -1522,6 +1492,48 @@
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/OrderResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Order API"
+                ],
+                "description": "Get all orders history from all user customer (admin only, not customer)",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success get all users orders history (sort by desc/latest)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderResponse"
+                                            }
                                         }
                                     }
                                 }
@@ -1561,7 +1573,10 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "status": {
+                                    "payment_status": {
+                                        "type": "string"
+                                    },
+                                    "delivery_status": {
                                         "type": "string"
                                     }
                                 }
@@ -1586,6 +1601,102 @@
                                         "data": {
                                             "type": "object",
                                             "$ref": "#/components/schemas/OrderResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/orders/users/{userId}": {
+            "get": {
+                "tags": [
+                    "Order API"
+                ],
+                "description": "Get all orders history from all user customer (admin only, not customer)",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "get all orders history (sort by desc/latest) by user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/orders/users/current": {
+            "get": {
+                "tags": [
+                    "Order API"
+                ],
+                "description": "Get all orders history from current user (just customer, not admin)",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success get all orders history by current user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderResponse"
+                                            }
                                         }
                                     }
                                 }
@@ -1883,7 +1994,7 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -1924,6 +2035,198 @@
                                         "data": {
                                             "type": "object",
                                             "$ref": "#/components/schemas/DiscountResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries": {
+            "get": {
+                "tags": [
+                    "Delivery API"
+                ],
+                "description": "Get delivery settings",
+                "responses": {
+                    "200": {
+                        "description": "Success get delivery settings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DeliveryResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Delivery API"
+                ],
+                "description": "Create delivery settings (just only made 1 time)",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "cost": {
+                                        "type": "integer"
+                                    },
+                                    "distance": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success create delivery settings (just only made 1 time)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DeliveryResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries/{deliveryId}": {
+            "put": {
+                "tags": [
+                    "Delivery API"
+                ],
+                "description": "Update delivery settings",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "cost": {
+                                        "type": "integer"
+                                    },
+                                    "distance": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success update delivery settings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DeliveryResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Delivery API"
+                ],
+                "description": "Delete delivery settings by id",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "deliveryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success delete delivery settings by id",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -2096,6 +2399,9 @@
                     "id": {
                         "type": "integer"
                     },
+                    "invoice": {
+                        "type": "string"
+                    },
                     "product_id": {
                         "type": "integer"
                     },
@@ -2114,6 +2420,12 @@
                     "amount": {
                         "type": "integer"
                     },
+                    "discount_type": {
+                        "type": "integer"
+                    },
+                    "discount_value": {
+                        "type": "integer"
+                    },
                     "user_id": {
                         "type": "integer"
                     },
@@ -2129,17 +2441,29 @@
                     "phone": {
                         "type": "string"
                     },
-                    "status": {
+                    "payment_method": {
+                        "type": "string"
+                    },
+                    "payment_status": {
+                        "type": "string"
+                    },
+                    "delivery_status": {
+                        "type": "string"
+                    },
+                    "is_delivery": {
+                        "type": "boolean"
+                    },
+                    "delivery_cost": {
                         "type": "string"
                     },
                     "category_name": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "complete_address": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "google_map_link": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "created_at": {
                         "type": "string"
@@ -2201,6 +2525,26 @@
                     },
                     "status": {
                         "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                }
+            },
+            "DeliveryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "cost": {
+                        "type": "integer"
+                    },
+                    "distance": {
+                        "type": "integer"
                     },
                     "created_at": {
                         "type": "string"
