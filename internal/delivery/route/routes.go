@@ -7,17 +7,18 @@ import (
 )
 
 type RouteConfig struct {
-	App                *fiber.App
-	UserController     *http.UserController
-	AddressController  *http.AddressController
-	CategoryController *http.CategoryController
-	ProductController  *http.ProductController
-	ImageController    *http.ImageController
-	OrderController    *http.OrderController
-	DiscountController *http.DiscountController
-	DeliveryController *http.DeliveryController
-	AuthMiddleware     fiber.Handler
-	RoleMiddleware     fiber.Handler
+	App                     *fiber.App
+	UserController          *http.UserController
+	AddressController       *http.AddressController
+	CategoryController      *http.CategoryController
+	ProductController       *http.ProductController
+	ImageController         *http.ImageController
+	OrderController         *http.OrderController
+	DiscountController      *http.DiscountController
+	DeliveryController      *http.DeliveryController
+	ProductReviewController *http.ProductReviewController
+	AuthMiddleware          fiber.Handler
+	RoleMiddleware          fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -68,6 +69,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Post("/orders", c.OrderController.Create)
 	auth.Get("/orders/users/current", c.OrderController.GetAllCurrent)
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
+
+	// product review
+	auth.Post("/reviews", c.ProductReviewController.Create)
 }
 
 func (c *RouteConfig) SetupAuthAdminRoute() {

@@ -33,6 +33,7 @@ func Bootstrap(config *BootstrapConfig) {
 	orderRepository := repository.NewOrderRepository(config.Log)
 	discountRepository := repository.NewDiscountRepository(config.Log)
 	deliveryRepository := repository.NewDeliveryRepository(config.Log)
+	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
@@ -43,6 +44,7 @@ func Bootstrap(config *BootstrapConfig) {
 	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountRepository, deliveryRepository)
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, config.Validate, discountRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
+	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -53,23 +55,25 @@ func Bootstrap(config *BootstrapConfig) {
 	orderController := http.NewOrderController(orderUseCase, config.Log)
 	discountController := http.NewDiscountController(discountUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
+	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
 	roleMiddleware := middleware.NewRole(userUseCase)
 
 	routeConfig := route.RouteConfig{
-		App:                config.App,
-		UserController:     userController,
-		AddressController:  addressController,
-		CategoryController: categoryController,
-		ProductController:  productController,
-		ImageController:    imageController,
-		OrderController:    orderController,
-		DiscountController: discountController,
-		DeliveryController: deliveryController,
-		AuthMiddleware:     authMiddleware,
-		RoleMiddleware:     roleMiddleware,
+		App:                     config.App,
+		UserController:          userController,
+		AddressController:       addressController,
+		CategoryController:      categoryController,
+		ProductController:       productController,
+		ImageController:         imageController,
+		OrderController:         orderController,
+		DiscountController:      discountController,
+		DeliveryController:      deliveryController,
+		ProductReviewController: productReviewController,
+		AuthMiddleware:          authMiddleware,
+		RoleMiddleware:          roleMiddleware,
 	}
 	routeConfig.Setup()
 }

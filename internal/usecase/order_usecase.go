@@ -125,8 +125,8 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newDiscount := new(entity.Discount)
 		count, err := c.DiscountRepository.CountDiscountByCode(tx, newDiscount, request.DiscountCode)
 		if err != nil {
-			c.Log.Warnf("Can't find discount by code : %+v", err)
-			return nil, fiber.ErrNotFound
+			c.Log.Warnf("Failed to find discount by code : %+v", err)
+			return nil, fiber.ErrInternalServerError
 		}
 
 		// cek apakah diskonnya ada dan statusnya aktif (true)

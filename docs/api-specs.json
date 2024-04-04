@@ -1731,9 +1731,6 @@
                                     "product_id": {
                                         "type": "integer"
                                     },
-                                    "user_id": {
-                                        "type": "integer"
-                                    },
                                     "rate": {
                                         "type": "integer"
                                     },

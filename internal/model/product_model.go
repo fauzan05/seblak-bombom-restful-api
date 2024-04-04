@@ -1,15 +1,16 @@
 package model
 
 type ProductResponse struct {
-	ID          uint64           `json:"id,omitempty"`
-	Category    CategoryResponse `json:"category,omitempty"`
-	Name        string           `json:"name,omitempty"`
-	Description string           `json:"description,omitempty"`
-	Price       float32          `json:"price,omitempty"`
-	Stock       int              `json:"stock,omitempty"`
-	Images      []ImageResponse  `json:"images,omitempty"`
-	CreatedAt   string           `json:"created_at,omitempty"`
-	UpdatedAt   string           `json:"updated_at,omitempty"`
+	ID          uint64                  `json:"id,omitempty"`
+	Category    CategoryResponse        `json:"category,omitempty"`
+	Name        string                  `json:"name,omitempty"`
+	Description string                  `json:"description,omitempty"`
+	Price       float32                 `json:"price,omitempty"`
+	Stock       int                     `json:"stock,omitempty"`
+	Images      []ImageResponse         `json:"images,omitempty"`
+	Reviews     []ProductReviewResponse `json:"product_reviews,omitempty"`
+	CreatedAt   string                  `json:"created_at,omitempty"`
+	UpdatedAt   string                  `json:"updated_at,omitempty"`
 }
 
 type CreateProductRequest struct {

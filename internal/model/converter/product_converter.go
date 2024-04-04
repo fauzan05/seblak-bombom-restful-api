@@ -24,6 +24,10 @@ func ProductToResponse(product *entity.Product) *model.ProductResponse {
 		response.Images = *ImagesToResponse(&product.Images)
 	}
 
+	if product.Reviews != nil {
+		response.Reviews = *ProductReviewsToResponse(&product.Reviews)
+	}
+
 	return response
 }
 
