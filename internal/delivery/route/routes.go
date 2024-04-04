@@ -66,6 +66,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// order
 	auth.Post("/orders", c.OrderController.Create)
+	auth.Get("/orders/users/current", c.OrderController.GetAllCurrent)
+	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
 }
 
 func (c *RouteConfig) SetupAuthAdminRoute() {
@@ -96,4 +98,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Post("/deliveries", c.DeliveryController.Create)
 	auth.Put("/deliveries/:deliveryId", c.DeliveryController.Update)
 	auth.Delete("/deliveries/:deliveryId", c.DeliveryController.Remove)
+
+	// order
+	auth.Patch("/orders/:orderId", c.OrderController.Update)
 }

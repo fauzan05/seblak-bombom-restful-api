@@ -167,7 +167,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		c.Log.Warnf("failed to create new order : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
-	invoice := fmt.Sprintf("INV/%d/USER/%d", newOrder.ID, newOrder.UserId)
+	invoice := fmt.Sprintf("INV/%d/CUST/%d", newOrder.ID, newOrder.UserId)
 	newOrder.Invoice = invoice
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to add invoice code : %+v", err)
@@ -180,4 +180,83 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	}
 
 	return converter.OrderToResponse(newOrder), nil
+}
+
+func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrderByCurrentRequest) (*[]model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	newOrders := new([]entity.Order)
+	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
+		c.Log.Warnf("Failed to find all orders by user id : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.OrdersToResponse(newOrders), nil
+}
+
+func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrderRequest) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	newOrder := new(entity.Order)
+	newOrder.ID = request.ID
+	if err := c.OrderRepository.FindById(tx, newOrder); err != nil {
+		c.Log.Warnf("Failed to find order by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	newOrder.PaymentStatus = request.PaymentStatus
+	newOrder.DeliveryStatus = request.DeliveryStatus
+	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
+		c.Log.Warnf("Failed to update request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.OrderToResponse(newOrder), nil
+}
+
+func (c *OrderUseCase) GetByUserId(ctx context.Context, request *model.GetOrdersByUserIdRequest) (*[]model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	newOrders := new([]entity.Order)
+	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
+		c.Log.Warnf("Failed to get all orders by user id from database : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.OrdersToResponse(newOrders), nil
 }

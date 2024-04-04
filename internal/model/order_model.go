@@ -46,3 +46,17 @@ type CreateOrderRequest struct {
 	GoogleMapLink   string               `json:"google_map_link" validate:"required"`
 	Distance        float32              `json:"distance" validate:"required"`
 }
+
+type GetOrderByCurrentRequest struct {
+	ID uint64 `json:"-" validate:"required"` //user id
+}
+
+type UpdateOrderRequest struct {
+	ID             uint64                `json:"-" validate:"required"` //order id
+	PaymentStatus  helper.PaymentStatus  `json:"payment_status" validate:"required"`
+	DeliveryStatus helper.DeliveryStatus `json:"delivery_status" validate:"required"`
+}
+
+type GetOrdersByUserIdRequest struct {
+	ID uint64 `json:"-" validate:"required"` //user id
+}

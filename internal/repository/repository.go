@@ -128,3 +128,7 @@ func (r *Repository[T]) CountDiscountByCodeIsExist(db *gorm.DB, entity *T, curre
 	}
 	return count, nil
 }
+
+func (r *Repository[T]) FindAllOrdersByUserId(db *gorm.DB, entity *[]T, userId uint64) error {
+	return db.Where("user_id = ?", userId).Find(&entity).Error
+}

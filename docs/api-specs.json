@@ -2145,6 +2145,14 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "deliveryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "requestBody": {
