@@ -1,0 +1,6 @@
+.gitignore
+database.sql
+README.md
+Screenshot 2024-03-26 at 20.38.04.png
+script.sh
+tests/
