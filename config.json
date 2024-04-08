@@ -39,6 +39,20 @@
                 "max" : 100,
                 "lifetime" : 300
             }
+        },
+        "docker" : {
+            "type" : "mysql",
+            "name" : "seblak_bombom",
+            "show_sql" : true,
+            "host" : "host.docker.internal",
+            "port" : 3306,
+            "username" : "root",
+            "password" : "",
+            "pool" : {
+                "idle" : 10,
+                "max" : 100,
+                "lifetime" : 300
+            }
         }
     }
 }

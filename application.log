@@ -2650,3 +2650,6 @@ time="2024-04-05T04:27:26+07:00" level=info msg="[/Users/fauzannurhidayat/Docume
 time="2024-04-05T04:27:26+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/internal/repository/repository.go:40 5.657969 1 SELECT * FROM `tokens` WHERE `tokens`.`user_id` = ?]"
 time="2024-04-05T04:27:26+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/internal/repository/repository.go:40 9.15819 1 SELECT * FROM `users` WHERE id = ?]"
 time="2024-04-05T04:27:26+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/internal/repository/repository.go:14 34.647796 1 INSERT INTO `product_reviews` (`product_id`,`user_id`,`rate`,`comment`,`created_at`,`updated_at`) VALUES (?,?,?,?,?,?)]"
+time="2024-04-08T15:37:31+07:00" level=error msg="Config File \"config\" Not Found in \"[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/app]\""
+time="2024-04-08T15:37:52+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/internal/config/gorm.go:26 Error 1049 (42000): Unknown database 'seblak_bombom']"
+time="2024-04-08T20:37:41+07:00" level=info msg="[/Users/fauzannurhidayat/Documents/Go-Lang/seblak-bombom-restful-api/internal/config/gorm.go:26 dial tcp 127.0.0.1:3306: connect: connection refused]"

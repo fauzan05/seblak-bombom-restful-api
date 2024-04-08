@@ -11,9 +11,8 @@ func NewViper() *viper.Viper {
 
 	config.SetConfigName("config")
 	config.SetConfigType("json")
-	// config.AddConfigPath("./../")
-	// config.AddConfigPath("./")
-	config.AddConfigPath(".") //untuk dockerfile
+	config.AddConfigPath("./../")
+	config.AddConfigPath("./")
 	err := config.ReadInConfig()
 
 	helper.HandleErrorWithPanic(err)
