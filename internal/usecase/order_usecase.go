@@ -171,7 +171,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	}
 	invoice := fmt.Sprintf("INV/%d/CUST/%d", newOrder.ID, newOrder.UserId)
 	newOrder.Invoice = invoice
-	
+
 	// memasukkan order_id ke order product
 	for i := range orderProducts {
 		orderProducts[i].OrderId = newOrder.ID
@@ -185,6 +185,11 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	// mengisi kolom invoice ke tabel order setelah mendapatkan ID order nya
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to add invoice code : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	
+	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
+		c.Log.Warnf("Failed to find order with preload : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 

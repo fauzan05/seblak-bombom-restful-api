@@ -99,6 +99,10 @@ func (r *Repository[T]) FindWithJoins(db *gorm.DB, entity *T, join string) error
 	return db.Joins(join).Find(&entity).Error
 }
 
+func (r *Repository[T]) FindWithPreloads(db *gorm.DB, entity *T, preload string) error {
+	return db.Preload(preload).Find(&entity).Error
+}
+
 func (r *Repository[T]) FindWith2Preloads(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
 	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
 }
