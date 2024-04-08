@@ -34,6 +34,7 @@ func Bootstrap(config *BootstrapConfig) {
 	discountRepository := repository.NewDiscountRepository(config.Log)
 	deliveryRepository := repository.NewDeliveryRepository(config.Log)
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
+	orderProductRepository := repository.NewOrderProductRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
@@ -41,7 +42,7 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository)
 	imageUseCase := usecase.NewImageUseCase(config.DB, config.Log, config.Validate, imageRepository)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountRepository, deliveryRepository)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountRepository, deliveryRepository, orderProductRepository)
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, config.Validate, discountRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)

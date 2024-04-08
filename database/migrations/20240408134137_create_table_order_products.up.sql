@@ -1,0 +1,12 @@
+CREATE TABLE order_products (
+    id INTEGER AUTO_INCREMENT,
+    order_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    price FLOAT NOT NULL,
+    quantity INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (order_id) REFERENCES orders (id)
+) ENGINE = InnoDB;

@@ -26,13 +26,15 @@ type OrderUseCase struct {
 	AddressRepository  *repository.AddressRepository
 	DiscountRepository *repository.DiscountRepository
 	DeliveryRepository *repository.DeliveryRepository
+	OrderProductRepository *repository.OrderProductRepository
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
-	discountRepository *repository.DiscountRepository, deliveryRepository *repository.DeliveryRepository) *OrderUseCase {
-	return &OrderUseCase{
+	discountRepository *repository.DiscountRepository, deliveryRepository *repository.DeliveryRepository,
+	orderProductRepository *repository.OrderProductRepository) *OrderUseCase {
+		return &OrderUseCase{
 		DB:                 db,
 		Log:                log,
 		Validate:           validate,
@@ -42,6 +44,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 		AddressRepository:  addressRepository,
 		DiscountRepository: discountRepository,
 		DeliveryRepository: deliveryRepository,
+		OrderProductRepository: orderProductRepository,
 	}
 }
 
@@ -56,37 +59,41 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	}
 
 	newOrder := new(entity.Order)
-	newProduct := new(entity.Product)
+	orderProducts := []entity.OrderProduct{}
+	// temukan produk untuk memastikan ketersediaan dan masukkan data produk ke slice OrderProduct serta mengkalkulasikan tagihannya
+	for _, orderProductRequest := range request.OrderProducts {
+		newProduct := new(entity.Product)
+		newProduct.ID = orderProductRequest.ProductId
+		count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
+		if count < 1 {
+			c.Log.Warnf("Find product by id not found : %+v", err)
+			return nil, fiber.ErrNotFound
+		}
 
-	// temukan produk untuk memastikan ketersediaan
-	newProduct.ID = request.ProductId
-	count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
-	if err != nil {
-		c.Log.Warnf("Failed to get product by id : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
+		if newProduct.Stock < 1 {
+			c.Log.Warnf("Product out of stock : %+v", err)
+			return nil, fiber.ErrNotFound
+		}
 
-	if count < 1 {
-		c.Log.Warnf("Find product by id not found : %+v", err)
-		return nil, fiber.ErrNotFound
+		min := newProduct.Stock - orderProductRequest.Quantity
+		if min < 0 {
+			c.Log.Warnf("Quantity order of product is out of limit : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+		if err := c.ProductRepository.Update(tx, newProduct); err != nil {
+			c.Log.Warnf("Failed to update stock of product : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+		fmt.Println("Nama produk ", newProduct.Name)
+		orderProduct := entity.OrderProduct{
+			ProductId:   orderProductRequest.ProductId,
+			ProductName: newProduct.Name,
+			Price:       newProduct.Price,
+			Quantity:    orderProductRequest.Quantity,
+		}
+		orderProducts = append(orderProducts, orderProduct)
+		newOrder.Amount += orderProduct.Price * float32(orderProduct.Quantity)
 	}
-
-	if newProduct.Stock < 1 {
-		c.Log.Warnf("Product out of stock : %+v", err)
-		return nil, fiber.ErrNotFound
-	}
-
-	newProduct.Stock -= 1
-	if err := c.ProductRepository.Update(tx, newProduct); err != nil {
-		c.Log.Warnf("Failed to update stock of product : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-	newOrder.ProductId = newProduct.ID
-	newOrder.ProductName = newProduct.Name
-	newOrder.ProductDescription = newProduct.Description
-	newOrder.Price = newProduct.Price
-	newOrder.Quantity = request.Quantity
-	newOrder.Amount = newProduct.Price * float32(newOrder.Quantity)
 
 	// user/customer data
 	newOrder.UserId = request.UserId
@@ -146,8 +153,8 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				c.Log.Warnf("Discount has expired : %+v", err)
 				return nil, fiber.ErrBadRequest
 			}
-		} else if count > 0 && !newDiscount.Status {
-			c.Log.Warnf("Discount has disabled : %+v", err)
+		} else if count < 1 && !newDiscount.Status {
+			c.Log.Warnf("Discount has disabled or doesn't exists : %+v", err)
 			return nil, fiber.ErrBadRequest
 		}
 	} else if request.DiscountCode == "" {
@@ -155,11 +162,6 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newOrder.DiscountType = helper.NOMINAL
 	}
 
-	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
-		c.Log.Warnf("failed to find product with join category order : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-	newOrder.CategoryName = newProduct.Category.Name
 	newOrder.CompleteAddress = request.CompleteAddress
 	newOrder.GoogleMapLink = request.GoogleMapLink
 
@@ -169,6 +171,18 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	}
 	invoice := fmt.Sprintf("INV/%d/CUST/%d", newOrder.ID, newOrder.UserId)
 	newOrder.Invoice = invoice
+	
+	// memasukkan order_id ke order product
+	for i := range orderProducts {
+		orderProducts[i].OrderId = newOrder.ID
+	}
+
+	// insert semua data order product ke tabel order_products
+	if err := c.OrderProductRepository.CreateInBatch(tx, &orderProducts); err != nil {
+		c.Log.Warnf("failed to add all order products into database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	// mengisi kolom invoice ke tabel order setelah mendapatkan ID order nya
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to add invoice code : %+v", err)
 		return nil, fiber.ErrInternalServerError

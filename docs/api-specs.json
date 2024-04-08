@@ -1453,12 +1453,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "product_id": {
-                                        "type": "integer"
-                                    },
-                                    "quantity": {
-                                        "type": "integer"
-                                    },
                                     "discount_code": {
                                         "type": "string"
                                     },
@@ -1470,6 +1464,12 @@
                                     },
                                     "distance": {
                                         "type": "integer"
+                                    },
+                                    "order_products": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/OrderProductRequest"
+                                        }
                                     }
                                 }
                             }
@@ -2556,6 +2556,17 @@
                     },
                     "updated_at": {
                         "type": "string"
+                    }
+                }
+            },
+            "OrderProductRequest": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "quantity": {
+                        "type": "integer"
                     }
                 }
             }

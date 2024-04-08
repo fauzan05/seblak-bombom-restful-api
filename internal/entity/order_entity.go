@@ -8,11 +8,6 @@ import (
 type Order struct {
 	ID                 uint64                `gorm:"primary_key;column:id;autoIncrement"`
 	Invoice            string                `gorm:"column:invoice"`
-	ProductId          uint64                `gorm:"column:product_id"`
-	ProductName        string                `gorm:"column:product_name"`
-	ProductDescription string                `gorm:"column:product_description"`
-	Price              float32               `gorm:"column:price"`
-	Quantity           int                   `gorm:"column:quantity"`
 	Amount             float32               `gorm:"column:amount"`
 	DiscountValue      float32               `gorm:"column:discount_value"`
 	DiscountType       helper.DiscountType   `gorm:"column:discount_type"`
@@ -26,12 +21,12 @@ type Order struct {
 	DeliveryStatus     helper.DeliveryStatus `gorm:"column:delivery_status"`
 	IsDelivery         bool                  `gorm:"column:is_delivery"`
 	DeliveryCost       float32               `gorm:"column:delivery_cost"`
-	CategoryName       string                `gorm:"column:category_name"`
 	CompleteAddress    string                `gorm:"column:complete_address"`
 	GoogleMapLink      string                `gorm:"column:google_map_link"`
 	Distance           float32               `gorm:"column:distance"`
 	Created_At         time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
 	Updated_At         time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	OrderProducts      []OrderProduct        `gorm:"foreignKey:order_id;references:id"`
 }
 
 func (o *Order) TableName() string {
