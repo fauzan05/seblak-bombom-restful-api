@@ -12,6 +12,7 @@ select * from products;
 select * from images;
 select * from categories;
 select * from orders;
+select * from order_products;
 
 show create table users;
 show create table addresses;

@@ -4,9 +4,9 @@ docker build -t zane01/seblak-bombom .
 docker network create --driver bridge seblak-bombom-network
 
 # app
-docker container create --name seblak-bombom --network seblak-bombom-network -p 8000:8000 zane01/seblak-bombom
+docker container create --name seblak-bombom-app --network seblak-bombom-net -p 8000:8000 seblak-bombom-img
 
-docker cp seblak-bombom:/seblak-bombom .
+docker cp seblak-bombom-app:/seblak-bombom .
 
 # database mariadb
 docker container create --name seblak-bombom-db --network seblak-bombom-network -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true -p 3306:3306 mariadb
@@ -18,6 +18,7 @@ docker run -v /migrations:/migrations --network seblak-bombom-network migrate/mi
     -path=/migrations/ -database mysql://host.docker.internal:3306/seblak_bombom up
 
 # untuk melihat path direktori kontainer
-docker container exec -i -t seblak-bombom /bin/sh
+docker container exec -i -t seblak-bombom-app /bin/sh
 
-# sebelum dijalankan, buat database seblak_bombom terlebih dahulu
+# menjalankan compose
+docker compose up

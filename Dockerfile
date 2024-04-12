@@ -1,27 +1,24 @@
-FROM golang:1.22.2-alpine3.19 as builder
+FROM golang:1.22.2-alpine
 
-WORKDIR /seblak-bombom
+# Environment variables which CompileDaemon requires to run
+ENV PROJECT_DIR=/app \
+    GO111MODULE=on \
+    CGO_ENABLED=0
+
+WORKDIR /app
+
+RUN mkdir "/build"
 
 COPY . .
-# bisa juga menggunakan tidy
+
+COPY go.mod .
+
 RUN go mod download
+# bisa juga menggunakan tidy
 
-RUN go build -o /seblak-bombom/seblak_bombom ./app/main.go
-
-FROM alpine:3.19
-
-WORKDIR /seblak-bombom
-
-# RUN apk update && \
-#     apk add --no-cache go 
-
-COPY --from=builder /seblak-bombom/seblak_bombom ./
-COPY config.json ./
-
-# COPY database/ ./
-# RUN go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-# RUN ln -s /go/bin/linux_amd64/migrate /usr/local/bin/migrate
+RUN go get github.com/githubnemo/CompileDaemon
+RUN go install github.com/githubnemo/CompileDaemon
 
 EXPOSE 8000
 
-ENTRYPOINT [ "./seblak_bombom" ]
+ENTRYPOINT CompileDaemon -directory="/app"  -build="go build -o /build/app ./app/main.go" -command="/build/app"

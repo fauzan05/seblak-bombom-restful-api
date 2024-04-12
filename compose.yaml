@@ -1,0 +1,31 @@
+version: "3.8"
+
+networks:
+  seblak-bombom-net:
+    name: seblak-bombom-net
+    driver: bridge
+
+services:
+  mariadb:
+    container_name: seblak-bombom-db
+    image: mariadb:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
+      MARIADB_DATABASE: seblak_bombom
+    networks:
+      - seblak-bombom-net
+  app:
+    container_name: seblak-bombom-app
+    build:
+      context: "."
+      dockerfile: Dockerfile
+    image: "seblak-bombom-img"
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    networks:
+      - seblak-bombom-net
