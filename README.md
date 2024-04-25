@@ -2,7 +2,7 @@
 
 # Background
 
-Berawal dari sebuah keisengan ngoding, dan kebetulan teman sendiri sedang membutuhkan bantuan dalam menjalankan proses bisnisnya, jadi saya memutuskan untuk membantu.
+Starting from observing my friend's business, I then attempted to create an application to manage his business using the Go programming language.
 
 # Requirements
 
