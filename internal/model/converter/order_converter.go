@@ -13,6 +13,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		Amount:          fmt.Sprintf("%.2f", order.Amount),
 		DiscountType:    order.DiscountType,
 		DiscountValue:   order.DiscountValue,
+		TotalDiscount:   order.TotalDiscount,
 		UserId:          order.UserId,
 		FirstName:       order.FirstName,
 		LastName:        order.LastName,

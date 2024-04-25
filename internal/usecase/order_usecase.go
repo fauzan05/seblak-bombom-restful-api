@@ -17,15 +17,15 @@ import (
 )
 
 type OrderUseCase struct {
-	DB                 *gorm.DB
-	Log                *logrus.Logger
-	Validate           *validator.Validate
-	OrderRepository    *repository.OrderRepository
-	ProductRepository  *repository.ProductRepository
-	CategoryRepository *repository.CategoryRepository
-	AddressRepository  *repository.AddressRepository
-	DiscountRepository *repository.DiscountRepository
-	DeliveryRepository *repository.DeliveryRepository
+	DB                     *gorm.DB
+	Log                    *logrus.Logger
+	Validate               *validator.Validate
+	OrderRepository        *repository.OrderRepository
+	ProductRepository      *repository.ProductRepository
+	CategoryRepository     *repository.CategoryRepository
+	AddressRepository      *repository.AddressRepository
+	DiscountRepository     *repository.DiscountRepository
+	DeliveryRepository     *repository.DeliveryRepository
 	OrderProductRepository *repository.OrderProductRepository
 }
 
@@ -34,16 +34,16 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
 	discountRepository *repository.DiscountRepository, deliveryRepository *repository.DeliveryRepository,
 	orderProductRepository *repository.OrderProductRepository) *OrderUseCase {
-		return &OrderUseCase{
-		DB:                 db,
-		Log:                log,
-		Validate:           validate,
-		OrderRepository:    orderRepository,
-		ProductRepository:  productRepository,
-		CategoryRepository: categoryRepository,
-		AddressRepository:  addressRepository,
-		DiscountRepository: discountRepository,
-		DeliveryRepository: deliveryRepository,
+	return &OrderUseCase{
+		DB:                     db,
+		Log:                    log,
+		Validate:               validate,
+		OrderRepository:        orderRepository,
+		ProductRepository:      productRepository,
+		CategoryRepository:     categoryRepository,
+		AddressRepository:      addressRepository,
+		DiscountRepository:     discountRepository,
+		DeliveryRepository:     deliveryRepository,
 		OrderProductRepository: orderProductRepository,
 	}
 }
@@ -124,7 +124,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
 		}
 	} else if newOrder.PaymentMethod == helper.ONSITE {
-		// jika pembayaran via onsite, fitur pengiriman "enabled"
+		// jika pembayaran via onsite, fitur pengiriman "disabled"
 		newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
 	}
 
@@ -145,9 +145,13 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 					discount := float32(newDiscount.Value) / float32(100)
 					afterDiscount := newOrder.Amount * discount
 					newOrder.Amount -= afterDiscount
+					// simpan total diskon/potongan harganya
+					newOrder.TotalDiscount = afterDiscount
 				} else if newDiscount.Type == helper.NOMINAL {
 					newOrder.DiscountType = helper.NOMINAL
 					newOrder.Amount -= newDiscount.Value
+					// simpan total diskon/potongan harganya
+					newOrder.TotalDiscount = newDiscount.Value
 				}
 			} else if newDiscount.End.Before(time.Now()) {
 				c.Log.Warnf("Discount has expired : %+v", err)
@@ -162,6 +166,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newOrder.DiscountType = helper.NOMINAL
 	}
 
+	// mengambil alamat utama yang diambil oleh user
 	newOrder.CompleteAddress = request.CompleteAddress
 	newOrder.GoogleMapLink = request.GoogleMapLink
 
@@ -169,6 +174,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		c.Log.Warnf("failed to create new order : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
+
 	invoice := fmt.Sprintf("INV/%d/CUST/%d", newOrder.ID, newOrder.UserId)
 	newOrder.Invoice = invoice
 
@@ -187,7 +193,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		c.Log.Warnf("failed to add invoice code : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
-	
+
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("Failed to find order with preload : %+v", err)
 		return nil, fiber.ErrInternalServerError

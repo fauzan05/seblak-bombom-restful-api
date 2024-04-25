@@ -9,17 +9,19 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/midtrans/midtrans-go/snap"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
 type BootstrapConfig struct {
-	DB       *gorm.DB
-	App      *fiber.App
-	Log      *logrus.Logger
-	Validate *validator.Validate
-	Config   *viper.Viper
+	DB         *gorm.DB
+	App        *fiber.App
+	Log        *logrus.Logger
+	Validate   *validator.Validate
+	Config     *viper.Viper
+	SnapClient *snap.Client
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -46,6 +48,7 @@ func Bootstrap(config *BootstrapConfig) {
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, config.Validate, discountRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
+	midtransUseCase := usecase.NewMidtransUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.DB)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -57,6 +60,7 @@ func Bootstrap(config *BootstrapConfig) {
 	discountController := http.NewDiscountController(discountUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
+	midtransController := http.NewMidtransController(midtransUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -73,6 +77,7 @@ func Bootstrap(config *BootstrapConfig) {
 		DiscountController:      discountController,
 		DeliveryController:      deliveryController,
 		ProductReviewController: productReviewController,
+		MidtransController:      midtransController,
 		AuthMiddleware:          authMiddleware,
 		RoleMiddleware:          roleMiddleware,
 	}

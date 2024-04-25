@@ -4,6 +4,7 @@ CREATE TABLE orders (
     amount FLOAT NOT NULL,
     discount_value FLOAT NULL,
     discount_type ENUM("percent", "nominal") NOT NULL DEFAULT "nominal",
+    total_discount FLOAT NULL,
     user_id INTEGER NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,

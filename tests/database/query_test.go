@@ -26,7 +26,7 @@ func NewViper() *viper.Viper {
 	return config
 }
 
-var db = config.NewDatabaseTest(NewViper(), config.NewLogger(NewViper()))
+var db = config.NewDatabaseProd(NewViper(), config.NewLogger(NewViper()))
 func TestCountEmailUser(t *testing.T) {
 	var total int64
 	err := db.Model(&entity.User{}).Where("email = ?", "fauzannurhidayat8@gmail.com").Count(&total).Error
@@ -148,3 +148,26 @@ func TestFindAndCountById(t *testing.T) {
 	fmt.Println(newCategory.Description)
 }
 
+func TestFindOrderWithOrderProducts(t *testing.T) {
+	selectedOrder := new(entity.Order)
+	selectedOrder.ID = 1
+	if err := db.Preload("OrderProducts").Find(selectedOrder).Error; err != nil {
+		panic(err)
+	}
+
+	type Products struct {
+		ID          uint64
+		ProductName string
+	}
+	
+	var products []Products
+	for _, product := range selectedOrder.OrderProducts {
+		newProduct := Products{
+			ID:          product.ID,
+			ProductName: product.ProductName,
+		}
+		products = append(products, newProduct)
+	}
+
+	fmt.Println(products)
+}

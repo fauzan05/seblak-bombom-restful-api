@@ -17,6 +17,7 @@ type RouteConfig struct {
 	DiscountController      *http.DiscountController
 	DeliveryController      *http.DeliveryController
 	ProductReviewController *http.ProductReviewController
+	MidtransController   *http.MidtransController
 	AuthMiddleware          fiber.Handler
 	RoleMiddleware          fiber.Handler
 }
@@ -44,7 +45,6 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// Product
 	api.Get("/products", c.ProductController.GetAll)
 	api.Get("/products/:productId", c.ProductController.Get)
-
 }
 
 func (c *RouteConfig) SetupAuthRoute() {
@@ -72,6 +72,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// product review
 	auth.Post("/reviews", c.ProductReviewController.Create)
+
+	// Midtrans
+	api.Post("/snap", c.MidtransController.CreateSnap)
 }
 
 func (c *RouteConfig) SetupAuthAdminRoute() {

@@ -105,7 +105,7 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequst)
 
 	var token = &entity.Token{}
 	now := time.Now()
-	oneHours := now.Add(1 * time.Hour)
+	oneHours := now.Add(24 * time.Hour)
 	findToken := c.TokenRepository.FindTokenByUserId(c.DB, token, int(user.ID))
 	// panic(findToken)
 	if findToken != nil {

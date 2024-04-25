@@ -11,8 +11,9 @@ func main() {
 	// db := config.NewDatabaseProd(viperConfig, log) //prod
 	// db := config.NewDatabaseTest(viperConfig, log) // test
 	db := config.NewDatabaseDev(viperConfig, log) // dev
+	snapClient := config.NewMidtransSanbox(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
-	app := config.NewFiber(viperConfig)
+	app := config.NewFiber(viperConfig) 
 
 	config.Bootstrap(&config.BootstrapConfig{
 		DB: db,
@@ -20,6 +21,7 @@ func main() {
 		Log: log,
 		Validate: validate,
 		Config: viperConfig,
+		SnapClient: snapClient,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

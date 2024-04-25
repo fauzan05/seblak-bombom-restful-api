@@ -14,6 +14,7 @@ services:
     environment:
       MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
       MARIADB_DATABASE: seblak_bombom
+      TZ: "Asia/Jakarta"
     networks:
       - seblak-bombom-net
   app:
@@ -23,6 +24,8 @@ services:
       dockerfile: Dockerfile
     image: "seblak-bombom-img"
     restart: always
+    environment:
+      TZ: "Asia/Jakarta"
     ports:
       - "8000:8000"
     volumes:

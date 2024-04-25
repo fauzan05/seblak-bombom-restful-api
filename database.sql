@@ -1,5 +1,6 @@
 create database seblak_bombom;
 create database seblak_bombom_test;
+show tables;
 
 use seblak_bombom;
 use seblak_bombom_test;

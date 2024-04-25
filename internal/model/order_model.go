@@ -5,27 +5,28 @@ import (
 )
 
 type OrderResponse struct {
-	ID              uint64                  `json:"id,omitempty"`
-	Invoice         string                  `json:"invoice,omitempty"`
+	ID              uint64                 `json:"id,omitempty"`
+	Invoice         string                 `json:"invoice,omitempty"`
 	OrderProducts   []OrderProductResponse `json:"order_products,omitempty"`
-	Amount          string                  `json:"amount,omitempty"`
-	DiscountType    helper.DiscountType     `json:"discount_type,omitempty"`
-	DiscountValue   float32                 `json:"discount_value,omitempty"`
-	UserId          uint64                  `json:"user_id,omitempty"`
-	FirstName       string                  `json:"first_name,omitempty"`
-	LastName        string                  `json:"last_name,omitempty"`
-	Email           string                  `json:"email,omitempty"`
-	Phone           string                  `json:"phone,omitempty"`
-	PaymentMethod   helper.PaymentMethod    `json:"payment_method,omitempty"`
-	PaymentStatus   helper.PaymentStatus    `json:"payment_status,omitempty"`
-	DeliveryStatus  helper.DeliveryStatus   `json:"delivery_status,omitempty"`
-	IsDelivery      bool                    `json:"delivery,omitempty"`
-	DeliveryCost    string                  `json:"delivery_cost,omitempty"`
-	CompleteAddress string                  `json:"complete_address,omitempty"`
-	GoogleMapLink   string                  `json:"google_map_link,omitempty"`
-	Distance        float32                 `json:"distance,omitempty"`
-	CreatedAt       string                  `json:"created_at,omitempty"`
-	UpdatedAt       string                  `json:"updated_at,omitempty"`
+	Amount          string                 `json:"amount,omitempty"`
+	DiscountType    helper.DiscountType    `json:"discount_type,omitempty"`
+	DiscountValue   float32                `json:"discount_value,omitempty"`
+	TotalDiscount   float32                `json:"total_discount,omitempty"`
+	UserId          uint64                 `json:"user_id,omitempty"`
+	FirstName       string                 `json:"first_name,omitempty"`
+	LastName        string                 `json:"last_name,omitempty"`
+	Email           string                 `json:"email,omitempty"`
+	Phone           string                 `json:"phone,omitempty"`
+	PaymentMethod   helper.PaymentMethod   `json:"payment_method,omitempty"`
+	PaymentStatus   helper.PaymentStatus   `json:"payment_status,omitempty"`
+	DeliveryStatus  helper.DeliveryStatus  `json:"delivery_status,omitempty"`
+	IsDelivery      bool                   `json:"delivery,omitempty"`
+	DeliveryCost    string                 `json:"delivery_cost,omitempty"`
+	CompleteAddress string                 `json:"complete_address,omitempty"`
+	GoogleMapLink   string                 `json:"google_map_link,omitempty"`
+	Distance        float32                `json:"distance,omitempty"`
+	CreatedAt       string                 `json:"created_at,omitempty"`
+	UpdatedAt       string                 `json:"updated_at,omitempty"`
 }
 
 type CreateOrderRequest struct {
