@@ -77,16 +77,6 @@
                 "tags": [
                     "User API"
                 ],
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "Success get all users",
@@ -112,7 +102,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/users/login": {
@@ -195,16 +190,6 @@
                     "User API"
                 ],
                 "description": "Get current user",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "Success get current user",
@@ -227,23 +212,18 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "patch": {
                 "tags": [
                     "User API"
                 ],
                 "description": "Update current user",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -295,22 +275,17 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "delete": {
                 "description": "Delete current user",
                 "tags": [
                     "User API"
-                ],
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
                 ],
                 "responses": {
                     "200": {
@@ -334,7 +309,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/users/current/password": {
@@ -343,16 +323,6 @@
                     "User API"
                 ],
                 "description": "Update current user password",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -395,7 +365,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/users/logout": {
@@ -403,16 +378,6 @@
                 "description": "Logout user",
                 "tags": [
                     "User API"
-                ],
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
                 ],
                 "responses": {
                     "200": {
@@ -436,7 +401,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/users/current/addresses": {
@@ -445,16 +415,6 @@
                     "Address API"
                 ],
                 "description": "Get address by current user",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "201": {
                         "description": "Success get address by current user",
@@ -480,23 +440,18 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
                     "Address API"
                 ],
                 "description": "Create address by current user",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -545,7 +500,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/addresses/{addressId}": {
@@ -555,14 +515,6 @@
                 ],
                 "description": "Get address by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "addressId",
                         "in": "path",
@@ -587,7 +539,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/AddressResponse"
                                         }
                                     }
@@ -595,7 +546,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "put": {
                 "tags": [
@@ -603,14 +559,6 @@
                 ],
                 "description": "Update address by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "addressId",
                         "in": "path",
@@ -664,7 +612,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/AddressResponse"
                                         }
                                     }
@@ -672,7 +619,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -680,14 +632,6 @@
                 ],
                 "description": "Delete address by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "addressId",
                         "in": "path",
@@ -719,7 +663,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/categories": {
@@ -727,16 +676,6 @@
                 "description": "Get all categories",
                 "tags": [
                     "Category API"
-                ],
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
                 ],
                 "responses": {
                     "200": {
@@ -763,23 +702,18 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
                     "Category API"
                 ],
                 "description": "Create new category",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -819,7 +753,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/categories/{categoryId}": {
@@ -829,14 +768,6 @@
                     "Category API"
                 ],
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "categoryId",
                         "in": "path",
@@ -871,7 +802,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "put": {
                 "tags": [
@@ -879,14 +815,6 @@
                 ],
                 "description": "Update category by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "categoryId",
                         "in": "path",
@@ -928,7 +856,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/CategoryResponse"
                                         }
                                     }
@@ -936,7 +863,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -944,14 +876,6 @@
                 ],
                 "description": "Delete category by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "categoryId",
                         "in": "path",
@@ -983,7 +907,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/products": {
@@ -1024,16 +953,6 @@
                     "Product API"
                 ],
                 "description": "Create new product",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1082,7 +1001,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/products/{productId}": {
@@ -1092,14 +1016,6 @@
                 ],
                 "description": "Update product by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "productId",
                         "in": "path",
@@ -1150,7 +1066,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/ProductResponse"
                                         }
                                     }
@@ -1158,7 +1073,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -1166,14 +1086,6 @@
                 ],
                 "description": "Delete product by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "productId",
                         "in": "path",
@@ -1205,7 +1117,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "get": {
                 "tags": [
@@ -1237,7 +1154,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/ProductResponse"
                                         }
                                     }
@@ -1254,16 +1170,6 @@
                     "Image API"
                 ],
                 "description": "Add image to product",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1305,7 +1211,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/ImageResponse"
                                         }
                                     }
@@ -1313,23 +1218,18 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "put": {
                 "tags": [
                     "Image API"
                 ],
                 "description": "Update image position by id",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1371,7 +1271,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/ImageResponse"
                                         }
                                     }
@@ -1379,7 +1278,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/images/{imageId}": {
@@ -1389,14 +1293,6 @@
                 ],
                 "description": "Delete image by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "imageId",
                         "in": "path",
@@ -1428,7 +1324,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/orders": {
@@ -1437,16 +1338,6 @@
                     "Order API"
                 ],
                 "description": "Create new order",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1498,23 +1389,18 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "get": {
                 "tags": [
                     "Order API"
                 ],
                 "description": "Get all orders history from all user customer (admin only, not customer)",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "Success get all users orders history (sort by desc/latest)",
@@ -1540,7 +1426,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/orders/{orderId}": {
@@ -1550,14 +1441,6 @@
                 ],
                 "description": "Update status order by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "orderId",
                         "in": "path",
@@ -1599,7 +1482,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/OrderResponse"
                                         }
                                     }
@@ -1607,7 +1489,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/orders/users/{userId}": {
@@ -1617,14 +1504,6 @@
                 ],
                 "description": "Get all orders history from all user customer (admin only, not customer)",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "userId",
                         "in": "path",
@@ -1659,7 +1538,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/orders/users/current": {
@@ -1668,16 +1552,6 @@
                     "Order API"
                 ],
                 "description": "Get all orders history from current user (just customer, not admin)",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "Success get all orders history by current user",
@@ -1703,7 +1577,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/reviews": {
@@ -1712,16 +1591,6 @@
                     "Product Reviews API"
                 ],
                 "description": "Create new review in product",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1764,7 +1633,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/discounts": {
@@ -1773,16 +1647,6 @@
                     "Discount API"
                 ],
                 "description": "Create new discount",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1837,7 +1701,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "get": {
                 "tags": [
@@ -1879,14 +1748,6 @@
                 ],
                 "description": "Update discount by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "discountId",
                         "in": "path",
@@ -1943,7 +1804,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/DiscountResponse"
                                         }
                                     }
@@ -1951,7 +1811,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -1959,14 +1824,6 @@
                 ],
                 "description": "Delete discount by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "discountId",
                         "in": "path",
@@ -1998,7 +1855,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "get": {
                 "tags": [
@@ -2030,7 +1892,6 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "type": "object",
                                             "$ref": "#/components/schemas/DiscountResponse"
                                         }
                                     }
@@ -2076,16 +1937,6 @@
                     "Delivery API"
                 ],
                 "description": "Create delivery settings (just only made 1 time)",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2125,7 +1976,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
         "/api/deliveries/{deliveryId}": {
@@ -2135,14 +1991,6 @@
                 ],
                 "description": "Update delivery settings",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "deliveryId",
                         "in": "path",
@@ -2191,7 +2039,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -2199,14 +2052,6 @@
                 ],
                 "description": "Delete delivery settings by id",
                 "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "name": "deliveryId",
                         "in": "path",
@@ -2238,25 +2083,20 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         },
-        "/api/midtrans/snap/orders": {
+        "/api/midtrans/snap/order": {
             "post": {
                 "tags": [
                     "Midtrans API"
                 ],
                 "description": "Create midtrans snap order (just only order have payment method = online state)",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2293,17 +2133,22 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
             }
         }
     },
     "components": {
         "securitySchemes": {
-            "CategoryAuth": {
-                "name": "Authentication Seblak Bombom API",
+            "Authorization": {
+                "name": "Authorization Seblak Bombom API",
                 "type": "apiKey",
                 "in": "header",
-                "description": "Authentication for  Seblak Bombom API"
+                "description": "Authorization for  Seblak Bombom API"
             }
         },
         "schemas": {
@@ -2398,7 +2243,6 @@
                         "type": "integer"
                     },
                     "category": {
-                        "type": "object",
                         "$ref": "#/components/schemas/CategoryResponse"
                     },
                     "name": {
