@@ -37,7 +37,8 @@ func Bootstrap(config *BootstrapConfig) {
 	deliveryRepository := repository.NewDeliveryRepository(config.Log)
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
-
+	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
+	
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
@@ -48,7 +49,7 @@ func Bootstrap(config *BootstrapConfig) {
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, config.Validate, discountRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
-	midtransUseCase := usecase.NewMidtransUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.DB)
+	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.DB, midtransSnapOrderRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -60,7 +61,7 @@ func Bootstrap(config *BootstrapConfig) {
 	discountController := http.NewDiscountController(discountUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
-	midtransController := http.NewMidtransController(midtransUseCase, config.Log)
+	midtransSnapOrderController := http.NewMidtransController(midtransSnapOrderUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -77,7 +78,7 @@ func Bootstrap(config *BootstrapConfig) {
 		DiscountController:      discountController,
 		DeliveryController:      deliveryController,
 		ProductReviewController: productReviewController,
-		MidtransController:      midtransController,
+		MidtransSnapOrderController:      midtransSnapOrderController,
 		AuthMiddleware:          authMiddleware,
 		RoleMiddleware:          roleMiddleware,
 	}

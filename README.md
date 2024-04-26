@@ -88,7 +88,7 @@ Install UUID
 go get github.com/google/uuid
 ```
 
-
+<br>
 
 # Database Table Structure
 

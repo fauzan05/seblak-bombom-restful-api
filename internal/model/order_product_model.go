@@ -14,7 +14,7 @@ type OrderProductResponse struct {
 type CreateOrderProductRequest struct {
 	OrderId     uint64  `json:"order_id"`
 	ProductId   uint64  `json:"product_id" validate:"required"`
-	ProductName string  `json:"product_name"`
-	Price       float32 `json:"price"`
+	ProductName string  `json:"product_name" validate:"required"`
+	Price       float32 `json:"price" validate:"required"`
 	Quantity    int     `json:"quantity" validate:"required"`
 }

@@ -84,7 +84,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			c.Log.Warnf("Failed to update stock of product : %+v", err)
 			return nil, fiber.ErrInternalServerError
 		}
-		fmt.Println("Nama produk ", newProduct.Name)
+
 		orderProduct := entity.OrderProduct{
 			ProductId:   orderProductRequest.ProductId,
 			ProductName: newProduct.Name,

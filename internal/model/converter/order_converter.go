@@ -7,7 +7,7 @@ import (
 )
 
 func OrderToResponse(order *entity.Order) *model.OrderResponse {
-	return &model.OrderResponse{
+	response := &model.OrderResponse{
 		ID:              order.ID,
 		Invoice:         order.Invoice,
 		Amount:          fmt.Sprintf("%.2f", order.Amount),
@@ -31,6 +31,12 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		CreatedAt:       order.Created_At.Format("2006-01-02 15:04:05"),
 		UpdatedAt:       order.Updated_At.Format("2006-01-02 15:04:05"),
 	}
+
+	if order.MidtransSnapOrder != nil {
+		response.MidtransSnapOrder = *MidtransSnapOrderToResponse(order.MidtransSnapOrder)
+	}
+
+	return response
 }
 
 func OrdersToResponse(orders *[]entity.Order) *[]model.OrderResponse {

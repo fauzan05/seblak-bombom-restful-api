@@ -17,26 +17,31 @@ import (
 	"gorm.io/gorm"
 )
 
-type MidtransUseCase struct {
-	Log *logrus.Logger
-	DB *gorm.DB
-	Validate *validator.Validate
-	OrderRepository *repository.OrderRepository
-	SnapClient *snap.Client
+type MidtransSnapOrderUseCase struct {
+	Log                         *logrus.Logger
+	DB                          *gorm.DB
+	Validate                    *validator.Validate
+	SnapClient                  *snap.Client
+	OrderRepository             *repository.OrderRepository
+	MidtransSnapOrderRepository *repository.MidtransSnapOrderRepository
 }
 
-func NewMidtransUseCase(log *logrus.Logger, validate *validator.Validate, orderRepository *repository.OrderRepository,
-	snapClient *snap.Client, db *gorm.DB) *MidtransUseCase {
-	return &MidtransUseCase{
-		Log: log,
-		Validate: validate,
-		OrderRepository: orderRepository,
-		SnapClient: snapClient,
-		DB: db,
+func NewMidtransSnapOrderUseCase(log *logrus.Logger, validate *validator.Validate, orderRepository *repository.OrderRepository,
+	snapClient *snap.Client, db *gorm.DB, midtransSnapOrderRepository *repository.MidtransSnapOrderRepository) *MidtransSnapOrderUseCase {
+	return &MidtransSnapOrderUseCase{
+		Log:                         log,
+		Validate:                    validate,
+		OrderRepository:             orderRepository,
+		SnapClient:                  snapClient,
+		DB:                          db,
+		MidtransSnapOrderRepository: midtransSnapOrderRepository,
 	}
 }
 
-func (c *MidtransUseCase) Add(ctx context.Context, request *model.CreateSnapRequest) (*model.SnapResponse, error) {
+func (c *MidtransSnapOrderUseCase) Add(ctx context.Context, request *model.CreateMidtransSnapOrderRequest) (*model.MidtransSnapOrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
@@ -44,12 +49,12 @@ func (c *MidtransUseCase) Add(ctx context.Context, request *model.CreateSnapRequ
 	}
 
 	newSnapClient := snap.Client{}
-	newSnapClient.New(c.SnapClient.ServerKey, midtrans.Sandbox)
+	newSnapClient.New(c.SnapClient.ServerKey, c.SnapClient.Env)
 
 	// temukan data order berdasarkan invoice dari request
 	selectedOrder := new(entity.Order)
 	selectedOrder.ID = request.OrderId
-	if err := c.OrderRepository.FindWithPreloads(c.DB, selectedOrder, "OrderProducts"); err != nil {
+	if err := c.OrderRepository.FindWithPreloads(tx, selectedOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("Failed to find order by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -62,38 +67,38 @@ func (c *MidtransUseCase) Add(ctx context.Context, request *model.CreateSnapRequ
 	var midtransItemDetails []midtrans.ItemDetails
 	for _, product := range selectedOrder.OrderProducts {
 		newMidtransItemsDetails := midtrans.ItemDetails{
-			ID: strconv.Itoa(int(product.ID)),
-			Qty: int32(product.Quantity),
+			ID:    strconv.Itoa(int(product.ID)),
+			Qty:   int32(product.Quantity),
 			Price: int64(product.Price),
-			Name: product.ProductName,
+			Name:  product.ProductName,
 		}
 		midtransItemDetails = append(midtransItemDetails, newMidtransItemsDetails)
 	}
 	// cek apakah ada biaya pengiriman, jika ada maka tambahkan ke midtransItemDetails agar value-nya sama
 	if selectedOrder.DeliveryCost != 0 {
 		newMidtransItemsDetails := midtrans.ItemDetails{
-			ID: "1",
-			Qty: 1,
+			ID:    "1",
+			Qty:   1,
 			Price: int64(selectedOrder.DeliveryCost),
-			Name: "Delivery Cost",
+			Name:  "Delivery Cost",
+		}
+		midtransItemDetails = append(midtransItemDetails, newMidtransItemsDetails)
+	}
+	// cek juga apakah terdapat diskon, jika ada maka tambahkan ke ItemDetails
+	if selectedOrder.TotalDiscount > 0 {
+		newMidtransItemsDetails := midtrans.ItemDetails{
+			ID:    "2",
+			Qty:   1,
+			Price: -int64(selectedOrder.TotalDiscount),
+			Name:  "Discount",
 		}
 		midtransItemDetails = append(midtransItemDetails, newMidtransItemsDetails)
 	}
 
-	if selectedOrder.TotalDiscount > 0 {
-		newMidtransItemsDetails := midtrans.ItemDetails{
-			ID: "2",
-			Qty: 1,
-			Price: -int64(selectedOrder.TotalDiscount),
-			Name: "Discount",
-		}
-		midtransItemDetails = append(midtransItemDetails, newMidtransItemsDetails)
-	}
-	
 	orderId := int(selectedOrder.ID)
 	midtransRequest := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
-			OrderID: strconv.Itoa(orderId),
+			OrderID:  strconv.Itoa(orderId),
 			GrossAmt: int64(selectedOrder.Amount),
 		},
 		CreditCard: &snap.CreditCardDetails{
@@ -106,7 +111,7 @@ func (c *MidtransUseCase) Add(ctx context.Context, request *model.CreateSnapRequ
 			Phone: selectedOrder.Phone,
 		},
 		EnabledPayments: snap.AllSnapPaymentType,
-		Items: &midtransItemDetails,
+		Items:           &midtransItemDetails,
 	}
 
 	snapResponse, snapErr := newSnapClient.CreateTransaction(midtransRequest)
@@ -115,5 +120,19 @@ func (c *MidtransUseCase) Add(ctx context.Context, request *model.CreateSnapRequ
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.MidtransToResponse(snapResponse), nil
+	newMidtransSnapOrder := new(entity.MidtransSnapOrder)
+	newMidtransSnapOrder.OrderId = request.OrderId
+	newMidtransSnapOrder.Token = snapResponse.Token
+	newMidtransSnapOrder.RedirectUrl = snapResponse.RedirectURL
+	if err := c.MidtransSnapOrderRepository.Create(tx, newMidtransSnapOrder); err != nil {
+		c.Log.Warnf("Failed to create new midtrans snap order : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.MidtransSnapOrderToResponse(newMidtransSnapOrder), nil
 }

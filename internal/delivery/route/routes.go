@@ -7,19 +7,19 @@ import (
 )
 
 type RouteConfig struct {
-	App                     *fiber.App
-	UserController          *http.UserController
-	AddressController       *http.AddressController
-	CategoryController      *http.CategoryController
-	ProductController       *http.ProductController
-	ImageController         *http.ImageController
-	OrderController         *http.OrderController
-	DiscountController      *http.DiscountController
-	DeliveryController      *http.DeliveryController
-	ProductReviewController *http.ProductReviewController
-	MidtransController   *http.MidtransController
-	AuthMiddleware          fiber.Handler
-	RoleMiddleware          fiber.Handler
+	App                         *fiber.App
+	UserController              *http.UserController
+	AddressController           *http.AddressController
+	CategoryController          *http.CategoryController
+	ProductController           *http.ProductController
+	ImageController             *http.ImageController
+	OrderController             *http.OrderController
+	DiscountController          *http.DiscountController
+	DeliveryController          *http.DeliveryController
+	ProductReviewController     *http.ProductReviewController
+	MidtransSnapOrderController *http.MidtransSnapOrderController
+	AuthMiddleware              fiber.Handler
+	RoleMiddleware              fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -74,7 +74,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Post("/reviews", c.ProductReviewController.Create)
 
 	// Midtrans
-	api.Post("/snap", c.MidtransController.CreateSnap)
+	api.Post("/snap", c.MidtransSnapOrderController.CreateSnap)
 }
 
 func (c *RouteConfig) SetupAuthAdminRoute() {
