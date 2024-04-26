@@ -65,7 +65,7 @@
         "sandbox": {
             "merchant_id": "",
             "client_key": "",
-            "server_key": "SB-Mid-server-6VjtitmAsI90UNv4n5tPUDK2",
+            "server_key": "",
             "is_prod": false
         }
         
