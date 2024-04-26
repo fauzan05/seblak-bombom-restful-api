@@ -74,7 +74,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Post("/reviews", c.ProductReviewController.Create)
 
 	// Midtrans
-	api.Post("/snap", c.MidtransSnapOrderController.CreateSnap)
+	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
 }
 
 func (c *RouteConfig) SetupAuthAdminRoute() {

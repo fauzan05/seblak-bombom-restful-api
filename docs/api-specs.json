@@ -2240,6 +2240,61 @@
                     }
                 }
             }
+        },
+        "/api/midtrans/snap/orders": {
+            "post": {
+                "tags": [
+                    "Midtrans API"
+                ],
+                "description": "Create midtrans snap order (just only order have payment method = online state)",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "order_id": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success create midtrans snap order (just only order have payment method = online state)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MidtransSnapOrder"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -2470,6 +2525,9 @@
                     "google_map_link": {
                         "type": "string"
                     },
+                    "midtrans_snap_order": {
+                        "$ref": "#/components/schemas/MidtransSnapOrder"
+                    },
                     "created_at": {
                         "type": "string"
                     },
@@ -2567,6 +2625,29 @@
                     },
                     "quantity": {
                         "type": "integer"
+                    }
+                }
+            },
+            "MidtransSnapOrder": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "redirect_url": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
                     }
                 }
             }
