@@ -27,7 +27,7 @@ func (c *RouteConfig) Setup() {
 	c.SetupAuthRoute()
 	c.SetupAuthAdminRoute()
 }
-
+// GUEST
 func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api")
 	api.Post("/users", c.UserController.Register)
@@ -46,7 +46,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api.Get("/products", c.ProductController.GetAll)
 	api.Get("/products/:productId", c.ProductController.Get)
 }
-
+// USER
 func (c *RouteConfig) SetupAuthRoute() {
 	api := c.App.Group("/api")
 	auth := api.Use(c.AuthMiddleware)
@@ -75,8 +75,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Midtrans
 	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
+	api.Get("/midtrans/snap/orders/:orderId", c.MidtransSnapOrderController.GetSnapOrder)
 }
-
+// ADMIN
 func (c *RouteConfig) SetupAuthAdminRoute() {
 	api := c.App.Group("/api")
 	auth := api.Use(c.AuthMiddleware, c.RoleMiddleware)

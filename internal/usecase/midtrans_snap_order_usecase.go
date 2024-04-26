@@ -136,3 +136,27 @@ func (c *MidtransSnapOrderUseCase) Add(ctx context.Context, request *model.Creat
 
 	return converter.MidtransSnapOrderToResponse(newMidtransSnapOrder), nil
 }
+
+func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMidtransSnapOrderRequest) (*model.MidtransSnapOrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	newMidtransSnapOrder := new(entity.MidtransSnapOrder)
+	if err := c.MidtransSnapOrderRepository.FindMidtransSnapOrderByOrderId(tx, newMidtransSnapOrder, request.OrderId); err != nil {
+		c.Log.Warnf("Failed to find order by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.MidtransSnapOrderToResponse(newMidtransSnapOrder), nil
+}
