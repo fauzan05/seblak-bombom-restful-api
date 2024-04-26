@@ -63,9 +63,9 @@
             "is_prod": true
         },
         "sandbox": {
-            "merchant_id": "G052483594",
-            "client_key": "SB-Mid-client-htMPQcokP-jhOnhT",
-            "server_key": "SB-Mid-server-6VjtitmAsI90UNv4n5tPUDK2",
+            "merchant_id": "",
+            "client_key": "",
+            "server_key": "",
             "is_prod": false
         }
         
