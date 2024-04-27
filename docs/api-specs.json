@@ -2140,6 +2140,37 @@
                     }
                 ]
             }
+        },
+        "/api/midtrans/snap/order/notification": {
+            "get": {
+                "tags": [
+                    "Midtrans API"
+                ],
+                "description": "Get midtrans snap order notification",
+                "responses": {
+                    "200": {
+                        "description": "Success get midtrans snap order notification",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/OrderResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
