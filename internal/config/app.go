@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -16,12 +17,13 @@ import (
 )
 
 type BootstrapConfig struct {
-	DB         *gorm.DB
-	App        *fiber.App
-	Log        *logrus.Logger
-	Validate   *validator.Validate
-	Config     *viper.Viper
-	SnapClient *snap.Client
+	DB            *gorm.DB
+	App           *fiber.App
+	Log           *logrus.Logger
+	Validate      *validator.Validate
+	Config        *viper.Viper
+	SnapClient    *snap.Client
+	CoreAPIClient *coreapi.Client
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -38,7 +40,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
 	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
-	
+
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
@@ -49,7 +51,7 @@ func Bootstrap(config *BootstrapConfig) {
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, config.Validate, discountRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
-	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.DB, midtransSnapOrderRepository)
+	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -68,19 +70,19 @@ func Bootstrap(config *BootstrapConfig) {
 	roleMiddleware := middleware.NewRole(userUseCase)
 
 	routeConfig := route.RouteConfig{
-		App:                     config.App,
-		UserController:          userController,
-		AddressController:       addressController,
-		CategoryController:      categoryController,
-		ProductController:       productController,
-		ImageController:         imageController,
-		OrderController:         orderController,
-		DiscountController:      discountController,
-		DeliveryController:      deliveryController,
-		ProductReviewController: productReviewController,
-		MidtransSnapOrderController:      midtransSnapOrderController,
-		AuthMiddleware:          authMiddleware,
-		RoleMiddleware:          roleMiddleware,
+		App:                         config.App,
+		UserController:              userController,
+		AddressController:           addressController,
+		CategoryController:          categoryController,
+		ProductController:           productController,
+		ImageController:             imageController,
+		OrderController:             orderController,
+		DiscountController:          discountController,
+		DeliveryController:          deliveryController,
+		ProductReviewController:     productReviewController,
+		MidtransSnapOrderController: midtransSnapOrderController,
+		AuthMiddleware:              authMiddleware,
+		RoleMiddleware:              roleMiddleware,
 	}
 	routeConfig.Setup()
 }

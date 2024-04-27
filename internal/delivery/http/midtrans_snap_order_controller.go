@@ -41,24 +41,25 @@ func (c *MidtransSnapOrderController) CreateSnap(ctx *fiber.Ctx) error {
 	})
 }
 
-func (c *MidtransSnapOrderController) GetSnapOrder(ctx *fiber.Ctx) error {
+func (c *MidtransSnapOrderController) GetSnapOrderNotification(ctx *fiber.Ctx) error {
 	snapRequest := new(model.GetMidtransSnapOrderRequest)
-	getId := ctx.Params("orderId")
+	getId := ctx.Query("order_id")
 	orderId, err := strconv.Atoi(getId)
 	if err != nil {
 		c.Log.Warnf("Failed to convert product id : %+v", err)
 		return err
 	}
+	
 	snapRequest.OrderId = uint64(orderId)
 	response, err := c.UseCase.Get(ctx.Context(), snapRequest)
 	if err != nil {
-		c.Log.Warnf("Failed to get a midtrans snap order : %+v", err)
+		c.Log.Warnf("Failed to get a notification order : %+v", err)
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.MidtransSnapOrderResponse]{
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.OrderResponse]{
 		Code:   200,
-		Status: "Success to get a midtrans snap order",
+		Status: "Success to get a notification order",
 		Data:   response,
 	})
 }

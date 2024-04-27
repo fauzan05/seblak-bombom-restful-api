@@ -45,6 +45,9 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// Product
 	api.Get("/products", c.ProductController.GetAll)
 	api.Get("/products/:productId", c.ProductController.Get)
+
+	// Midtrans
+	api.Get("/midtrans/snap/orders/notification", c.MidtransSnapOrderController.GetSnapOrderNotification)
 }
 // USER
 func (c *RouteConfig) SetupAuthRoute() {
@@ -75,7 +78,6 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Midtrans
 	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
-	api.Get("/midtrans/snap/orders/:orderId", c.MidtransSnapOrderController.GetSnapOrder)
 }
 // ADMIN
 func (c *RouteConfig) SetupAuthAdminRoute() {

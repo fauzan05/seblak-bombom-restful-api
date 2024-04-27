@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -22,17 +24,19 @@ type MidtransSnapOrderUseCase struct {
 	DB                          *gorm.DB
 	Validate                    *validator.Validate
 	SnapClient                  *snap.Client
+	CoreAPIClient               *coreapi.Client
 	OrderRepository             *repository.OrderRepository
 	MidtransSnapOrderRepository *repository.MidtransSnapOrderRepository
 }
 
 func NewMidtransSnapOrderUseCase(log *logrus.Logger, validate *validator.Validate, orderRepository *repository.OrderRepository,
-	snapClient *snap.Client, db *gorm.DB, midtransSnapOrderRepository *repository.MidtransSnapOrderRepository) *MidtransSnapOrderUseCase {
+	snapClient *snap.Client, coreAPIClient *coreapi.Client, db *gorm.DB, midtransSnapOrderRepository *repository.MidtransSnapOrderRepository) *MidtransSnapOrderUseCase {
 	return &MidtransSnapOrderUseCase{
 		Log:                         log,
 		Validate:                    validate,
 		OrderRepository:             orderRepository,
 		SnapClient:                  snapClient,
+		CoreAPIClient:               coreAPIClient,
 		DB:                          db,
 		MidtransSnapOrderRepository: midtransSnapOrderRepository,
 	}
@@ -137,7 +141,7 @@ func (c *MidtransSnapOrderUseCase) Add(ctx context.Context, request *model.Creat
 	return converter.MidtransSnapOrderToResponse(newMidtransSnapOrder), nil
 }
 
-func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMidtransSnapOrderRequest) (*model.MidtransSnapOrderResponse, error) {
+func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMidtransSnapOrderRequest) (*model.OrderResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -147,9 +151,78 @@ func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMi
 		return nil, fiber.ErrBadRequest
 	}
 
-	newMidtransSnapOrder := new(entity.MidtransSnapOrder)
-	if err := c.MidtransSnapOrderRepository.FindMidtransSnapOrderByOrderId(tx, newMidtransSnapOrder, request.OrderId); err != nil {
+	selectedOrder := new(entity.Order)
+	selectedOrder.ID = request.OrderId
+	if err := c.OrderRepository.FindById(tx, selectedOrder); err != nil {
 		c.Log.Warnf("Failed to find order by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// untuk mengecek notifikasi harus menggunakan core api
+	newCoreAPIClient := coreapi.Client{}
+	newCoreAPIClient.New(c.CoreAPIClient.ServerKey, c.CoreAPIClient.Env)
+	fmt.Println("DISINI TIDAK ERROR")
+	orderIdIntConversion := int(request.OrderId)
+	orderIdStringConversion := strconv.Itoa(orderIdIntConversion)
+	transactionStatusResponse, e := newCoreAPIClient.CheckTransaction(orderIdStringConversion)
+	if e != nil {
+		c.Log.Warnf("Failed to check the transaction by order id : %+v", err)
+		return nil, fiber.ErrBadRequest
+	} else {
+		if transactionStatusResponse != nil {
+			// 5. Do set transaction status based on response from check transaction status
+			if transactionStatusResponse.TransactionStatus == "capture" {
+				if transactionStatusResponse.FraudStatus == "challenge" {
+					// TODO set transaction status on your database to 'challenge'
+					// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
+					selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
+					if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+						c.Log.Warnf("Failed to update status success order by id : %+v", err)
+						return nil, fiber.ErrInternalServerError
+					}
+				} else if transactionStatusResponse.FraudStatus == "accept" {
+					// TODO set transaction status on your database to 'success'
+					selectedOrder.PaymentStatus = helper.PAID_PAYMENT
+					if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+						c.Log.Warnf("Failed to update status success order by id : %+v", err)
+						return nil, fiber.ErrInternalServerError
+					}
+				}
+			} else if transactionStatusResponse.TransactionStatus == "settlement" {
+				// TODO set transaction status on your databaase to 'success'
+				selectedOrder.PaymentStatus = helper.PAID_PAYMENT
+				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+					c.Log.Warnf("Failed to update status success order by id : %+v", err)
+					return nil, fiber.ErrInternalServerError
+				}
+			} else if transactionStatusResponse.TransactionStatus == "deny" {
+				// TODO you can ignore 'deny', because most of the time it allows payment retries
+				// and later can become success
+				selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
+				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+					c.Log.Warnf("Failed to update status pending order by id : %+v", err)
+					return nil, fiber.ErrInternalServerError
+				}
+			} else if transactionStatusResponse.TransactionStatus == "cancel" || transactionStatusResponse.TransactionStatus == "expire" {
+				// TODO set transaction status on your databaase to 'failure'
+				selectedOrder.PaymentStatus = helper.FAILED_PAYMENT
+				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+					c.Log.Warnf("Failed to update status failed order by id : %+v", err)
+					return nil, fiber.ErrInternalServerError
+				}
+			} else if transactionStatusResponse.TransactionStatus == "pending" {
+				// TODO set transaction status on your databaase to 'pending' / waiting payment
+				selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
+				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+					c.Log.Warnf("Failed to update status pending order by id : %+v", err)
+					return nil, fiber.ErrInternalServerError
+				}
+			}
+		}
+	}
+
+	if err := c.OrderRepository.FindWithJoins(tx, selectedOrder, "MidtransSnapOrder"); err != nil {
+		c.Log.Warnf("Failed to find order by id with joins midtrans snap order : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
@@ -158,5 +231,5 @@ func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMi
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.MidtransSnapOrderToResponse(newMidtransSnapOrder), nil
+	return converter.OrderToResponse(selectedOrder), nil
 }
