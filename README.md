@@ -4,6 +4,8 @@
 
 Starting from observing my friend's business, I then attempted to create an application to manage his business using the Go programming language. This is a "seblak" sales application where payments can be made onsite or online. For onsite payments, customers only need to come to the location and an admin will input their data manually to indicate whether they have paid or not. Meanwhile, for online payments, customers simply choose from the payment methods provided by Midtrans, and the payment status will be automatically displayed. So the admin no longer needs to manually input data because everything is handled by Midtrans. For delivery distance, we use kilometers as the unit, and there is a menu for delivery service rates along with the delivery status. This application is integrated with the Midtrans payment gateway. Make sure you have read the documentation from Midtrans to understand the payment flow further.
 
+<br>
+
 # Requirements
 
 ## Tech Stack
@@ -23,6 +25,13 @@ Starting from observing my friend's business, I then attempted to create an appl
 - MySQL : https://github.com/go-sql-driver/mysql
 - Midtrans : https://midtrans.com/
 
+## Software
+- Docker
+- Terminal
+- Postman
+- Ngrok
+
+<br>
 
 # Installation
 Please install/add packages in the root directory project first below :
@@ -107,9 +116,9 @@ If you're not using Docker, simply run **go run main.go** in the app directory. 
 <br>
 
 For testing purposes on the Midtrans endpoint, I recommend using Ngrok because Midtrans Callback Notification, after the user completes the payment, requires the redirection settings to be an active URL (endpoint) accessible over the internet. For example, by exposing a URL like this and entering it in the finish URL section:
-```
-https://87f2-103-242-105-91.ngrok-free.app/api/midtrans/snap/orders/notification
-```
+
+**https://8xx2-xxx-xx2-1xx5-9x1.ngrok-free.app/api/midtrans/snap/orders/notification**
+
 So after a successful transaction or expiration, Midtrans will automatically perform a callback to that endpoint.
 
 # Go Migrate Command
