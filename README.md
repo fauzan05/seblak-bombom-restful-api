@@ -1,4 +1,4 @@
-# Aplikasi Warung Seblak Bombom
+# Seblak Bombom Eatery App
 
 # Background
 
