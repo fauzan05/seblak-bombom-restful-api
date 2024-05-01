@@ -2,7 +2,7 @@
 
 # Background
 
-Starting from observing my friend's business, I then attempted to create an application to manage his business using the Go programming language.
+Starting from observing my friend's business, I then attempted to create an application to manage his business using the Go programming language. This is a "seblak" sales application where payments can be made onsite or online. For onsite payments, customers only need to come to the location and an admin will input their data manually to indicate whether they have paid or not. Meanwhile, for online payments, customers simply choose from the payment methods provided by Midtrans, and the payment status will be automatically displayed. So the admin no longer needs to manually input data because everything is handled by Midtrans. For delivery distance, we use kilometers as the unit, and there is a menu for delivery service rates along with the delivery status. This application is integrated with the Midtrans payment gateway. Make sure you have read the documentation from Midtrans to understand the payment flow further.
 
 # Requirements
 
@@ -21,6 +21,7 @@ Starting from observing my friend's business, I then attempted to create an appl
 - Logrus : https://github.com/sirupsen/logrus
 - Testify : https://github.com/stretchr/testify
 - MySQL : https://github.com/go-sql-driver/mysql
+- Midtrans : https://midtrans.com/
 
 
 # Installation
@@ -90,7 +91,26 @@ go get github.com/google/uuid
 
 <br>
 
-# Database Table Structure
+# How to run
+Before proceeding further, make sure you have an account on Midtrans. Just create one, and it's free. After finishing creating the account, input the environment such as **MerchantID**, **Client Key**, and **Server Key** in the config.json file located in the root directory. So, after that because I'm using Docker Compose environment, what needs to be done is to execute the following command:
+```
+docker compose build
+```
+This command will build the images specified in the Dockerfile and MariaDB. Then, once it's done, execute the following command:
+```
+docker compose up
+```
+This command is used to run the configurations that have been set up in the Dockerfile as well as the MariaDB container. At this stage, when we make changes to any files in this application, they will be automatically recompiled without the need for manual compilation. This is because I'm using CompileDaemon, which has been fetched in the Dockerfile.
+<br>
+
+If you're not using Docker, simply run **go run main.go** in the app directory. Beforehand, make sure the database is running and the database is created according to the configuration in the config.json file in the root directory. Once done, perform operations on the API by referring to api-specs.json to understand the request and response of each endpoint.
+<br>
+
+For testing purposes on the Midtrans endpoint, I recommend using Ngrok because Midtrans Callback Notification, after the user completes the payment, requires the redirection settings to be an active URL (endpoint) accessible over the internet. For example, by exposing a URL like this and entering it in the finish URL section:
+```
+https://87f2-103-242-105-91.ngrok-free.app/api/midtrans/snap/orders/notification
+```
+So after a successful transaction or expiration, Midtrans will automatically perform a callback to that endpoint.
 
 # Go Migrate Command
 
