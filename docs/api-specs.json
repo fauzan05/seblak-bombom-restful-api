@@ -2171,6 +2171,123 @@
                     }
                 }
             }
+        },
+        "/api/applications": {
+            "post": {
+                "tags": [
+                    "Application API"
+                ],
+                "description": "Create an application settings (just an admin can do this)",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplicationCreateUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success create an application settings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApplicationResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Application API"
+                ],
+                "description": "Update an application settings (just an admin can do this)",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplicationCreateUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success update an application settings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApplicationResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
+            },
+            "get": {
+                "tags": [
+                    "Application API"
+                ],
+                "description": "Get an application settings",
+                "responses": {
+                    "201": {
+                        "description": "Success get an application settings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApplicationResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -2522,6 +2639,121 @@
                         "type": "string"
                     },
                     "updated_at": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ApplicationResponse": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "integer"
+                        },
+                        "app_name": {
+                            "type": "string"
+                        },
+                        "opening_hours": {
+                            "type": "string"
+                        },
+                        "closing_hours": {
+                            "type": "string"
+                        },
+                        "address": {
+                            "type": "string"
+                        },
+                        "longitude": {
+                            "type": "string"
+                        },
+                        "latitude": {
+                            "type": "string"
+                        },
+                        "google_map_link": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "phone_number": {
+                            "type": "string"
+                        },
+                        "email": {
+                            "type": "string"
+                        },
+                        "instagram_name": {
+                            "type": "string"
+                        },
+                        "instagram_link": {
+                            "type": "string"
+                        },
+                        "twitter_name": {
+                            "type": "string"
+                        },
+                        "twitter_link": {
+                            "type": "string"
+                        },
+                        "facebook_name": {
+                            "type": "string"
+                        },
+                        "facebook_link": {
+                            "type": "string"
+                        },
+                        "created_at": {
+                            "type": "string"
+                        },
+                        "updated_at": {
+                            "type": "string"
+                        }
+                    }  
+            },
+            "ApplicationCreateUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "app_name": {
+                        "type": "string"
+                    },
+                    "opening_hours": {
+                        "type": "string"
+                    },
+                    "closing_hours": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "longitude": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": "string"
+                    },
+                    "google_map_link": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "phone_number": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "instagram_name": {
+                        "type": "string"
+                    },
+                    "instagram_link": {
+                        "type": "string"
+                    },
+                    "twitter_name": {
+                        "type": "string"
+                    },
+                    "twitter_link": {
+                        "type": "string"
+                    },
+                    "facebook_name": {
+                        "type": "string"
+                    },
+                    "facebook_link": {
                         "type": "string"
                     }
                 }

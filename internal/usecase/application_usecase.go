@@ -45,6 +45,7 @@ func (c *ApplicationUseCase) Add(ctx context.Context, request *model.CreateAppli
 		c.Log.Warnf("Failed to find application request : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
+	// application settings harus berupa 1 baris data saja, tidak boleh lebih dari 2 karena akan membgingunkan nantinya saat pengambilan data mengenai pengaturan aplikasinya
 	if count < 1 {
 		// boleh dibuat
 		newApplication.AppName = request.AppName
