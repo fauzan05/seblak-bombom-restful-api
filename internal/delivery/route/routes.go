@@ -18,6 +18,7 @@ type RouteConfig struct {
 	DeliveryController          *http.DeliveryController
 	ProductReviewController     *http.ProductReviewController
 	MidtransSnapOrderController *http.MidtransSnapOrderController
+	ApplicationController       *http.ApplicationController
 	AuthMiddleware              fiber.Handler
 	RoleMiddleware              fiber.Handler
 }
@@ -27,6 +28,7 @@ func (c *RouteConfig) Setup() {
 	c.SetupAuthRoute()
 	c.SetupAuthAdminRoute()
 }
+
 // GUEST
 func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api")
@@ -49,6 +51,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// Midtrans
 	api.Get("/midtrans/snap/orders/notification", c.MidtransSnapOrderController.GetSnapOrderNotification)
 }
+
 // USER
 func (c *RouteConfig) SetupAuthRoute() {
 	api := c.App.Group("/api")
@@ -79,6 +82,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Midtrans
 	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
 }
+
 // ADMIN
 func (c *RouteConfig) SetupAuthAdminRoute() {
 	api := c.App.Group("/api")
@@ -111,4 +115,9 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 
 	// order
 	auth.Patch("/orders/:orderId", c.OrderController.Update)
+
+	// application
+	auth.Post("/applications", c.ApplicationController.Create)
+	auth.Put("/applications", c.ApplicationController.Update)
+	auth.Get("/applications", c.ApplicationController.Get)
 }

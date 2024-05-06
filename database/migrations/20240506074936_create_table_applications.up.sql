@@ -1,0 +1,22 @@
+CREATE TABLE applications (
+    id INTEGER AUTO_INCREMENT,
+    app_name VARCHAR(255) NOT NULL,
+    opening_hours TIME DEFAULT NULL,
+    closing_hours TIME DEFAULT NULL,
+    address TEXT DEFAULT NULL,
+    longitude TEXT DEFAULT NULL,
+    latitude TEXT DEFAULT NULL,
+    google_map_link TEXT DEFAULT NULL,
+    description TEXT DEFAULT NULL,
+    phone_number VARCHAR(255) DEFAULT NULL,
+    email VARCHAR(255) DEFAULT NULL,
+    instagram_name VARCHAR(255) DEFAULT NULL,
+    instagram_link VARCHAR(255) DEFAULT NULL,
+    twitter_name VARCHAR(255) DEFAULT NULL,
+    twitter_link VARCHAR(255) DEFAULT NULL,
+    facebook_name VARCHAR(255) DEFAULT NULL,
+    facebook_link VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE = InnoDB;

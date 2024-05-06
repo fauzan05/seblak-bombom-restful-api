@@ -15,6 +15,7 @@ select * from categories;
 select * from orders;
 select * from order_products;
 select * from midtrans_snap_orders;
+select * from applications;
 
 show create table users;
 show create table addresses;

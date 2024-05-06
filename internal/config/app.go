@@ -40,6 +40,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
 	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
+	applicationRepository := repository.NewApplicationRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
@@ -52,6 +53,7 @@ func Bootstrap(config *BootstrapConfig) {
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
 	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository)
+	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -64,6 +66,7 @@ func Bootstrap(config *BootstrapConfig) {
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
 	midtransSnapOrderController := http.NewMidtransController(midtransSnapOrderUseCase, config.Log)
+	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -81,6 +84,7 @@ func Bootstrap(config *BootstrapConfig) {
 		DeliveryController:          deliveryController,
 		ProductReviewController:     productReviewController,
 		MidtransSnapOrderController: midtransSnapOrderController,
+		ApplicationController:       applicationController,
 		AuthMiddleware:              authMiddleware,
 		RoleMiddleware:              roleMiddleware,
 	}

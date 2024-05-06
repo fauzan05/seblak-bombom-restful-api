@@ -30,6 +30,12 @@ func (r *Repository[T]) FindFirst(db *gorm.DB, entity *T) error {
 	return db.First(&entity).Error
 }
 
+func (r *Repository[T]) FindCount(db *gorm.DB, entity *T) (int64, error) {
+	var count int64
+	err := db.Model(&entity).Count(&count).Error
+	return count, err 
+}
+
 func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string) error {
 	token := new(entity.Token)
 	// temukan data user_id
