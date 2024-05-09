@@ -124,7 +124,8 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
 		}
 	} else if newOrder.PaymentMethod == helper.ONSITE {
-		// jika pembayaran via onsite, fitur pengiriman "disabled"
+		// jika pembayaran via onsite, fitur pengiriman "enabled"
+		// fitur ini seperti COD (Cash On Delivery) yang dimana nanti si admin yang akan men-acc apakah sudah dibayar tunai atau belum saat COD berlangsung
 		newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
 	}
 
