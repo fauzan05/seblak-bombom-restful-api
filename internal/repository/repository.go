@@ -146,3 +146,12 @@ func (r *Repository[T]) FindAllOrdersByUserId(db *gorm.DB, entity *[]T, userId u
 func (r *Repository[T]) FindMidtransSnapOrderByOrderId(db *gorm.DB, entity *T, orderId uint64) error {
 	return db.Where("order_id = ?", orderId).Find(&entity).Error
 }
+
+func (r *Repository[T]) FindCartDuplicate(db *gorm.DB, entity *T, userId uint64, productId uint64) (int64, error) {
+	var count int64
+	err := db.Where("user_id = ? AND product_id = ?", userId, productId).Find(&entity).Count(&count).Error
+	if err != nil {
+		return count, err
+	}
+	return count, nil
+}

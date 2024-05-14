@@ -28,6 +28,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		Longitude:       order.Longitude,
 		Latitude:        order.Latitude,
 		Distance:        order.Distance,
+		Note:            order.Note,
 		OrderProducts:   *OrderProductsToResponse(&order.OrderProducts),
 		CreatedAt:       order.Created_At.Format("2006-01-02 15:04:05"),
 		UpdatedAt:       order.Updated_At.Format("2006-01-02 15:04:05"),

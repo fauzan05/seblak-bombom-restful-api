@@ -19,6 +19,7 @@ type RouteConfig struct {
 	ProductReviewController     *http.ProductReviewController
 	MidtransSnapOrderController *http.MidtransSnapOrderController
 	ApplicationController       *http.ApplicationController
+	CartController              *http.CartController
 	AuthMiddleware              fiber.Handler
 	RoleMiddleware              fiber.Handler
 }
@@ -81,6 +82,12 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Midtrans
 	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
+
+	// Cart
+	api.Post("/carts", c.CartController.Create)
+
+	// order
+	auth.Patch("/orders/:orderId", c.OrderController.Update)
 }
 
 // ADMIN
@@ -112,9 +119,6 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Post("/deliveries", c.DeliveryController.Create)
 	auth.Put("/deliveries/:deliveryId", c.DeliveryController.Update)
 	auth.Delete("/deliveries/:deliveryId", c.DeliveryController.Remove)
-
-	// order
-	auth.Patch("/orders/:orderId", c.OrderController.Update)
 
 	// application
 	auth.Post("/applications", c.ApplicationController.Create)

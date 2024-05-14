@@ -1367,6 +1367,9 @@
                                         "items": {
                                             "$ref": "#/components/schemas/OrderProductRequest"
                                         }
+                                    },
+                                    "note": {
+                                        "type": "string"
                                     }
                                 }
                             }
@@ -2531,6 +2534,9 @@
                     },
                     "midtrans_snap_order": {
                         "$ref": "#/components/schemas/MidtransSnapOrder"
+                    },
+                    "note": {
+                        "type": "string"
                     },
                     "created_at": {
                         "type": "string"

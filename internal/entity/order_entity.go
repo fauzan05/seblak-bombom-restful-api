@@ -25,7 +25,8 @@ type Order struct {
 	CompleteAddress   string                `gorm:"column:complete_address"`
 	Longitude         float64               `gorm:"column:longitude"`
 	Latitude          float64               `gorm:"column:latitude"`
-	Distance          float32               `gorm:"column:distance"`
+	Distance          float32               `gorm:"column:distance"` // satuan KM
+	Note              string                `gorm:"column:note"`
 	Created_At        time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
 	Updated_At        time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	OrderProducts     []OrderProduct        `gorm:"foreignKey:order_id;references:id"`

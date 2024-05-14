@@ -5,6 +5,7 @@ type PaymentMethod string
 type PaymentStatus string
 type DeliveryStatus string
 type DiscountType string
+type NotificationType string
 
 const (
 	// role
@@ -25,4 +26,7 @@ const (
 	// discount type
 	PERCENT DiscountType = "percent"
 	NOMINAL DiscountType = "nominal"
+	// notification type
+	TRANSACTION NotificationType = "transaction"
+	PROMOTION   NotificationType = "promotion"
 )

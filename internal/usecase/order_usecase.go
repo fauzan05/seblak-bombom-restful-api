@@ -62,6 +62,10 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	orderProducts := []entity.OrderProduct{}
 	// temukan produk untuk memastikan ketersediaan dan masukkan data produk ke slice OrderProduct serta mengkalkulasikan tagihannya
 	for _, orderProductRequest := range request.OrderProducts {
+		if orderProductRequest.Quantity < 0 {
+			c.Log.Warnf("Quantity must be positive number : %+v", err)
+			return nil, fiber.ErrBadRequest
+		}
 		newProduct := new(entity.Product)
 		newProduct.ID = orderProductRequest.ProductId
 		count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
@@ -101,6 +105,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	newOrder.LastName = request.LastName
 	newOrder.Email = request.Email
 	newOrder.Phone = request.Phone
+	newOrder.Note = request.Note
 
 	// payment
 	newOrder.PaymentMethod = request.PaymentMethod
@@ -114,8 +119,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			c.Log.Warnf("Can't find delivery settings : %+v", err)
 			return nil, fiber.ErrNotFound
 		}
-		newOrder.Longitude = request.Longitude
-		newOrder.Latitude = request.Latitude
+
 		newOrder.Distance = request.Distance
 		newOrder.DeliveryCost = newOrder.Distance / newDelivery.Distance * newDelivery.Cost
 		// jumlahkan semua total termasuk ongkir
@@ -127,6 +131,10 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		// jika tidak ingin dikirim, berarti ambil sendiri dan tidak dikenakan biaya ongkir dan status awalnya adalah 'take_away'
 		newOrder.DeliveryStatus = helper.TAKE_AWAY
 	}
+
+	// isi longitude dan latitude meskipun datanya 0
+	newOrder.Longitude = request.Longitude
+	newOrder.Latitude = request.Latitude
 
 	if request.DiscountCode != "" {
 		newDiscount := new(entity.Discount)
@@ -242,9 +250,34 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 
 	newOrder := new(entity.Order)
 	newOrder.ID = request.ID
-	if err := c.OrderRepository.FindById(tx, newOrder); err != nil {
+	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("Failed to find order by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
+	}
+
+	if newOrder.PaymentStatus == helper.FAILED_PAYMENT {
+		// jika ordernya statusnya ternyata sudah failed (berusaha untuk melakukan request ke 2x), maka tolak request tersebut
+		c.Log.Warnf("Failed to edit status order with has failed payment status : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	if request.PaymentStatus == helper.FAILED_PAYMENT {
+		for _, orderProduct := range newOrder.OrderProducts {
+			newProduct := new(entity.Product)
+			newProduct.ID = orderProduct.ProductId
+			// mencari data terkini dari produk dengan id
+			if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
+				c.Log.Warnf("Failed to find product by id : %+v", err)
+				return nil, fiber.ErrInternalServerError
+			} 
+			// tambahkan/kembalikan quantitas produk karena transaksinya gagal
+			newProduct.Stock += orderProduct.Quantity
+			// perbarui stok barang sekarang
+			if err := c.ProductRepository.Update(tx, newProduct); err != nil {
+				c.Log.Warnf("Failed to update product stock : %+v", err)
+				return nil, fiber.ErrInternalServerError
+			}
+		}
 	}
 
 	newOrder.PaymentStatus = request.PaymentStatus
@@ -253,6 +286,7 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 		c.Log.Warnf("Failed to update request body : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return nil, fiber.ErrInternalServerError

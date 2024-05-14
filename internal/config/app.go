@@ -41,6 +41,7 @@ func Bootstrap(config *BootstrapConfig) {
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
 	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
 	applicationRepository := repository.NewApplicationRepository(config.Log)
+	cartRepository := repository.NewCartRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
@@ -54,6 +55,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
 	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
+	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -67,6 +69,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
 	midtransSnapOrderController := http.NewMidtransController(midtransSnapOrderUseCase, config.Log)
 	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
+	cartController := http.NewCartController(cartUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -85,6 +88,7 @@ func Bootstrap(config *BootstrapConfig) {
 		ProductReviewController:     productReviewController,
 		MidtransSnapOrderController: midtransSnapOrderController,
 		ApplicationController:       applicationController,
+		CartController:              cartController,
 		AuthMiddleware:              authMiddleware,
 		RoleMiddleware:              roleMiddleware,
 	}

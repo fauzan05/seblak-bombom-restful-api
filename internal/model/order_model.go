@@ -27,24 +27,27 @@ type OrderResponse struct {
 	Latitude          float64                   `json:"latitude,omitempty"`
 	Distance          float32                   `json:"distance,omitempty"`
 	MidtransSnapOrder MidtransSnapOrderResponse `json:"midtrans_snap_order,omitempty"`
+	Note              string                    `json:"note,omitempty"`
 	CreatedAt         string                    `json:"created_at,omitempty"`
 	UpdatedAt         string                    `json:"updated_at,omitempty"`
 }
 
 type CreateOrderRequest struct {
-	DiscountCode    string                      `json:"discount_code"`
-	UserId          uint64                      `json:"user_id" validate:"required"`
-	FirstName       string                      `json:"first_name" validate:"required"`
-	LastName        string                      `json:"last_name" validate:"required"`
-	Email           string                      `json:"email" validate:"required"`
-	Phone           string                      `json:"phone" validate:"required"`
-	PaymentMethod   helper.PaymentMethod        `json:"payment_method" validate:"required"`
-	IsDelivery      bool                        `json:"is_delivery"`
-	CompleteAddress string                      `json:"complete_address" validate:"required"`
-	Longitude       float64                     `json:"longitude" validate:"required"`
-	Latitude        float64                     `json:"latitude" validate:"required"`
-	Distance        float32                     `json:"distance" validate:"required"`
-	OrderProducts   []CreateOrderProductRequest `json:"order_products" validate:"required"`
+	DiscountCode       string                      `json:"discount_code"`
+	UserId             uint64                      `json:"user_id" validate:"required"`
+	FirstName          string                      `json:"first_name" validate:"required"`
+	LastName           string                      `json:"last_name" validate:"required"`
+	Email              string                      `json:"email" validate:"required"`
+	Phone              string                      `json:"phone" validate:"required"`
+	PaymentMethod      helper.PaymentMethod        `json:"payment_method" validate:"required"`
+	IsDelivery         bool                        `json:"is_delivery"`
+	CompleteAddress    string                      `json:"complete_address" validate:"required"`
+	Longitude          float64                     `json:"longitude"`
+	Latitude           float64                     `json:"latitude"`
+	Distance           float32                     `json:"distance"`
+	Note               string                      `json:"note"`
+	OrderProducts      []CreateOrderProductRequest `json:"order_products" validate:"required"`
+	IsLonLatTakeManual bool                        `json:"is_lonlat_take_manual"` // apakah lon lat mengambil dari alamat customers (otomatis) atau tidak (manual)
 }
 
 type GetOrderByCurrentRequest struct {

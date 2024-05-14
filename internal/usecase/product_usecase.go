@@ -42,6 +42,11 @@ func (c *ProductUseCase) Add(ctx context.Context, request *model.CreateProductRe
 		return nil, fiber.ErrBadRequest
 	}
 
+	if request.Stock < 0 {
+		c.Log.Warnf("Stock must be positive number : %+v", err)
+			return nil, fiber.ErrBadRequest
+	}
+
 	newProduct := new(entity.Product)
 	newProduct.CategoryId = request.CategoryId
 	newProduct.Name = request.Name
