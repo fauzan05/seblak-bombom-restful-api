@@ -255,13 +255,14 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if newOrder.PaymentStatus == helper.FAILED_PAYMENT {
-		// jika ordernya statusnya ternyata sudah failed (berusaha untuk melakukan request ke 2x), maka tolak request tersebut
-		c.Log.Warnf("Failed to edit status order with has failed payment status : %+v", err)
+	if newOrder.PaymentStatus == helper.FAILED_PAYMENT || newOrder.PaymentStatus == helper.PAID_PAYMENT {
+		// jika ordernya statusnya ternyata sudah failed atau paid (berusaha untuk melakukan request ke 2x), maka tolak request tersebut agar stock produknya tidak ikut bertambah
+		c.Log.Warnf("Failed to edit status order with has failed or paid payment status : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
 
-	if request.PaymentStatus == helper.FAILED_PAYMENT {
+	// jika ingin mengubah status menjadi gagal atau terbayar
+	if request.PaymentStatus == helper.FAILED_PAYMENT || request.PaymentStatus == helper.PAID_PAYMENT{
 		for _, orderProduct := range newOrder.OrderProducts {
 			newProduct := new(entity.Product)
 			newProduct.ID = orderProduct.ProductId
