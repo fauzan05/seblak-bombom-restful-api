@@ -14,7 +14,6 @@ func ApplicationToResponse(application *entity.Application) *model.ApplicationRe
 		Address: application.Address,
 		Longitude: application.Longitude,
 		Latitude: application.Latitude,
-		GoogleMapLink: application.GoogleMapLink,
 		Description: application.Description,
 		PhoneNumber: application.PhoneNumber,
 		Email: application.Email,

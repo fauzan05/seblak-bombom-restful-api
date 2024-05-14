@@ -106,27 +106,26 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	newOrder.PaymentMethod = request.PaymentMethod
 	newOrder.PaymentStatus = helper.PENDING_PAYMENT
 
-	if newOrder.PaymentMethod == helper.ONLINE {
-		// jika pembayaran via online, fitur pengiriman "enabled"
-		newOrder.IsDelivery = request.IsDelivery
-		if newOrder.IsDelivery {
-			newDelivery := new(entity.Delivery)
-			if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
-				c.Log.Warnf("Can't find delivery settings : %+v", err)
-				return nil, fiber.ErrNotFound
-			}
-			newOrder.Distance = request.Distance
-			newOrder.DeliveryCost = newOrder.Distance / newDelivery.Distance * newDelivery.Cost
-			// jumlahkan semua total termasuk ongkir
-			newOrder.Amount += newOrder.DeliveryCost
-
-			// set status pengiriman
-			newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
+	newOrder.IsDelivery = request.IsDelivery
+	if newOrder.IsDelivery {
+		// jika ingin dikirim, berarti dikenakan biaya ongkir dan status awalnya adalah 'prepare'
+		newDelivery := new(entity.Delivery)
+		if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
+			c.Log.Warnf("Can't find delivery settings : %+v", err)
+			return nil, fiber.ErrNotFound
 		}
-	} else if newOrder.PaymentMethod == helper.ONSITE {
-		// jika pembayaran via onsite, fitur pengiriman "enabled"
-		// fitur ini seperti COD (Cash On Delivery) yang dimana nanti si admin yang akan men-acc apakah sudah dibayar tunai atau belum saat COD berlangsung
+		newOrder.Longitude = request.Longitude
+		newOrder.Latitude = request.Latitude
+		newOrder.Distance = request.Distance
+		newOrder.DeliveryCost = newOrder.Distance / newDelivery.Distance * newDelivery.Cost
+		// jumlahkan semua total termasuk ongkir
+		newOrder.Amount += newOrder.DeliveryCost
+
+		// set status pengiriman
 		newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
+	} else {
+		// jika tidak ingin dikirim, berarti ambil sendiri dan tidak dikenakan biaya ongkir dan status awalnya adalah 'take_away'
+		newOrder.DeliveryStatus = helper.TAKE_AWAY
 	}
 
 	if request.DiscountCode != "" {
@@ -169,7 +168,6 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	// mengambil alamat utama yang diambil oleh user
 	newOrder.CompleteAddress = request.CompleteAddress
-	newOrder.GoogleMapLink = request.GoogleMapLink
 
 	if err := c.OrderRepository.Create(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to create new order : %+v", err)

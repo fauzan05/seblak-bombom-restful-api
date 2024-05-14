@@ -65,10 +65,12 @@ func TestCreateNewUser(t *testing.T) {
 				Regency: "Kebumen",
 				SubDistrict: "Pejagoan",
 				CompleteAddress: "Jl tembana-peniron km.12, Dukuh jetis, Desa Peniron RT01/05, Kecamatan Pejagoan, Kabupaten Kebumen, Provinsi Jawa Tengah 54361",
-				GoogleMapLink: "https://maps.app.goo.gl/UBRaYVdBxkUDkHMW7",
+				Longitude: -74.00898606,
+				Latitude: 40.71727401,
 				IsMain: true,
 			},
 		},
+		Role: helper.ADMIN,
 	}
 	result := db.Create(&user)
 	assert.Nil(t, result.Error)
@@ -106,7 +108,7 @@ func TestGetUserByToken(t *testing.T) {
 
 func TestGetUserWithAddress(t *testing.T) {
 	var user []entity.User
-	findUser := db.Where("id = ?", 2).Find(&user)
+	findUser := db.Where("id = ?", 1).Find(&user)
 	assert.Nil(t, findUser.Error)
 	result := db.Preload("Addresses").Find(&user)
 	assert.Nil(t, result.Error)

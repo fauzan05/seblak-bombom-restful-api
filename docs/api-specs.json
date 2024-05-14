@@ -467,8 +467,11 @@
                                     "complete_address": {
                                         "type": "string"
                                     },
-                                    "google_map_link": {
-                                        "type": "string"
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "latitude": {
+                                        "type": "number"
                                     },
                                     "is_main": {
                                         "type": "boolean"
@@ -586,8 +589,11 @@
                                     "complete_address": {
                                         "type": "string"
                                     },
-                                    "google_map_link": {
-                                        "type": "string"
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "latitude": {
+                                        "type": "number"
                                     },
                                     "is_main": {
                                         "type": "boolean"
@@ -2350,8 +2356,11 @@
                     "complete_address": {
                         "type": "string"
                     },
-                    "google_map_link": {
-                        "type": "string"
+                    "longitude": {
+                        "type": "number"
+                    },
+                    "latitude": {
+                        "type": "number"
                     },
                     "is_main": {
                         "type": "boolean"
@@ -2514,8 +2523,11 @@
                     "complete_address": {
                         "type": "string"
                     },
-                    "google_map_link": {
-                        "type": "string"
+                    "longitude": {
+                        "type": "number"
+                    },
+                    "latitude": {
+                        "type": "number"
                     },
                     "midtrans_snap_order": {
                         "$ref": "#/components/schemas/MidtransSnapOrder"
@@ -2662,13 +2674,10 @@
                             "type": "string"
                         },
                         "longitude": {
-                            "type": "string"
+                            "type": "number"
                         },
                         "latitude": {
-                            "type": "string"
-                        },
-                        "google_map_link": {
-                            "type": "string"
+                            "type": "number"
                         },
                         "description": {
                             "type": "string"
@@ -2721,13 +2730,10 @@
                         "type": "string"
                     },
                     "longitude": {
-                        "type": "string"
+                        "type": "number"
                     },
                     "latitude": {
-                        "type": "string"
-                    },
-                    "google_map_link": {
-                        "type": "string"
+                        "type": "number"
                     },
                     "description": {
                         "type": "string"

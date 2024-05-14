@@ -19,7 +19,7 @@ type AddressUseCase struct {
 	Validate          *validator.Validate
 	UserRepository    *repository.UserRepository
 	AddressRepository *repository.AddressRepository
-	UserUseCase 	*UserUseCase
+	UserUseCase       *UserUseCase
 }
 
 func NewAddressUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
@@ -30,7 +30,7 @@ func NewAddressUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Vali
 		Validate:          validate,
 		UserRepository:    userRepository,
 		AddressRepository: addressRepository,
-		UserUseCase: userUseCase,
+		UserUseCase:       userUseCase,
 	}
 }
 
@@ -55,7 +55,8 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 	address.Regency = request.Regency
 	address.SubDistrict = request.Subdistrict
 	address.CompleteAddress = request.CompleteAddress
-	address.GoogleMapLink = request.GoogleMapLink
+	address.Longitude = request.Longitude
+	address.Latitude = request.Latitude
 	address.IsMain = request.IsMain
 
 	if err := c.AddressRepository.Create(tx, address); err != nil {
@@ -76,7 +77,7 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 	return converter.AddressToResponse(address), nil
 }
 
-func (c *AddressUseCase) GetAll(user *model.UserResponse)(*[]model.AddressResponse, error) {
+func (c *AddressUseCase) GetAll(user *model.UserResponse) (*[]model.AddressResponse, error) {
 	return converter.AddressesToResponse(&user.Addresses), nil
 }
 
@@ -119,7 +120,8 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	newAddress.Regency = request.Regency
 	newAddress.SubDistrict = request.Subdistrict
 	newAddress.CompleteAddress = request.CompleteAddress
-	newAddress.GoogleMapLink = request.GoogleMapLink
+	newAddress.Longitude = request.Longitude
+	newAddress.Latitude = request.Latitude
 	newAddress.IsMain = request.IsMain
 
 	if err := c.AddressRepository.Update(tx, newAddress); err != nil {

@@ -4,20 +4,19 @@ import "time"
 
 // token is a struct that represents a token entity in database table
 type Application struct {
-	ID            uint64      `gorm:"primary_key;column:id;autoIncrement"`
-	AppName       string      `gorm:"column:app_name"`
-	OpeningHours  string   `gorm:"column:opening_hours"`
-	ClosingHours  string   `gorm:"column:closing_hours"`
-	Address       string      `gorm:"column:address"`
-	Longitude     string      `gorm:"column:longitude"`
-	Latitude      string      `gorm:"column:latitude"`
-	GoogleMapLink string      `gorm:"column:google_map_link"`
-	Description   string      `gorm:"column:description"`
-	PhoneNumber   string      `gorm:"column:phone_number"`
-	Email         string      `gorm:"column:email"`
-	SocialMedia   SocialMedia `gorm:"embedded"`
-	Created_At    time.Time   `gorm:"column:created_at;autoCreateTime;<-:create"`
-	Updated_At    time.Time   `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	ID           uint64      `gorm:"primary_key;column:id;autoIncrement"`
+	AppName      string      `gorm:"column:app_name"`
+	OpeningHours string      `gorm:"column:opening_hours"`
+	ClosingHours string      `gorm:"column:closing_hours"`
+	Address      string      `gorm:"column:address"`
+	Longitude    float64     `gorm:"column:longitude"`
+	Latitude     float64     `gorm:"column:latitude"`
+	Description  string      `gorm:"column:description"`
+	PhoneNumber  string      `gorm:"column:phone_number"`
+	Email        string      `gorm:"column:email"`
+	SocialMedia  SocialMedia `gorm:"embedded"`
+	Created_At   time.Time   `gorm:"column:created_at;autoCreateTime;<-:create"`
+	Updated_At   time.Time   `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }
 
 func (u *Application) TableName() string {

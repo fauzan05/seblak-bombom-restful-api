@@ -38,7 +38,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	for _, address := range auth.Addresses {
 		if address.IsMain {
 			orderRequest.CompleteAddress = address.CompleteAddress
-			orderRequest.GoogleMapLink = address.GoogleMapLink
+			// orderRequest.GoogleMapLink = address.Coordinate
 			break
 		}
 	}

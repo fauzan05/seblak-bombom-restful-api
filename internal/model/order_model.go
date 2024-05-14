@@ -23,7 +23,8 @@ type OrderResponse struct {
 	IsDelivery        bool                      `json:"delivery,omitempty"`
 	DeliveryCost      string                    `json:"delivery_cost,omitempty"`
 	CompleteAddress   string                    `json:"complete_address,omitempty"`
-	GoogleMapLink     string                    `json:"google_map_link,omitempty"`
+	Longitude         float64                   `json:"longitude,omitempty"`
+	Latitude          float64                   `json:"latitude,omitempty"`
 	Distance          float32                   `json:"distance,omitempty"`
 	MidtransSnapOrder MidtransSnapOrderResponse `json:"midtrans_snap_order,omitempty"`
 	CreatedAt         string                    `json:"created_at,omitempty"`
@@ -40,7 +41,8 @@ type CreateOrderRequest struct {
 	PaymentMethod   helper.PaymentMethod        `json:"payment_method" validate:"required"`
 	IsDelivery      bool                        `json:"is_delivery"`
 	CompleteAddress string                      `json:"complete_address" validate:"required"`
-	GoogleMapLink   string                      `json:"google_map_link" validate:"required"`
+	Longitude       float64                     `json:"longitude" validate:"required"`
+	Latitude        float64                     `json:"latitude" validate:"required"`
 	Distance        float32                     `json:"distance" validate:"required"`
 	OrderProducts   []CreateOrderProductRequest `json:"order_products" validate:"required"`
 }

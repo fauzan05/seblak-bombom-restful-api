@@ -59,7 +59,6 @@ func (c *ApplicationUseCase) Add(ctx context.Context, request *model.CreateAppli
 		newApplication.Address = request.Address
 		newApplication.Longitude = request.Longitude
 		newApplication.Latitude = request.Latitude
-		newApplication.GoogleMapLink = request.GoogleMapLink
 		newApplication.Description = request.Description
 		newApplication.PhoneNumber = request.PhoneNumber
 		newApplication.Email = request.Email
@@ -118,7 +117,6 @@ func (c *ApplicationUseCase) Edit(ctx context.Context, request *model.UpdateAppl
 		newApplication.Address = request.Address
 		newApplication.Longitude = request.Longitude
 		newApplication.Latitude = request.Latitude
-		newApplication.GoogleMapLink = request.GoogleMapLink
 		newApplication.Description = request.Description
 		newApplication.PhoneNumber = request.PhoneNumber
 		newApplication.Email = request.Email

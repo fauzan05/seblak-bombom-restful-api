@@ -23,7 +23,8 @@ type Order struct {
 	IsDelivery        bool                  `gorm:"column:is_delivery"`
 	DeliveryCost      float32               `gorm:"column:delivery_cost"`
 	CompleteAddress   string                `gorm:"column:complete_address"`
-	GoogleMapLink     string                `gorm:"column:google_map_link"`
+	Longitude         float64               `gorm:"column:longitude"`
+	Latitude          float64               `gorm:"column:latitude"`
 	Distance          float32               `gorm:"column:distance"`
 	Created_At        time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
 	Updated_At        time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
