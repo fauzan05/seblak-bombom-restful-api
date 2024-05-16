@@ -14,7 +14,6 @@ func CartToResponse(cart *entity.Cart) *model.CartResponse {
 		Quantity:   cart.Quantity,
 		Price:      cart.Price,
 		TotalPrice: cart.TotalPrice,
-		Stock:      cart.Stock,
 		CreatedAt:  cart.Created_At.Format("2006-01-02 15:04:05"),
 		UpdatedAt:  cart.Updated_At.Format("2006-01-02 15:04:05"),
 	}

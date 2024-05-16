@@ -8,7 +8,6 @@ type CartResponse struct {
 	Quantity   int     `json:"quantity,omitempty"`
 	Price      float32 `json:"price,omitempty"`
 	TotalPrice float32 `json:"total_price,omitempty"`
-	Stock      int     `json:"stock,omitempty"`
 	CreatedAt  string  `json:"created_at,omitempty"`
 	UpdatedAt  string  `json:"updated_at,omitempty"`
 }

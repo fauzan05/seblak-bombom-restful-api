@@ -79,11 +79,13 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			return nil, fiber.ErrNotFound
 		}
 
-		min := newProduct.Stock - orderProductRequest.Quantity
-		if min < 0 {
+		// pastikan permintaan tidak melebihi stok produk yang terkini
+		newProduct.Stock -= orderProductRequest.Quantity
+		if newProduct.Stock < 0 {
 			c.Log.Warnf("Quantity order of product is out of limit : %+v", err)
 			return nil, fiber.ErrInternalServerError
 		}
+		// setelah dipastikan tidak melebihi stok produk yang terkini, kurangi stok produk terkini
 		if err := c.ProductRepository.Update(tx, newProduct); err != nil {
 			c.Log.Warnf("Failed to update stock of product : %+v", err)
 			return nil, fiber.ErrInternalServerError
@@ -251,7 +253,13 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 	newOrder := new(entity.Order)
 	newOrder.ID = request.ID
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
-		c.Log.Warnf("Failed to find order by id : %+v", err)
+		c.Log.Warnf("Failed to find order by id into database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	// cari apakah order by id itu ada di database
+	if newOrder.Invoice == "" {
+		c.Log.Warnf("Failed to find order by id (order not found) : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
@@ -262,7 +270,7 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 	}
 
 	// jika ingin mengubah status menjadi gagal atau terbayar
-	if request.PaymentStatus == helper.FAILED_PAYMENT || request.PaymentStatus == helper.PAID_PAYMENT{
+	if request.PaymentStatus == helper.FAILED_PAYMENT {
 		for _, orderProduct := range newOrder.OrderProducts {
 			newProduct := new(entity.Product)
 			newProduct.ID = orderProduct.ProductId
@@ -270,7 +278,7 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 			if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
 				c.Log.Warnf("Failed to find product by id : %+v", err)
 				return nil, fiber.ErrInternalServerError
-			} 
+			}
 			// tambahkan/kembalikan quantitas produk karena transaksinya gagal
 			newProduct.Stock += orderProduct.Quantity
 			// perbarui stok barang sekarang
@@ -284,7 +292,7 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 	newOrder.PaymentStatus = request.PaymentStatus
 	newOrder.DeliveryStatus = request.DeliveryStatus
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
-		c.Log.Warnf("Failed to update request body : %+v", err)
+		c.Log.Warnf("Failed to update status order by id : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
 

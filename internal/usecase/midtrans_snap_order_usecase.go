@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
@@ -26,15 +25,18 @@ type MidtransSnapOrderUseCase struct {
 	SnapClient                  *snap.Client
 	CoreAPIClient               *coreapi.Client
 	OrderRepository             *repository.OrderRepository
+	ProductRepository           *repository.ProductRepository
 	MidtransSnapOrderRepository *repository.MidtransSnapOrderRepository
 }
 
 func NewMidtransSnapOrderUseCase(log *logrus.Logger, validate *validator.Validate, orderRepository *repository.OrderRepository,
-	snapClient *snap.Client, coreAPIClient *coreapi.Client, db *gorm.DB, midtransSnapOrderRepository *repository.MidtransSnapOrderRepository) *MidtransSnapOrderUseCase {
+	snapClient *snap.Client, coreAPIClient *coreapi.Client, db *gorm.DB, midtransSnapOrderRepository *repository.MidtransSnapOrderRepository,
+	productRepository *repository.ProductRepository) *MidtransSnapOrderUseCase {
 	return &MidtransSnapOrderUseCase{
 		Log:                         log,
 		Validate:                    validate,
 		OrderRepository:             orderRepository,
+		ProductRepository:           productRepository,
 		SnapClient:                  snapClient,
 		CoreAPIClient:               coreAPIClient,
 		DB:                          db,
@@ -153,7 +155,7 @@ func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMi
 
 	selectedOrder := new(entity.Order)
 	selectedOrder.ID = request.OrderId
-	if err := c.OrderRepository.FindById(tx, selectedOrder); err != nil {
+	if err := c.OrderRepository.FindWithPreloads(tx, selectedOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("Failed to find order by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -161,7 +163,6 @@ func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMi
 	// untuk mengecek notifikasi harus menggunakan core api
 	newCoreAPIClient := coreapi.Client{}
 	newCoreAPIClient.New(c.CoreAPIClient.ServerKey, c.CoreAPIClient.Env)
-	fmt.Println("DISINI TIDAK ERROR")
 	orderIdIntConversion := int(request.OrderId)
 	orderIdStringConversion := strconv.Itoa(orderIdIntConversion)
 	transactionStatusResponse, e := newCoreAPIClient.CheckTransaction(orderIdStringConversion)
@@ -205,6 +206,22 @@ func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMi
 				}
 			} else if transactionStatusResponse.TransactionStatus == "cancel" || transactionStatusResponse.TransactionStatus == "expire" {
 				// TODO set transaction status on your databaase to 'failure'
+				for _, orderProduct := range selectedOrder.OrderProducts {
+					newProduct := new(entity.Product)
+					newProduct.ID = orderProduct.ProductId
+					// mencari data terkini dari produk dengan id
+					if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
+						c.Log.Warnf("Failed to find product by id : %+v", err)
+						return nil, fiber.ErrInternalServerError
+					}
+					// tambahkan/kembalikan stok produk karena transaksinya gagal
+					newProduct.Stock += orderProduct.Quantity
+					// perbarui stok barang sekarang
+					if err := c.ProductRepository.Update(tx, newProduct); err != nil {
+						c.Log.Warnf("Failed to update product stock : %+v", err)
+						return nil, fiber.ErrInternalServerError
+					}
+				}
 				selectedOrder.PaymentStatus = helper.FAILED_PAYMENT
 				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
 					c.Log.Warnf("Failed to update status failed order by id : %+v", err)
