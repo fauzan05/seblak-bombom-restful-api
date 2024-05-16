@@ -42,6 +42,7 @@ func Bootstrap(config *BootstrapConfig) {
 	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
 	applicationRepository := repository.NewApplicationRepository(config.Log)
 	cartRepository := repository.NewCartRepository(config.Log)
+	cartItemRepository := repository.NewCartItemRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
@@ -55,7 +56,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
 	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository, productRepository)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
-	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository)
+	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository, cartItemRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)

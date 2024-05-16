@@ -109,6 +109,10 @@ func (r *Repository[T]) FindWithPreloads(db *gorm.DB, entity *T, preload string)
 	return db.Preload(preload).Find(&entity).Error
 }
 
+func (r *Repository[T]) FindCurrentUserCartWithPreloads(db *gorm.DB, entity *T, preload string, userId uint64) error {
+	return db.Where("user_id = ?", userId).Preload(preload).Find(&entity).Error
+}
+
 func (r *Repository[T]) FindWith2Preloads(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
 	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
 }
@@ -147,16 +151,10 @@ func (r *Repository[T]) FindMidtransSnapOrderByOrderId(db *gorm.DB, entity *T, o
 	return db.Where("order_id = ?", orderId).Find(&entity).Error
 }
 
-func (r *Repository[T]) FindCartDuplicate(db *gorm.DB, entity *T, userId uint64, productId uint64) (int64, error) {
-	var count int64
-	err := db.Model(&entity).Where("user_id = ? AND product_id = ?", userId, productId).Count(&count).Error
-	if err != nil {
-		return count, err
-	}
+func (r *Repository[T]) FindCartByUserId(db *gorm.DB, entity *T, userId uint64) error {
+	return db.Where("user_id = ?", userId).Find(entity).Error
+}
 
-	err = db.Where("user_id = ? AND product_id = ?", userId, productId).Find(entity).Error
-	if err != nil {
-		return count, err
-	}
-	return count, nil
+func (r *Repository[T]) FindAllProductByCartItem(db *gorm.DB, entity *[]T, userId uint64) error {
+	return db.Where("user_id = ?", userId).Preload("Product").Find(entity).Error
 }

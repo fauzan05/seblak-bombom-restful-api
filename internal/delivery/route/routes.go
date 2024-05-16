@@ -85,6 +85,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Cart
 	api.Post("/carts", c.CartController.Create)
+	api.Get("/carts", c.CartController.GetAllCurrent)
 
 	// order
 	auth.Patch("/orders/:orderId", c.OrderController.Update)

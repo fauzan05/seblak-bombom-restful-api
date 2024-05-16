@@ -13,6 +13,7 @@ select * from products;
 select * from images;
 select * from categories;
 select * from carts;
+select * from cart_items;
 select * from orders;
 select * from order_products;
 select * from midtrans_snap_orders;

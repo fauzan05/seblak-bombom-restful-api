@@ -15,6 +15,7 @@ type Product struct {
 	Category    *Category       `gorm:"foreignKey:category_id;references:id"`
 	Images      []Image         `gorm:"foreignKey:product_id;references:id"`
 	Reviews     []ProductReview `gorm:"foreignKey:product_id;references:id"`
+	CartItems   []CartItem      `gorm:"foreignKey:product_id;references:id"`
 }
 
 func (p *Product) TableName() string {

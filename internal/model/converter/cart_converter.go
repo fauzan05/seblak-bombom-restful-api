@@ -6,17 +6,18 @@ import (
 )
 
 func CartToResponse(cart *entity.Cart) *model.CartResponse {
-	return &model.CartResponse{
-		ID:         cart.ID,
-		UserID:     cart.UserID,
-		ProductID:  cart.ProductID,
-		Name:       cart.Name,
-		Quantity:   cart.Quantity,
-		Price:      cart.Price,
-		TotalPrice: cart.TotalPrice,
-		CreatedAt:  cart.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt:  cart.Updated_At.Format("2006-01-02 15:04:05"),
+	response := &model.CartResponse{
+		ID:        cart.ID,
+		UserID:    cart.UserID,
+		CreatedAt: cart.Created_At.Format("2006-01-02 15:04:05"),
+		UpdatedAt: cart.Updated_At.Format("2006-01-02 15:04:05"),
 	}
+
+	if cart.CartItems != nil {
+		response.CartItems = *CartItemsToResponse(&cart.CartItems)
+	}
+
+	return response
 }
 
 func CartsToResponse(carts *[]entity.Cart) *[]model.CartResponse {

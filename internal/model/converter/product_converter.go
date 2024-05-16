@@ -6,6 +6,10 @@ import (
 )
 
 func ProductToResponse(product *entity.Product) *model.ProductResponse {
+	if product == nil {
+		return &model.ProductResponse{
+		}
+	}
 	response := &model.ProductResponse{
 		ID:          product.ID,
 		Name:        product.Name,

@@ -173,3 +173,15 @@ func TestFindOrderWithOrderProducts(t *testing.T) {
 
 	fmt.Println(products)
 }
+
+func TestFindCurrentCartWithProducts(t *testing.T) {
+	newCart := new(entity.Cart)
+
+	if err := db.SetupJoinTable(&entity.Cart{}, "CartItems", &entity.CartItem{}); err != nil {
+		panic(err)
+	}
+
+	for _, newCart := range newCart.CartItems {
+		fmt.Println("DATANYA : ", newCart)
+	}
+}

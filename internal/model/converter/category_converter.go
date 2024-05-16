@@ -17,7 +17,7 @@ func CategoryToResponse(category *entity.Category) *model.CategoryResponse {
 
 func CategoriesToResponse(categories *[]entity.Category) *[]model.CategoryResponse {
 	getCategories := make([]model.CategoryResponse, len(*categories))
-	for i , category := range *categories {
+	for i, category := range *categories {
 		getCategories[i] = *CategoryToResponse(&category)
 	}
 	return &getCategories

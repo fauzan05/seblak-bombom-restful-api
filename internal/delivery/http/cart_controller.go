@@ -22,7 +22,6 @@ func NewCartController(useCase *usecase.CartUseCase, logger *logrus.Logger) *Car
 }
 
 func (c *CartController) Create(ctx *fiber.Ctx) error {
-
 	request := new(model.CreateCartRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
@@ -40,6 +39,24 @@ func (c *CartController) Create(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.CartResponse]{
 		Code:   201,
 		Status: "Success to add product into cart",
+		Data:   response,
+	})
+}
+
+func (c *CartController) GetAllCurrent(ctx *fiber.Ctx) error {
+	request := new(model.GetAllCartByCurrentUserRequest)
+	auth := middleware.GetCurrentUser(ctx)
+	request.UserID = auth.ID
+
+	response, err := c.UseCase.GetAllByCurrentUser(ctx.Context(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to get products from cart : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.CartResponse]{
+		Code:   200,
+		Status: "Success to get all product from cart",
 		Data:   response,
 	})
 }
