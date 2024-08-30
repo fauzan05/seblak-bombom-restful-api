@@ -6,15 +6,16 @@ networks:
     driver: bridge
 
 services:
-  mariadb:
+  mysql:
+    image: mysql:5.7
     container_name: seblak-bombom-db
-    image: mariadb:latest
+    restart: unless-stopped
+    tty: true
     ports:
-      - "3306:3306"
+      - "3330:3306"
     environment:
-      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
-      MARIADB_DATABASE: seblak_bombom
-      TZ: "Asia/Jakarta"
+      MYSQL_DATABASE: seblak_bombom
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     networks:
       - seblak-bombom-net
   app:
@@ -27,7 +28,7 @@ services:
     environment:
       TZ: "Asia/Jakarta"
     ports:
-      - "8000:8000"
+      - "8010:8010"
     volumes:
       - ./:/app
     networks:

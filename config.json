@@ -6,7 +6,7 @@
     },
     "web" : {
         "prefork" : false,
-        "port" : 8000
+        "port" : 8010
     },
     "log" : {
         "level" : 6
@@ -19,7 +19,7 @@
             "host" : "localhost",
             "port" : 3306,
             "username" : "root",
-            "password" : "root",
+            "password" : "",
             "pool" : {
                 "idle" : 10,
                 "max" : 100,
@@ -28,10 +28,10 @@
         },
         "test" : {
             "type" : "mysql",
-            "name" : "seblak_bombom_test",
+            "name" : "seblak_bombom",
             "show_sql" : true,
             "host" : "localhost",
-            "port" : 3306,
+            "port" : 3330,
             "username" : "root",
             "password" : "",
             "pool" : {
@@ -45,7 +45,7 @@
             "name" : "seblak_bombom",
             "show_sql" : true,
             "host" : "host.docker.internal",
-            "port" : 3306,
+            "port" : 3330,
             "username" : "root",
             "password" : "",
             "pool" : {

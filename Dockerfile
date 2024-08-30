@@ -18,6 +18,6 @@ RUN go mod download
 RUN go get github.com/githubnemo/CompileDaemon
 RUN go install github.com/githubnemo/CompileDaemon
 
-EXPOSE 8000
+EXPOSE 8010
 
 ENTRYPOINT CompileDaemon -build="go build -o /build/app ./app/main.go" -command="/build/app"

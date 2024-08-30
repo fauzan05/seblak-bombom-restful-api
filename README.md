@@ -11,7 +11,7 @@ Starting from observing my friend's business, I then attempted to create an appl
 ## Tech Stack
 
 - Go version 1.22.0  : https://go.dev/
-- MariaDB version 10.4.28 : https://mariadb.org/
+- MySQL version 5.7 : https://mariadb.org/
 
 ## Frameworks & Libraries
 
