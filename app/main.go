@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"seblak-bombom-restful-api/internal/config"
 )
 
@@ -15,6 +16,14 @@ func main() {
 	coreAPIClient := config.NewMidtransSanboxCoreAPIClient(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
 	app := config.NewFiber(viperConfig)
+	
+	// cors setting
+	app.Use(cors.New(cors.Config{
+		AllowHeaders:     "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin",
+		AllowOrigins:     "http://localhost:9000",
+		AllowCredentials: true,
+		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:            db,

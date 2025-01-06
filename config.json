@@ -44,7 +44,7 @@
             "type" : "mysql",
             "name" : "seblak_bombom",
             "show_sql" : true,
-            "host" : "host.docker.internal",
+            "host" : "localhost",
             "port" : 3330,
             "username" : "root",
             "password" : "",
