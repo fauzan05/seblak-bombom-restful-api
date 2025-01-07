@@ -2,10 +2,16 @@ package usecase
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
+	"mime/multipart"
+	"path/filepath"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
+	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -19,20 +25,22 @@ type ProductUseCase struct {
 	Validate           *validator.Validate
 	CategoryRepository *repository.CategoryRepository
 	ProductRepository  *repository.ProductRepository
+	ImageRepository *repository.ImageRepository
 }
 
 func NewProductUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
-	categoryRepository *repository.CategoryRepository, productRepository *repository.ProductRepository) *ProductUseCase {
+	categoryRepository *repository.CategoryRepository, productRepository *repository.ProductRepository, imageRepository *repository.ImageRepository) *ProductUseCase {
 	return &ProductUseCase{
 		DB:                 db,
 		Log:                log,
 		Validate:           validate,
 		CategoryRepository: categoryRepository,
 		ProductRepository:  productRepository,
+		ImageRepository: imageRepository,
 	}
 }
 
-func (c *ProductUseCase) Add(ctx context.Context, request *model.CreateProductRequest) (*model.ProductResponse, error) {
+func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, request *model.CreateProductRequest, files []*multipart.FileHeader, positions []string) (*model.ProductResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -44,7 +52,7 @@ func (c *ProductUseCase) Add(ctx context.Context, request *model.CreateProductRe
 
 	if request.Stock < 0 {
 		c.Log.Warnf("Stock must be positive number : %+v", err)
-			return nil, fiber.ErrBadRequest
+		return nil, fiber.ErrBadRequest
 	}
 
 	newProduct := new(entity.Product)
@@ -56,12 +64,39 @@ func (c *ProductUseCase) Add(ctx context.Context, request *model.CreateProductRe
 
 	if err := c.ProductRepository.Create(tx, newProduct); err != nil {
 		c.Log.Warnf("Failed create product into database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to store data!")
 	}
 
 	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
 		c.Log.Warnf("Failed find product by id with preload from database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Couldn't find category because category not created yet! ")
+	}
+
+	newImages := make([]entity.Image, len(files))
+
+	for i, file := range files {
+		fmt.Printf("File #%d: %s with position %s\n", i+1, file.Filename, positions[i])
+		// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
+		hashedFilename := hashFileName(file.Filename)
+		var position, _ = strconv.Atoi(positions[i])
+		// Tambahkan data ke struct ImageAddRequest
+		newImages[i].ProductId = newProduct.ID
+		newImages[i].FileName = hashedFilename
+		newImages[i].Type = file.Header.Get("Content-Type")
+		newImages[i].Position = position
+
+		// Simpan file ke direktori uploads
+		err := fiberContext.SaveFile(file, fmt.Sprintf("../uploads/images/products/%s", hashedFilename))
+		if err != nil {
+			c.Log.Warnf("Failed to save file: %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
+		}
+	}
+
+	// Simpan gambar ke database
+	if err := c.ImageRepository.CreateInBatch(tx, &newImages); err != nil {
+		c.Log.Warnf("Failed to save file data into database: %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -72,9 +107,7 @@ func (c *ProductUseCase) Add(ctx context.Context, request *model.CreateProductRe
 }
 
 func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductRequest) (*model.ProductResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
-
+	// Validasi request
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
@@ -83,18 +116,17 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ID
-	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
+
+	// Mengambil data produk
+	if err := c.ProductRepository.FindWith2Preloads(c.DB.WithContext(ctx), newProduct, "Category", "Images"); err != nil {
 		c.Log.Warnf("Failed get product from database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
+	// Mengembalikan response produk
 	return converter.ProductToResponse(newProduct), nil
 }
+
 
 func (c *ProductUseCase) GetAll(ctx context.Context) (*[]model.ProductResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
@@ -173,4 +205,11 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 	}
 
 	return true, nil
+}
+
+// Fungsi untuk membuat hash dari nama file
+func hashFileName(originalName string) string {
+	timestamp := time.Now().UnixNano()
+	hash := sha256.Sum256([]byte(fmt.Sprintf("%d-%s", timestamp, originalName)))
+	return fmt.Sprintf("%x", hash[:8]) + filepath.Ext(originalName) // Menggunakan 8 karakter pertama hash
 }

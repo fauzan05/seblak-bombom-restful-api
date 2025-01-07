@@ -1,6 +1,7 @@
 package http
 
 import (
+	"os"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -22,13 +23,30 @@ func NewProductController(useCase *usecase.ProductUseCase, logger *logrus.Logger
 }
 
 func (c *ProductController) Create(ctx *fiber.Ctx) error {
-	request := new(model.CreateProductRequest)
-	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Cannot parse data : %+v", err)
+	// Buat direktori uploads jika belum ada
+	if _, err := os.Stat("../uploads/images/products/"); os.IsNotExist(err) {
+		os.MkdirAll("../uploads/images/products/", os.ModePerm)
+	}
+
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		c.Log.Warnf("Cannot parse multipart form data: %+v", err)
 		return err
 	}
 
-	response, err := c.UseCase.Add(ctx.Context(), request)
+	request := new(model.CreateProductRequest)
+	categoryID, _ := strconv.ParseUint(form.Value["category_id"][0], 10, 64)
+	request.CategoryId = categoryID
+	request.Name = form.Value["name"][0]
+	request.Description = form.Value["description"][0]
+	parsePrice64, _ := strconv.ParseFloat(form.Value["price"][0], 64)
+	request.Price = float32(parsePrice64)
+	request.Stock, _ = strconv.Atoi(form.Value["stock"][0])
+
+	files := form.File["images"]
+	positions := form.Value["positions"]
+
+	response, err := c.UseCase.Add(ctx.Context(), ctx, request, files, positions)
 	if err != nil {
 		c.Log.Warnf("Failed to create new product : %+v", err)
 		return err

@@ -1,6 +1,8 @@
 package route
 
 import (
+	"fmt"
+	"os"
 	"seblak-bombom-restful-api/internal/delivery/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -51,6 +53,23 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 	// Midtrans
 	api.Get("/midtrans/snap/orders/notification", c.MidtransSnapOrderController.GetSnapOrderNotification)
+
+	// Images
+	uploadsDir := "../uploads/images/products/"
+	api.Static("/uploads", uploadsDir)
+	api.Get("/image/:filename", func (c *fiber.Ctx) error  {
+		filename := c.Params("filename")
+		filepath := fmt.Sprintf("%s/%s", uploadsDir, filename)
+
+		// Mengecek apakah file ada di direktori uploads
+		if _, err := os.Stat(filepath); os.IsNotExist(err) {
+			// Jika file tidak ditemukan, kembalikan error 404
+			return c.Status(fiber.StatusNotFound).SendString("File not found")
+		}
+
+		// Kirimkan gambar jika ditemukan
+		return c.SendFile(filepath)
+	})
 }
 
 // USER
