@@ -2,3 +2,4 @@
 .zed:settings.json
 .zed/
 *.log
+application.log
