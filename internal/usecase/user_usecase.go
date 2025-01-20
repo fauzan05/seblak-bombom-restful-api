@@ -106,25 +106,12 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequst)
 	var token = &entity.Token{}
 	now := time.Now()
 	oneHours := now.Add(24 * time.Hour)
-	findToken := c.TokenRepository.FindTokenByUserId(c.DB, token, int(user.ID))
-	// panic(findToken)
-	if findToken != nil {
-		// jika token tidak ada, maka buat baru
-		token.Token = uuid.New().String()
-		token.UserId = user.ID
-		token.ExpiryDate = oneHours
-		if err := c.TokenRepository.Create(tx, token); err != nil {
-			c.Log.Warnf("Cannot generate tokennya : %+v", err)
-			return nil, fiber.ErrInternalServerError
-		}
-	} else {
-		// jika ada maka perbarui expired date-nya saja
-		token.Token = uuid.New().String()
-		token.ExpiryDate = oneHours
-		if err := c.TokenRepository.Update(tx, token); err != nil {
-			c.Log.Warnf("Cannot generate token : %+v", err)
-			return nil, fiber.ErrInternalServerError
-		}
+	token.Token = uuid.New().String()
+	token.UserId = user.ID
+	token.ExpiryDate = oneHours
+	if err := c.TokenRepository.Create(tx, token); err != nil {
+		c.Log.Warnf("Cannot generate tokennya : %+v", err)
+		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
