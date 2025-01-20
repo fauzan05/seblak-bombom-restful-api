@@ -279,11 +279,11 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 
 		// Hapus file gambar
 		for _, currentImage := range *currentImages {
-			err = os.Remove(filePath + currentImage.FileName)
-			if err != nil {
-				fmt.Printf("Error deleting file: %v\n", err)
-				return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete product images in directory!")
-			}
+			_ = os.Remove(filePath + currentImage.FileName)
+			// if err != nil {
+			// 	fmt.Printf("Error deleting file: %v\n", err)
+			// 	return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete product images in directory!")
+			// }
 		}
 	}
 
