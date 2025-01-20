@@ -72,8 +72,6 @@ func (c *ImageUseCase) Update(ctx context.Context, request *model.UpdateImagesRe
 	newImages := make([]entity.Image, len(request.Images))
 	for i, image := range request.Images {
 		newImages[i].ID = image.ID
-		newImages[i].ProductId = image.ProductId
-		newImages[i].FileName = image.FileName
 		newImages[i].Position = image.Position
 	}
 

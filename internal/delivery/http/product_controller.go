@@ -5,6 +5,7 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -83,7 +84,21 @@ func (c *ProductController) Get(ctx *fiber.Ctx) error {
 }
 
 func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
-	response, err := c.UseCase.GetAll(ctx.Context())
+	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
+	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'per_page' parameter")
+		return err
+	}
+
+	// Ambil query parameter 'page' dengan default value 1 jika tidak disediakan
+	page, err := strconv.Atoi(ctx.Query("page", "1"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'page' parameter")
+		return err
+	}
+	
+	response, err := c.UseCase.GetAll(ctx.Context(), page, perPage)
 	if err != nil {
 		c.Log.Warnf("Failed to find all products : %+v", err)
 		return err
@@ -97,21 +112,58 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 }
 
 func (c *ProductController) Edit(ctx *fiber.Ctx) error {
-	getId := ctx.Params("productId")
-	productId, err := strconv.Atoi(getId)
+	// Buat direktori uploads jika belum ada
+	if _, err := os.Stat("../uploads/images/products/"); os.IsNotExist(err) {
+		os.MkdirAll("../uploads/images/products/", os.ModePerm)
+	}
+
+	form, err := ctx.MultipartForm()
 	if err != nil {
-		c.Log.Warnf("Failed to convert product id : %+v", err)
+		c.Log.Warnf("Cannot parse multipart form data: %+v", err)
 		return err
 	}
 
-	productRequest := new(model.UpdateProductRequest)
-	if err := ctx.BodyParser(productRequest); err != nil {
-		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
-	}
-	productRequest.ID = uint64(productId)
+	request := new(model.UpdateProductRequest)
+	getProductId, _ := strconv.ParseUint(ctx.Params("productId"), 10, 64)
+	request.ID = getProductId
+	categoryID, _ := strconv.ParseUint(form.Value["category_id"][0], 10, 64)
+	request.CategoryId = categoryID
+	request.Name = form.Value["name"][0]
+	request.Description = form.Value["description"][0]
+	parsePrice64, _ := strconv.ParseFloat(form.Value["price"][0], 64)
+	request.Price = float32(parsePrice64)
+	request.Stock, _ = strconv.Atoi(form.Value["stock"][0])
 
-	response, err := c.UseCase.Update(ctx.Context(), productRequest)
+	// Inisialisasi NEW IMAGES
+	newImageFiles := form.File["new_images"]
+	newImagePositions := form.Value["new_positions"]
+
+	// Inisialisasi CURRENT IMAGES
+	updateImagesRequest := model.UpdateImagesRequest{}
+	for i, imageId := range form.Value["current_images"] {
+		imageId, _ := strconv.ParseUint(imageId, 10, 64)
+		currentPosition, _ := strconv.Atoi(form.Value["current_positions"][i])
+		currentImage := model.ImageUpdateRequest{
+			ID:       imageId,
+			Position: currentPosition,
+		}
+		updateImagesRequest.Images = append(updateImagesRequest.Images, currentImage)
+	}
+
+	// Inisialisasi DELETED IMAGES
+	deleteImagesRequest := model.DeleteImagesRequest{}
+	if len(form.Value["images_deleted"]) > 0 {
+		imagesDeleted := strings.Split(form.Value["images_deleted"][0], ",")
+		for _, imageId := range imagesDeleted {
+			imageId, _ := strconv.ParseUint(imageId, 10, 64)
+			deleteImage := model.DeleteImageRequest{
+				ID: imageId,
+			}
+			deleteImagesRequest.Images = append(deleteImagesRequest.Images, deleteImage)
+		}
+	}
+
+	response, err := c.UseCase.Update(ctx.Context(), ctx, request, newImageFiles, newImagePositions, updateImagesRequest, deleteImagesRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to update product by id : %+v", err)
 		return err
@@ -136,7 +188,7 @@ func (c *ProductController) Remove(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Delete(ctx.Context(), productRequest)
 	if err != nil {
-		c.Log.Warnf("Failed to delete product by id : %+v", err)
+		c.Log.Warnf("%+v", err)
 		return err
 	}
 

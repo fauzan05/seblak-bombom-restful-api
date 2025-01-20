@@ -33,7 +33,7 @@ func (r *Repository[T]) FindFirst(db *gorm.DB, entity *T) error {
 func (r *Repository[T]) FindCount(db *gorm.DB, entity *T) (int64, error) {
 	var count int64
 	err := db.Model(&entity).Count(&count).Error
-	return count, err 
+	return count, err
 }
 
 func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string) error {
@@ -48,6 +48,10 @@ func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string)
 
 func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 	return db.Delete(&entity).Error
+}
+
+func (r *Repository[T]) DeleteByProductId(db *gorm.DB, entity *T, productId uint64) error {
+	return db.Where("product_id = ?", productId).Delete(&entity).Error
 }
 
 func (r *Repository[T]) FindById(db *gorm.DB, entity *T) error {
@@ -80,6 +84,10 @@ func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string, req
 
 func (r *Repository[T]) FindUserById(db *gorm.DB, entity *T, userId uint64) error {
 	return db.Where("id = ?", userId).Preload("Token").Preload("Addresses").Find(&entity).Error
+}
+
+func (r *Repository[T]) FindImageByProductId(db *gorm.DB, entities *[]T, productId uint64) error {
+	return db.Where("product_id = ?", productId).Find(&entities).Error
 }
 
 func (r *Repository[T]) FindUserByIdWithAddress(db *gorm.DB, entity *T, userId uint64) error {
@@ -121,8 +129,9 @@ func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) 
 	return db.Joins(join).Find(&entity).Error
 }
 
-func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 string, preload2 string) error {
-	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 string, preload2 string, page int, pageSize int) error {
+	offset := (page - 1) * pageSize
+	return db.Preload(preload1).Order("id desc").Preload(preload2, func(db *gorm.DB) *gorm.DB { return db.Order("position ASC") }).Offset(offset).Limit(pageSize).Find(&entity).Error
 }
 
 func (r *Repository[T]) CountDiscountByCode(db *gorm.DB, entity *T, discountCode string) (int64, error) {
@@ -136,7 +145,7 @@ func (r *Repository[T]) CountDiscountByCode(db *gorm.DB, entity *T, discountCode
 
 func (r *Repository[T]) CountDiscountByCodeIsExist(db *gorm.DB, entity *T, currentCode string, requestCode string) (int64, error) {
 	var count int64
-	err := db.Where("code = ? AND code != ?",requestCode, currentCode ).Find(&entity).Count(&count).Error
+	err := db.Where("code = ? AND code != ?", requestCode, currentCode).Find(&entity).Count(&count).Error
 	if err != nil {
 		return int64(0), err
 	}

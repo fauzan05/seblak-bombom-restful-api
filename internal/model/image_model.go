@@ -27,9 +27,11 @@ type UpdateImagesRequest struct {
 
 type ImageUpdateRequest struct {
 	ID        uint64 `json:"id" validate:"required"`
-	ProductId uint64 `json:"product_id" validate:"required"`
-	FileName  string `json:"file_name" validate:"required,max=100"`
 	Position  int    `json:"position" validate:"required"`
+}
+
+type DeleteImagesRequest struct {
+	Images []DeleteImageRequest `json:"-"`
 }
 
 type DeleteImageRequest struct {
