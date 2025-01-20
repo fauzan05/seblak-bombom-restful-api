@@ -35,5 +35,5 @@ type UpdateProductRequest struct {
 }
 
 type DeleteProductRequest struct {
-	ID uint64 `json:"-" validate:"required"`
+	IDs []uint64 `json:"-" validate:"required"`
 }

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"os"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -97,7 +98,7 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Invalid 'page' parameter")
 		return err
 	}
-	
+
 	response, err := c.UseCase.GetAll(ctx.Context(), page, perPage)
 	if err != nil {
 		c.Log.Warnf("Failed to find all products : %+v", err)
@@ -177,14 +178,33 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 }
 
 func (c *ProductController) Remove(ctx *fiber.Ctx) error {
-	getId := ctx.Params("productId")
-	productId, err := strconv.Atoi(getId)
-	if err != nil {
-		c.Log.Warnf("Failed to convert product id : %+v", err)
-		return err
+	idsParam := ctx.Query("ids")
+	if idsParam == "" {
+		ctx.Status(fiber.StatusBadRequest)
+		return ctx.JSON(fiber.Map{
+			"error": "Parameter 'ids' is required",
+		})
 	}
+
+	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
+	idStrings := strings.Split(idsParam, ",")
+	var productIds []uint64
+
+	// Konversi setiap elemen menjadi integer
+	for _, idStr := range idStrings {
+		if (idStr != "") {
+			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
+			if err != nil {
+				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": fmt.Sprintf("Invalid ID: %s", idStr),
+				})
+			}
+			productIds = append(productIds, id)
+		}
+	}
+
 	productRequest := new(model.DeleteProductRequest)
-	productRequest.ID = uint64(productId)
+	productRequest.IDs = productIds
 
 	response, err := c.UseCase.Delete(ctx.Context(), productRequest)
 	if err != nil {
@@ -194,7 +214,7 @@ func (c *ProductController) Remove(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,
-		Status: "Success to delete an product by id",
+		Status: "Success to delete products by ids",
 		Data:   response,
 	})
 }

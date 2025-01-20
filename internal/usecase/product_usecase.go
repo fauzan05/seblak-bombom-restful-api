@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"mime/multipart"
+	"os"
 	"path/filepath"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
@@ -135,7 +136,7 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int) (*[]
 	if page <= 0 {
 		page = 1
 	}
-	
+
 	newProducts := new([]entity.Product)
 	if err := c.ProductRepository.FindAllWith2Preloads(tx, newProducts, "Category", "Images", page, perPage); err != nil {
 		c.Log.Warnf("Failed get all products from database : %+v", err)
@@ -260,23 +261,47 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 		return false, fiber.ErrBadRequest
 	}
 
-	currentImage := new([]entity.Image)
-	if err := c.ImageRepository.FindImageByProductId(tx, currentImage, request.ID); err != nil {
+	currentImages := new([]entity.Image)
+	if err := c.ImageRepository.FindImagesByProductIds(tx, currentImages, request.IDs); err != nil {
 		c.Log.Warnf("Failed find product images by product id : %+v", err)
 		return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to find product images!")
 	}
 
-	newProduct := new(entity.Product)
-	newProduct.ID = request.ID
-	if err := c.ProductRepository.Delete(tx, newProduct); err != nil {
-		c.Log.Warnf("Failed delete product by id : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete products!")
+	// Mengecek apakah gambar kosong atau nil
+	if len(*currentImages) != 0 {
+		// hapus semua gambar di database
+		if err := c.ImageRepository.DeleteInBatch(tx, currentImages); err != nil {
+			c.Log.Warnf("Failed to delete product images in database : %+v", err)
+			return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete product images in database!")
+		}
+
+		filePath := "../uploads/images/products"
+
+		// Hapus file gambar
+		for _, currentImage := range *currentImages {
+			err = os.Remove(filePath + currentImage.FileName)
+			if err != nil {
+				fmt.Printf("Error deleting file: %v\n", err)
+				return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete product images in directory!")
+			}
+		}
 	}
 
-	newImage := new(entity.Image)
-	if err := c.ImageRepository.DeleteByProductId(tx, newImage, request.ID); err != nil {
-		c.Log.Warnf("Failed to delete image file data from database: %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete products image!")
+	// hapus semua produk
+	newProducts := []entity.Product{}
+
+	for _, idProduct := range request.IDs {
+		newProduct := entity.Product{
+			ID: idProduct,
+		}
+
+		newProducts = append(newProducts, newProduct)
+	}
+
+	// hapus produk di database
+	if err := c.ProductRepository.DeleteInBatch(tx, &newProducts); err != nil {
+		c.Log.Warnf("Failed delete in batch product by id : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete in batch products!")
 	}
 
 	if err := tx.Commit().Error; err != nil {

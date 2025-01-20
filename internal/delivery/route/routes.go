@@ -123,7 +123,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	// Product
 	auth.Post("/products", c.ProductController.Create)
 	auth.Put("/products/:productId", c.ProductController.Edit)
-	auth.Delete("/products/:productId", c.ProductController.Remove)
+	auth.Delete("/products", c.ProductController.Remove)
 
 	// image
 	auth.Post("/images", c.ImageController.Creates)

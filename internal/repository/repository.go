@@ -50,6 +50,10 @@ func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 	return db.Delete(&entity).Error
 }
 
+func (r *Repository[T]) DeleteInBatch(db *gorm.DB, entity *[]T) error {
+	return db.Delete(&entity).Error
+}
+
 func (r *Repository[T]) DeleteByProductId(db *gorm.DB, entity *T, productId uint64) error {
 	return db.Where("product_id = ?", productId).Delete(&entity).Error
 }
@@ -86,9 +90,10 @@ func (r *Repository[T]) FindUserById(db *gorm.DB, entity *T, userId uint64) erro
 	return db.Where("id = ?", userId).Preload("Token").Preload("Addresses").Find(&entity).Error
 }
 
-func (r *Repository[T]) FindImageByProductId(db *gorm.DB, entities *[]T, productId uint64) error {
-	return db.Where("product_id = ?", productId).Find(&entities).Error
+func (r *Repository[T]) FindImagesByProductIds(db *gorm.DB, entities *[]T, productIds []uint64) error {
+	return db.Where("product_id IN ?", productIds).Find(&entities).Error
 }
+
 
 func (r *Repository[T]) FindUserByIdWithAddress(db *gorm.DB, entity *T, userId uint64) error {
 	return db.Where("id = ?", userId).Preload("Addresses").Find(&entity).Error
