@@ -129,7 +129,7 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 	return converter.ProductToResponse(newProduct), nil
 }
 
-func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int) (*[]model.ProductResponse, error) {
+func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int) (*[]model.ProductResponse, int64, int, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -137,18 +137,31 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int) (*[]
 		page = 1
 	}
 
+	getAllProducts := new(entity.Product)
+	totalProducts, err := c.ProductRepository.CountItems(tx, getAllProducts)
+	if err != nil {
+		c.Log.Warnf("Failed to count products: %+v", err)
+		return nil, 0, 0, fiber.ErrInternalServerError
+	}
+
+	// Hitung total halaman
+	totalPages := int(totalProducts / int64(perPage))
+	if totalProducts%int64(perPage) > 0 {
+		totalPages++
+	}
+
 	newProducts := new([]entity.Product)
 	if err := c.ProductRepository.FindAllWith2Preloads(tx, newProducts, "Category", "Images", page, perPage); err != nil {
 		c.Log.Warnf("Failed get all products from database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.ErrInternalServerError
 	}
 
-	return converter.ProductsToResponse(newProducts), nil
+	return converter.ProductsToResponse(newProducts), totalProducts, totalPages, nil
 }
 
 func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, request *model.UpdateProductRequest, newImageFiles []*multipart.FileHeader, newImagePositions []string, updateCurrentImages model.UpdateImagesRequest, deletedImages model.DeleteImagesRequest) (*model.ProductResponse, error) {

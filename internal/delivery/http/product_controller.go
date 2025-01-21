@@ -99,16 +99,20 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	response, err := c.UseCase.GetAll(ctx.Context(), page, perPage)
+	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage)
 	if err != nil {
 		c.Log.Warnf("Failed to find all products : %+v", err)
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*[]model.ProductResponse]{
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.ProductResponse]{
 		Code:   200,
 		Status: "Success to get all products",
 		Data:   response,
+		TotalDatas: totalProducts,
+		TotalPages: totalPages,
+		CurrentPages: page,
+		DataPerPages: perPage,
 	})
 }
 

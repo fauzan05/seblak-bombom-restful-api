@@ -157,6 +157,15 @@ func (r *Repository[T]) CountDiscountByCodeIsExist(db *gorm.DB, entity *T, curre
 	return count, nil
 }
 
+func (r *Repository[T]) CountItems(db *gorm.DB, entity *T) (int64, error) {
+	var count int64
+	err := db.Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
 func (r *Repository[T]) FindAllOrdersByUserId(db *gorm.DB, entity *[]T, userId uint64) error {
 	return db.Where("user_id = ?", userId).Joins("MidtransSnapOrder").Preload("OrderProducts").Find(&entity).Error
 }
