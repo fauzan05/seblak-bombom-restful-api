@@ -85,6 +85,26 @@ func (c *ProductController) Get(ctx *fiber.Ctx) error {
 }
 
 func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
+	search := ctx.Query("search", "")
+	getCategoryId := ctx.Query("category_id", "");
+	var categoryId uint64
+	categoryId = 0
+	if getCategoryId != "" {
+		getValueConvert, err := strconv.ParseUint(ctx.Query("category_id", ""), 10, 64)
+		if err != nil {
+			// Handle kasus ketika category_id tidak valid atau kosong
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid or missing category_id",
+			})
+		}
+		categoryId = getValueConvert
+	}
+
+	// ambil data sorting
+	getColumn := ctx.Query("column", "");
+	getSortBy := ctx.Query("sort_by", "desc");
+
+
 	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
 	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
 	if err != nil {
@@ -99,7 +119,7 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage)
+	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, search, categoryId, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("Failed to find all products : %+v", err)
 		return err
