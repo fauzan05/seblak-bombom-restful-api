@@ -86,6 +86,8 @@ func (c *ProductController) Get(ctx *fiber.Ctx) error {
 
 func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 	search := ctx.Query("search", "")
+	trimSearch := strings.TrimSpace(search)
+
 	getCategoryId := ctx.Query("category_id", "");
 	var categoryId uint64
 	categoryId = 0
@@ -119,7 +121,7 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, search, categoryId, getColumn, getSortBy)
+	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, categoryId, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("Failed to find all products : %+v", err)
 		return err

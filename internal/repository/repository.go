@@ -169,33 +169,42 @@ func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 
 	return query.Order("id desc").Offset(offset).Limit(pageSize).Find(entity).Error
 }
 
-func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string, categoryId uint64) error {
 	offset := (page - 1) * pageSize
 	if sortingColumn == "" {
 		sortingColumn = "products.id"
 	}
 
-	rows, err := db.Table("products").
+	query := db.Table("products").
 		Select(`
-            products.id as product_id, 
-            products.name as product_name, 
-            products.description as product_description, 
-            products.price as product_price, 
-            products.stock as product_stock, 
-            products.created_at as product_created_at, 
-            products.updated_at as product_updated_at, 
-            categories.id as category_id, 
-            categories.name as category_name, 
-            categories.description as category_desc, 
-            categories.created_at as category_created_at, 
-            categories.updated_at as category_updated_at
-        `).
+        products.id as product_id, 
+        products.name as product_name, 
+        products.description as product_description, 
+        products.price as product_price, 
+        products.stock as product_stock, 
+        products.created_at as product_created_at, 
+        products.updated_at as product_updated_at, 
+        categories.id as category_id, 
+        categories.name as category_name, 
+        categories.description as category_desc, 
+        categories.created_at as category_created_at, 
+        categories.updated_at as category_updated_at
+    `).
 		Joins("LEFT JOIN categories ON categories.id = products.category_id").
 		Where("products.name LIKE ?", "%"+search+"%").
 		Order(fmt.Sprintf("%s %s", sortingColumn, sortBy)).
 		Offset(offset).
-		Limit(pageSize).
-		Rows()
+		Limit(pageSize)
+
+	// Hanya tambahkan klausa WHERE untuk categories.id jika categoryId != 0
+	if categoryId > 0 {
+		query = query.Where("categories.id = ?", categoryId)
+	}
+
+	rows, err := query.Rows()
+	if err != nil {
+		return err
+	}
 
 	if err != nil {
 		return err
@@ -336,9 +345,9 @@ func (r *Repository[T]) FetchImagesForProducts(db *gorm.DB, products *[]map[stri
 	return nil
 }
 
-func (r *Repository[T]) GetProductsWithPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+func (r *Repository[T]) GetProductsWithPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string, categoryId uint64) error {
 	// Ambil data produk dengan paginasi
-	err := r.FindProductsPagination(db, entity, page, pageSize, search, sortingColumn, sortBy)
+	err := r.FindProductsPagination(db, entity, page, pageSize, search, sortingColumn, sortBy, categoryId)
 	if err != nil {
 		return err
 	}
@@ -370,9 +379,13 @@ func (r *Repository[T]) CountDiscountByCodeIsExist(db *gorm.DB, entity *T, curre
 	return count, nil
 }
 
-func (r *Repository[T]) CountItems(db *gorm.DB, entity *T) (int64, error) {
+func (r *Repository[T]) CountProductItems(db *gorm.DB, entity *T, search string, categoryId uint64) (int64, error) {
 	var count int64
-	err := db.Find(&entity).Count(&count).Error
+	query := db.Where("products.name LIKE ?", "%"+search+"%")
+	if categoryId > 0 {
+		query.Where("category_id = ?", categoryId)
+	}
+	err := query.Find(&entity).Count(&count).Error
 	if err != nil {
 		return int64(0), err
 	}

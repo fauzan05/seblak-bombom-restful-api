@@ -12,7 +12,6 @@ import (
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -140,7 +139,7 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 
 	// newProducts := new([]entity.Product)
 	var result []map[string]interface{} // entity kosong yang akan diisi
-	if err := c.ProductRepository.GetProductsWithPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
+	if err := c.ProductRepository.GetProductsWithPagination(tx, &result, page, perPage, search, sortingColumn, sortBy, categoryId); err != nil {
 		c.Log.Warnf("Failed get all products from database : %+v", err)
 		return nil, 0, 0, fiber.ErrInternalServerError
 	}
@@ -154,24 +153,30 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 	
 	var totalPages int = 0
 	getAllProducts := new(entity.Product)
-	totalProducts, err := c.ProductRepository.CountItems(tx, getAllProducts)
+	totalProducts, err := c.ProductRepository.CountProductItems(tx, getAllProducts, search, categoryId)
 	if err != nil {
 		c.Log.Warnf("Failed to count products: %+v", err)
 		return nil, 0, 0, fiber.ErrInternalServerError
 	}
 
-	if strings.TrimSpace(search) != "" {
-		totalPages = int(int64(len(*newProducts)) / int64(perPage))
-		if int64(len(*newProducts))%int64(perPage) > 0 {
-			totalPages++
-		}
-	} else if strings.TrimSpace(search) == "" {
-		// Hitung total halaman
-		totalPages = int(totalProducts / int64(perPage))
-		if totalProducts%int64(perPage) > 0 {
-			totalPages++
-		}
+	// Hitung total halaman
+	totalPages = int(totalProducts / int64(perPage))
+	if totalProducts%int64(perPage) > 0 {
+		totalPages++
 	}
+
+	// if strings.TrimSpace(search) != "" || categoryId > 0 {
+	// 	totalPages = int(int64(len(*newProducts)) / int64(perPage))
+	// 	if int64(len(*newProducts))%int64(perPage) > 0 {
+	// 		totalPages++
+	// 	}
+	// } else if strings.TrimSpace(search) == "" || categoryId <= 0 {
+	// 	// Hitung total halaman
+	// 	totalPages = int(totalProducts / int64(perPage))
+	// 	if totalProducts%int64(perPage) > 0 {
+	// 		totalPages++
+	// 	}
+	// }
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
