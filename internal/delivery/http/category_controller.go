@@ -4,6 +4,7 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -65,16 +66,41 @@ func (c *CategoryController) Get(ctx *fiber.Ctx) error {
 }
 
 func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
-	response, err := c.UseCase.GetAll(ctx.Context())
+	search := ctx.Query("search", "")
+	trimSearch := strings.TrimSpace(search)
+
+	// ambil data sorting
+	getColumn := ctx.Query("column", "")
+	getSortBy := ctx.Query("sort_by", "desc")
+
+	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
+	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'per_page' parameter")
+		return err
+	}
+
+	// Ambil query parameter 'page' dengan default value 1 jika tidak disediakan
+	page, err := strconv.Atoi(ctx.Query("page", "1"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'page' parameter")
+		return err
+	}
+
+	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("Failed to find all categories : %+v", err)
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*[]model.CategoryResponse]{
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.CategoryResponse]{
 		Code:   200,
 		Status: "Success to get all category",
 		Data:   response,
+		TotalDatas: totalProducts,
+		TotalPages: totalPages,
+		CurrentPages: page,
+		DataPerPages: perPage,
 	})
 }
 
@@ -91,7 +117,7 @@ func (c *CategoryController) Edit(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Cannot parse data : %+v", err)
 		return err
 	}
-	updateCategory.ID = uint64(categoryId)	
+	updateCategory.ID = uint64(categoryId)
 	response, err := c.UseCase.Update(ctx.Context(), updateCategory)
 	if err != nil {
 		c.Log.Warnf("Failed to edit category : %+v", err)
@@ -113,7 +139,7 @@ func (c *CategoryController) Remove(ctx *fiber.Ctx) error {
 		return err
 	}
 	deleteCategory := new(model.DeleteCategoryRequest)
-	deleteCategory.ID = uint64(categoryId)	
+	deleteCategory.ID = uint64(categoryId)
 
 	response, err := c.UseCase.Delete(ctx.Context(), deleteCategory)
 	if err != nil {
@@ -127,5 +153,3 @@ func (c *CategoryController) Remove(ctx *fiber.Ctx) error {
 		Data:   response,
 	})
 }
-
-

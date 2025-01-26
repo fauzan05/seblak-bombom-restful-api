@@ -392,6 +392,15 @@ func (r *Repository[T]) CountProductItems(db *gorm.DB, entity *T, search string,
 	return count, nil
 }
 
+func (r *Repository[T]) CountCategoryItems(db *gorm.DB, entity *T, search string) (int64, error) {
+	var count int64
+	err := db.Where("categories.name LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
 func (r *Repository[T]) FindAllOrdersByUserId(db *gorm.DB, entity *[]T, userId uint64) error {
 	return db.Where("user_id = ?", userId).Joins("MidtransSnapOrder").Preload("OrderProducts").Find(&entity).Error
 }
@@ -406,4 +415,80 @@ func (r *Repository[T]) FindCartByUserId(db *gorm.DB, entity *T, userId uint64) 
 
 func (r *Repository[T]) FindAllProductByCartItem(db *gorm.DB, entity *[]T, userId uint64) error {
 	return db.Where("user_id = ?", userId).Preload("Product").Find(entity).Error
+}
+
+func (r *Repository[T]) GetCategoriesWithPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+	// Ambil data produk dengan paginasi
+	err := r.FindCategoriesPagination(db, entity, page, pageSize, search, sortingColumn, sortBy)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+	offset := (page - 1) * pageSize
+	if sortingColumn == "" {
+		sortingColumn = "categories.id"
+	}
+
+	query := db.Table("categories").
+		Select(` 
+        categories.id as category_id, 
+        categories.name as category_name, 
+        categories.description as category_desc, 
+        categories.created_at as category_created_at, 
+        categories.updated_at as category_updated_at
+    `).
+		Where("categories.name LIKE ?", "%"+search+"%").
+		Order(fmt.Sprintf("%s %s", sortingColumn, sortBy)).
+		Offset(offset).
+		Limit(pageSize)
+
+	rows, err := query.Rows()
+	if err != nil {
+		return err
+	}
+
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var results []map[string]interface{}
+	for rows.Next() {
+		var (
+			categoryID        string
+			categoryName      string
+			categoryDesc      string
+			categoryCreatedAt string
+			categoryUpdatedAt string
+		)
+
+		// Scan data
+		if err := rows.Scan(
+			&categoryID,
+			&categoryName,
+			&categoryDesc,
+			&categoryCreatedAt,
+			&categoryUpdatedAt,
+		); err != nil {
+			return err
+		}
+
+		// Masukkan kategori ke hasil
+		product := map[string]interface{}{
+			"category_id":         categoryID,
+			"category_name":       categoryName,
+			"category_desc":       categoryDesc,
+			"category_created_at": categoryCreatedAt,
+			"category_updated_at": categoryUpdatedAt,
+			"images":              []map[string]interface{}{}, // Placeholder untuk images
+		}
+		results = append(results, product)
+	}
+
+	*entity = results
+	return nil
 }
