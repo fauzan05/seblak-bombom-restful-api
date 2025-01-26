@@ -118,7 +118,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	// category
 	auth.Post("/categories", c.CategoryController.Create)
 	auth.Put("/categories/:categoryId", c.CategoryController.Edit)
-	auth.Delete("/categories/:categoryId", c.CategoryController.Remove)
+	auth.Delete("/categories", c.CategoryController.Remove)
 
 	// Product
 	auth.Post("/products", c.ProductController.Create)

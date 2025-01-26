@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -132,14 +133,32 @@ func (c *CategoryController) Edit(ctx *fiber.Ctx) error {
 }
 
 func (c *CategoryController) Remove(ctx *fiber.Ctx) error {
-	getId := ctx.Params("categoryId")
-	categoryId, err := strconv.Atoi(getId)
-	if err != nil {
-		c.Log.Warnf("Failed to convert category id : %+v", err)
-		return err
+	idsParam := ctx.Query("ids")
+	if idsParam == "" {
+		ctx.Status(fiber.StatusBadRequest)
+		return ctx.JSON(fiber.Map{
+			"error": "Parameter 'ids' is required",
+		})
 	}
+	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
+	idStrings := strings.Split(idsParam, ",")
+	var categoryIds []uint64
+
+	// Konversi setiap elemen menjadi integer
+	for _, idStr := range idStrings {
+		if (idStr != "") {
+			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
+			if err != nil {
+				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": fmt.Sprintf("Invalid ID: %s", idStr),
+				})
+			}
+			categoryIds = append(categoryIds, id)
+		}
+	}
+
 	deleteCategory := new(model.DeleteCategoryRequest)
-	deleteCategory.ID = uint64(categoryId)
+	deleteCategory.IDs = categoryIds
 
 	response, err := c.UseCase.Delete(ctx.Context(), deleteCategory)
 	if err != nil {

@@ -163,9 +163,17 @@ func (c *CategoryUseCase) Delete(ctx context.Context, request *model.DeleteCateg
 		return false, fiber.ErrBadRequest
 	}
 
-	newCategory := new(entity.Category)
-	newCategory.ID = request.ID
-	if err := c.CategoryRepository.Delete(tx, newCategory); err != nil {
+	newCategories := []entity.Category{}
+
+	for _, idProduct := range request.IDs {
+		newCategory := entity.Category{
+			ID: idProduct,
+		}
+
+		newCategories = append(newCategories, newCategory)
+	}
+
+	if err := c.CategoryRepository.DeleteInBatch(tx, &newCategories); err != nil {
 		c.Log.Warnf("Failed to delete category : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}

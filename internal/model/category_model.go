@@ -24,5 +24,5 @@ type UpdateCategoryRequest struct {
 }
 
 type DeleteCategoryRequest struct {
-	ID uint64 `json:"-" validate:"required"`
+	IDs []uint64 `json:"-" validate:"required"`
 }
