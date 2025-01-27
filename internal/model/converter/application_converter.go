@@ -9,6 +9,7 @@ func ApplicationToResponse(application *entity.Application) *model.ApplicationRe
 	return &model.ApplicationResponse{
 		ID: application.ID,
 		AppName: application.AppName,
+		LogoFilename: application.LogoFilename,
 		OpeningHours: application.OpeningHours,
 		ClosingHours: application.ClosingHours,
 		Address: application.Address,

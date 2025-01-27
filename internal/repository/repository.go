@@ -28,7 +28,14 @@ func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) err
 }
 
 func (r *Repository[T]) FindFirst(db *gorm.DB, entity *T) error {
-	return db.First(&entity).Error
+    result := db.First(&entity)
+    
+    if result.Error == gorm.ErrRecordNotFound {
+        // Jika data tidak ditemukan, kamu bisa mengembalikan nil atau menangani sesuai kebutuhan
+        return nil // Tidak ada error jika data tidak ditemukan
+    }
+    
+    return result.Error // Kembalikan error jika ada kesalahan lain
 }
 
 func (r *Repository[T]) FindCount(db *gorm.DB, entity *T) (int64, error) {

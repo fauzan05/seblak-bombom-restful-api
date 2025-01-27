@@ -6,6 +6,7 @@ import "time"
 type Application struct {
 	ID           uint64      `gorm:"primary_key;column:id;autoIncrement"`
 	AppName      string      `gorm:"column:app_name"`
+	LogoFilename string      `gorm:"column:logo_filename"`
 	OpeningHours string      `gorm:"column:opening_hours"`
 	ClosingHours string      `gorm:"column:closing_hours"`
 	Address      string      `gorm:"column:address"`

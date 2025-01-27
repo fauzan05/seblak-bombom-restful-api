@@ -1,8 +1,8 @@
 package route
 
 import (
-	"fmt"
 	"os"
+	"path/filepath"
 	"seblak-bombom-restful-api/internal/delivery/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -55,11 +55,15 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api.Get("/midtrans/snap/orders/notification", c.MidtransSnapOrderController.GetSnapOrderNotification)
 
 	// Images
-	uploadsDir := "../uploads/images/products/"
+	uploadsDir := "../uploads/images"
 	api.Static("/uploads", uploadsDir)
-	api.Get("/image/:filename", func (c *fiber.Ctx) error  {
-		filename := c.Params("filename")
-		filepath := fmt.Sprintf("%s/%s", uploadsDir, filename)
+
+	api.Get("/image/:dir/:filename", func(c *fiber.Ctx) error {
+		dir := c.Params("dir")           // Direktori (contoh: products, applications)
+		filename := c.Params("filename") // Nama file
+
+		// Gabungkan path menggunakan filepath.Join untuk keamanan
+		filepath := filepath.Join(uploadsDir, dir, filename)
 
 		// Mengecek apakah file ada di direktori uploads
 		if _, err := os.Stat(filepath); os.IsNotExist(err) {
@@ -70,6 +74,8 @@ func (c *RouteConfig) SetupGuestRoute() {
 		// Kirimkan gambar jika ditemukan
 		return c.SendFile(filepath)
 	})
+
+	api.Get("/applications", c.ApplicationController.Get)
 }
 
 // USER
@@ -141,7 +147,5 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Delete("/deliveries/:deliveryId", c.DeliveryController.Remove)
 
 	// application
-	auth.Post("/applications", c.ApplicationController.Create)
-	auth.Put("/applications", c.ApplicationController.Update)
-	auth.Get("/applications", c.ApplicationController.Get)
+	auth.Post("/applications", c.ApplicationController.Create) // add & update
 }
