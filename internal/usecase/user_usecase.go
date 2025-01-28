@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
@@ -170,10 +171,12 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 	}
 
 	user := new(entity.User)
+	user.ID = currentUser.ID
 	user.Email = request.Email
 	user.Name.FirstName = request.FirstName
 	user.Name.LastName = request.LastName
 	user.Phone = request.Phone
+	user.Role = helper.ADMIN
 
 	if err := c.UserRepository.Update(tx, user); err != nil {
 		c.Log.Warnf("Failed to update data user : %+v", err)

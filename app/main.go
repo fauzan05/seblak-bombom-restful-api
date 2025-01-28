@@ -20,7 +20,7 @@ func main() {
 	// cors setting
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://localhost:8000", // Frontend yang diizinkan (port 8000)
-		AllowMethods: "GET,POST,PUT,DELETE",   // Metode HTTP yang diizinkan
+		AllowMethods: "GET,POST,PATCH,PUT,DELETE",   // Metode HTTP yang diizinkan
 		AllowHeaders: "Origin, Content-Type, X-Requested-With, Accept, Authorization", // Header yang diizinkan
 		AllowCredentials: true,  // Mengizinkan pengiriman cookie
 	}))
