@@ -1,0 +1,12 @@
+CREATE TABLE coupon_usages (
+    id INTEGER AUTO_INCREMENT,
+    user_id INTEGER NOT NULL,
+    coupon_id INTEGER NOT NULL,
+    usage_count INTEGER NOT NULL,
+    last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (coupon_id) REFERENCES discount_coupons (id)
+) ENGINE = InnoDB;

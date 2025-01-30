@@ -1,4 +1,4 @@
-CREATE TABLE discounts (
+CREATE TABLE discount_coupons (
     id INTEGER AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     code VARCHAR(255) NOT NULL unique,
@@ -6,6 +6,9 @@ CREATE TABLE discounts (
     type ENUM("percent", "nominal") NOT NULL DEFAULT "nominal",
     start DATETIME DEFAULT CURRENT_TIMESTAMP,
     end DATETIME DEFAULT CURRENT_TIMESTAMP,
+    max_usage INT DEFAULT 1,
+    used_count INT DEFAULT 0,
+    min_order_value INT DEFAULT 0,
     description TEXT NOT NULL,
     status BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
