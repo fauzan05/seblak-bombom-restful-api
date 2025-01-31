@@ -4,7 +4,7 @@ import (
 	"seblak-bombom-restful-api/internal/helper"
 )
 
-type DiscountResponse struct {
+type DiscountCouponResponse struct {
 	ID          uint64              `json:"id,omitempty"`
 	Name        string              `json:"name,omitempty"`
 	Description string              `json:"description,omitempty"`
@@ -18,7 +18,7 @@ type DiscountResponse struct {
 	UpdatedAt   string              `json:"updated_at,omitempty"`
 }
 
-type CreateDiscountRequest struct {
+type CreateDiscountCouponRequest struct {
 	Name        string              `json:"name" validate:"required,max=100"`
 	Description string              `json:"description" validate:"required"`
 	Code        string              `json:"code" validate:"required,max=100"`
@@ -29,11 +29,11 @@ type CreateDiscountRequest struct {
 	Status      bool                `json:"status" validate:"required"`
 }
 
-type GetDiscountRequest struct {
+type GetDiscountCouponRequest struct {
 	ID uint64 `json:"-" validate:"required"`
 }
 
-type UpdateDiscountRequest struct {
+type UpdateDiscountCouponRequest struct {
 	ID          uint64              `json:"-" validate:"required"`
 	Name        string              `json:"name" validate:"required,max=100"`
 	Description string              `json:"description" validate:"required"`
@@ -45,6 +45,6 @@ type UpdateDiscountRequest struct {
 	Status      bool                `json:"status" validate:"required"`
 }
 
-type DeleteDiscountRequest struct {
+type DeleteDiscountCouponRequest struct {
 	ID uint64 `json:"-" validate:"required"`
 }

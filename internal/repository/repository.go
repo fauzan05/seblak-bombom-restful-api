@@ -213,9 +213,6 @@ func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
 	defer rows.Close()
 
 	var results []map[string]interface{}
@@ -458,9 +455,6 @@ func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[stri
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
 	defer rows.Close()
 
 	var results []map[string]interface{}

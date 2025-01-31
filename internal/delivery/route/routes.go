@@ -16,7 +16,7 @@ type RouteConfig struct {
 	ProductController           *http.ProductController
 	ImageController             *http.ImageController
 	OrderController             *http.OrderController
-	DiscountController          *http.DiscountController
+	DiscountController          *http.DiscountCouponController
 	DeliveryController          *http.DeliveryController
 	ProductReviewController     *http.ProductReviewController
 	MidtransSnapOrderController *http.MidtransSnapOrderController

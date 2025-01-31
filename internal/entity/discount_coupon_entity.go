@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Discount struct {
+type DiscountCoupon struct {
 	ID          uint64              `gorm:"primary_key;column:id;autoIncrement"`
 	Name        string              `gorm:"column:name"`
 	Description string              `gorm:"column:description"`
@@ -19,6 +19,6 @@ type Discount struct {
 	Updated_At  time.Time           `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }
 
-func (c *Discount) TableName() string {
-	return "discounts"
+func (c *DiscountCoupon) TableName() string {
+	return "discount_coupons"
 }

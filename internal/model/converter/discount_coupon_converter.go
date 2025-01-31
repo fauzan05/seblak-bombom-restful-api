@@ -5,8 +5,8 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 )
 
-func DiscountToResponse(discount *entity.Discount) *model.DiscountResponse {
-	return &model.DiscountResponse{
+func DiscountCouponToResponse(discount *entity.DiscountCoupon) *model.DiscountCouponResponse {
+	return &model.DiscountCouponResponse{
 		ID:          discount.ID,
 		Name:        discount.Name,
 		Description: discount.Description,
@@ -21,10 +21,10 @@ func DiscountToResponse(discount *entity.Discount) *model.DiscountResponse {
 	}
 }
 
-func DiscountsToResponse(discounts *[]entity.Discount) *[]model.DiscountResponse {
-	getDiscounts := make([]model.DiscountResponse, len(*discounts))
+func DiscountCouponsToResponse(discounts *[]entity.DiscountCoupon) *[]model.DiscountCouponResponse {
+	getDiscounts := make([]model.DiscountCouponResponse, len(*discounts))
 	for i, discount := range *discounts {
-		getDiscounts[i] = *DiscountToResponse(&discount)
+		getDiscounts[i] = *DiscountCouponToResponse(&discount)
 	}
 	return &getDiscounts
 }

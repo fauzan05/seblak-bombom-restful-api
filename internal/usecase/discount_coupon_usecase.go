@@ -14,26 +14,26 @@ import (
 	"gorm.io/gorm"
 )
 
-type DiscountUseCase struct {
+type DiscountCouponUseCase struct {
 	DB                 *gorm.DB
 	Log                *logrus.Logger
 	Validate           *validator.Validate
-	DiscountRepository *repository.DiscountRepository
+	DiscountCouponRepository *repository.DiscountCouponRepository
 }
 
-func NewDiscountUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
-	discountRepository *repository.DiscountRepository) *DiscountUseCase {
-	return &DiscountUseCase{
+func NewDiscountCouponUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
+	DiscountCouponRepository *repository.DiscountCouponRepository) *DiscountCouponUseCase {
+	return &DiscountCouponUseCase{
 		DB:                 db,
 		Log:                log,
 		Validate:           validate,
-		DiscountRepository: discountRepository,
+		DiscountCouponRepository: DiscountCouponRepository,
 	}
 }
 
 var layoutTime string = "2006-01-02 15:04:05"
 
-func (c *DiscountUseCase) Add(ctx context.Context, request *model.CreateDiscountRequest) (*model.DiscountResponse, error) {
+func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDiscountCouponRequest) (*model.DiscountCouponResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -43,8 +43,8 @@ func (c *DiscountUseCase) Add(ctx context.Context, request *model.CreateDiscount
 		return nil, fiber.ErrBadRequest
 	}
 
-	newDiscount := new(entity.Discount)
-	count, err := c.DiscountRepository.CountDiscountByCode(tx, newDiscount, request.Code)
+	newDiscount := new(entity.DiscountCoupon)
+	count, err := c.DiscountCouponRepository.CountDiscountByCode(tx, newDiscount, request.Code)
 	if err != nil {
 		c.Log.Warnf("Failed to count discount by code : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -71,7 +71,7 @@ func (c *DiscountUseCase) Add(ctx context.Context, request *model.CreateDiscount
 		return nil, fiber.ErrBadRequest
 	}
 	newDiscount.Status = request.Status
-	if err := c.DiscountRepository.Create(tx, newDiscount); err != nil {
+	if err := c.DiscountCouponRepository.Create(tx, newDiscount); err != nil {
 		c.Log.Warnf("Failed to create a new discount : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -81,15 +81,15 @@ func (c *DiscountUseCase) Add(ctx context.Context, request *model.CreateDiscount
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.DiscountToResponse(newDiscount), nil
+	return converter.DiscountCouponToResponse(newDiscount), nil
 }
 
-func (c *DiscountUseCase) GetAll(ctx context.Context) (*[]model.DiscountResponse, error) {
+func (c *DiscountCouponUseCase) GetAll(ctx context.Context) (*[]model.DiscountCouponResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	newDiscounts := new([]entity.Discount)
-	if err := c.DiscountRepository.FindAll(tx, newDiscounts); err != nil {
+	newDiscounts := new([]entity.DiscountCoupon)
+	if err := c.DiscountCouponRepository.FindAll(tx, newDiscounts); err != nil {
 		c.Log.Warnf("Failed to find all discounts : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -99,16 +99,16 @@ func (c *DiscountUseCase) GetAll(ctx context.Context) (*[]model.DiscountResponse
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.DiscountsToResponse(newDiscounts), nil
+	return converter.DiscountCouponsToResponse(newDiscounts), nil
 }
 
-func (c *DiscountUseCase) GetById(ctx context.Context, request *model.GetDiscountRequest) (*model.DiscountResponse, error) {
+func (c *DiscountCouponUseCase) GetById(ctx context.Context, request *model.GetDiscountCouponRequest) (*model.DiscountCouponResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	newDiscount := new(entity.Discount)
+	newDiscount := new(entity.DiscountCoupon)
 	newDiscount.ID = request.ID
-	if err := c.DiscountRepository.FindById(tx, newDiscount); err != nil {
+	if err := c.DiscountCouponRepository.FindById(tx, newDiscount); err != nil {
 		c.Log.Warnf("Failed to find discount by id: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -118,10 +118,10 @@ func (c *DiscountUseCase) GetById(ctx context.Context, request *model.GetDiscoun
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.DiscountToResponse(newDiscount), nil
+	return converter.DiscountCouponToResponse(newDiscount), nil
 }
 
-func (c *DiscountUseCase) Edit(ctx context.Context, request *model.UpdateDiscountRequest) (*model.DiscountResponse, error) {
+func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateDiscountCouponRequest) (*model.DiscountCouponResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -131,14 +131,14 @@ func (c *DiscountUseCase) Edit(ctx context.Context, request *model.UpdateDiscoun
 		return nil, fiber.ErrBadRequest
 	}
 
-	newDiscount := new(entity.Discount)
+	newDiscount := new(entity.DiscountCoupon)
 	newDiscount.ID = request.ID
-	if err := c.DiscountRepository.FindById(tx, newDiscount); err != nil {
+	if err := c.DiscountCouponRepository.FindById(tx, newDiscount); err != nil {
 		c.Log.Warnf("Can't find discount by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	count, err := c.DiscountRepository.CountDiscountByCodeIsExist(tx, newDiscount, newDiscount.Code, request.Code)
+	count, err := c.DiscountCouponRepository.CountDiscountByCodeIsExist(tx, newDiscount, newDiscount.Code, request.Code)
 	if err != nil {
 		c.Log.Warnf("Can't find discount by code : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -166,7 +166,7 @@ func (c *DiscountUseCase) Edit(ctx context.Context, request *model.UpdateDiscoun
 		return nil, fiber.ErrBadRequest
 	}
 	newDiscount.Status = request.Status
-	if err := c.DiscountRepository.Update(tx, newDiscount); err != nil {
+	if err := c.DiscountCouponRepository.Update(tx, newDiscount); err != nil {
 		c.Log.Warnf("Can't update discount by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -176,10 +176,10 @@ func (c *DiscountUseCase) Edit(ctx context.Context, request *model.UpdateDiscoun
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return converter.DiscountToResponse(newDiscount), nil
+	return converter.DiscountCouponToResponse(newDiscount), nil
 }
 
-func (c *DiscountUseCase) Remove(ctx context.Context, request *model.DeleteDiscountRequest) (bool, error) {
+func (c *DiscountCouponUseCase) Remove(ctx context.Context, request *model.DeleteDiscountCouponRequest) (bool, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -189,9 +189,9 @@ func (c *DiscountUseCase) Remove(ctx context.Context, request *model.DeleteDisco
 		return false, fiber.ErrBadRequest
 	}
 
-	newDiscount := new(entity.Discount)
+	newDiscount := new(entity.DiscountCoupon)
 	newDiscount.ID = request.ID
-	if err := c.DiscountRepository.Delete(tx, newDiscount); err != nil {
+	if err := c.DiscountCouponRepository.Delete(tx, newDiscount); err != nil {
 		c.Log.Warnf("Failed to delete discount by id: %+v", err)
 		return false, fiber.ErrInternalServerError
 	}

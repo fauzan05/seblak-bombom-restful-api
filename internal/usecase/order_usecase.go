@@ -24,7 +24,7 @@ type OrderUseCase struct {
 	ProductRepository      *repository.ProductRepository
 	CategoryRepository     *repository.CategoryRepository
 	AddressRepository      *repository.AddressRepository
-	DiscountRepository     *repository.DiscountRepository
+	DiscountRepository     *repository.DiscountCouponRepository
 	DeliveryRepository     *repository.DeliveryRepository
 	OrderProductRepository *repository.OrderProductRepository
 }
@@ -32,7 +32,7 @@ type OrderUseCase struct {
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
-	discountRepository *repository.DiscountRepository, deliveryRepository *repository.DeliveryRepository,
+	discountRepository *repository.DiscountCouponRepository, deliveryRepository *repository.DeliveryRepository,
 	orderProductRepository *repository.OrderProductRepository) *OrderUseCase {
 	return &OrderUseCase{
 		DB:                     db,
@@ -139,7 +139,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	newOrder.Latitude = request.Latitude
 
 	if request.DiscountCode != "" {
-		newDiscount := new(entity.Discount)
+		newDiscount := new(entity.DiscountCoupon)
 		count, err := c.DiscountRepository.CountDiscountByCode(tx, newDiscount, request.DiscountCode)
 		if err != nil {
 			c.Log.Warnf("Failed to find discount by code : %+v", err)
