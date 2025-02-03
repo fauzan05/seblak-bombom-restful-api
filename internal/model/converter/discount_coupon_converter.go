@@ -7,17 +7,21 @@ import (
 
 func DiscountCouponToResponse(discount *entity.DiscountCoupon) *model.DiscountCouponResponse {
 	return &model.DiscountCouponResponse{
-		ID:          discount.ID,
-		Name:        discount.Name,
-		Description: discount.Description,
-		Code:        discount.Code,
-		Value:       discount.Value,
-		Type:        discount.Type,
-		Start:       discount.Start.Format("2006-01-02 15:04:05"),
-		End:         discount.End.Format("2006-01-02 15:04:05"),
-		Status:      discount.Status,
-		CreatedAt:   discount.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   discount.Updated_At.Format("2006-01-02 15:04:05"),
+		ID:              discount.ID,
+		Name:            discount.Name,
+		Description:     discount.Description,
+		Code:            discount.Code,
+		Value:           discount.Value,
+		Type:            discount.Type,
+		Start:           discount.Start.Format("2006-01-02 15:04"),
+		End:             discount.End.Format("2006-01-02 15:04"),
+		Status:          discount.Status,
+		MaxUsagePerUser: discount.MaxUsagePerUser,
+		TotalMaxUsage:   discount.TotalMaxUsage,
+		UsedCount:       discount.UsedCount,
+		MinOrderValue:   discount.MinOrderValue,
+		CreatedAt:       discount.Created_At.Format("2006-01-02 15:04:05"),
+		UpdatedAt:       discount.Updated_At.Format("2006-01-02 15:04:05"),
 	}
 }
 

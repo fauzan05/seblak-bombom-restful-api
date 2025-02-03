@@ -28,14 +28,14 @@ func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) err
 }
 
 func (r *Repository[T]) FindFirst(db *gorm.DB, entity *T) error {
-    result := db.First(&entity)
-    
-    if result.Error == gorm.ErrRecordNotFound {
-        // Jika data tidak ditemukan, kamu bisa mengembalikan nil atau menangani sesuai kebutuhan
-        return nil // Tidak ada error jika data tidak ditemukan
-    }
-    
-    return result.Error // Kembalikan error jika ada kesalahan lain
+	result := db.First(&entity)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		// Jika data tidak ditemukan, kamu bisa mengembalikan nil atau menangani sesuai kebutuhan
+		return nil // Tidak ada error jika data tidak ditemukan
+	}
+
+	return result.Error // Kembalikan error jika ada kesalahan lain
 }
 
 func (r *Repository[T]) FindCount(db *gorm.DB, entity *T) (int64, error) {
@@ -485,11 +485,121 @@ func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[stri
 			"category_desc":       categoryDesc,
 			"category_created_at": categoryCreatedAt,
 			"category_updated_at": categoryUpdatedAt,
-			"images":              []map[string]interface{}{}, // Placeholder untuk images
 		}
 		results = append(results, product)
 	}
 
 	*entity = results
 	return nil
+}
+
+func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+	offset := (page - 1) * pageSize
+	if sortingColumn == "" {
+		sortingColumn = "discount_coupons.id"
+	}
+
+	query := db.Table("discount_coupons").
+		Select(` 
+        discount_coupons.id as discount_coupon_id, 
+        discount_coupons.name as discount_coupon_name, 
+		discount_coupons.description as discount_coupon_desc, 
+        discount_coupons.code as discount_coupon_code,
+        discount_coupons.value as discount_coupon_value,
+        discount_coupons.type as discount_coupon_type,
+        discount_coupons.start as discount_coupon_start,
+        discount_coupons.end as discount_coupon_end,
+        discount_coupons.total_max_usage as discount_coupon_total_max_usage,
+        discount_coupons.max_usage_per_user as discount_coupon_max_usage_per_user,
+        discount_coupons.used_count as discount_coupon_used_count,
+        discount_coupons.min_order_value as discount_coupon_min_order_value,
+        discount_coupons.status as discount_coupon_status,
+        discount_coupons.created_at as discount_coupon_created_at, 
+        discount_coupons.updated_at as discount_coupon_updated_at
+    `).
+		Where("discount_coupons.name LIKE ?", "%"+search+"%").
+		Order(fmt.Sprintf("%s %s", sortingColumn, sortBy)).
+		Offset(offset).
+		Limit(pageSize)
+
+	rows, err := query.Rows()
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	var results []map[string]interface{}
+	for rows.Next() {
+		var (
+			discountCouponID        string
+			discountCouponName      string
+			discountCouponDesc      string
+			discountCouponCode      string
+			discountCouponValue      string
+			discountCouponType      string
+			discountCouponStart      string
+			discountCouponEnd      string
+			discountCouponTotalMaxUsage      string
+			discountCouponMaxUsagePerUser      string
+			discountCouponUsedCount      string
+			discountCouponMinOrderValue      string
+			discountCouponStatus      string
+			discountCouponCreatedAt string
+			discountCouponUpdatedAt string
+		)
+
+		// Scan data
+		if err := rows.Scan(
+			&discountCouponID,
+			&discountCouponName,
+			&discountCouponDesc,
+			&discountCouponCode,
+			&discountCouponValue,
+			&discountCouponType,
+			&discountCouponStart,
+			&discountCouponEnd,
+			&discountCouponTotalMaxUsage,
+			&discountCouponMaxUsagePerUser,
+			&discountCouponUsedCount,
+			&discountCouponMinOrderValue,
+			&discountCouponStatus,
+			&discountCouponCreatedAt,
+			&discountCouponUpdatedAt,
+		); err != nil {
+			return err
+		}
+
+		// Masukkan kategori ke hasil
+		product := map[string]interface{}{
+			"discount_coupon_id":         discountCouponID,
+			"discount_coupon_name":       discountCouponName,
+			"discount_coupon_desc":       discountCouponDesc,
+			"discount_coupon_code": discountCouponCode,
+			"discount_coupon_value": discountCouponValue,
+			"discount_coupon_type": discountCouponType,
+			"discount_coupon_start": discountCouponStart,
+			"discount_coupon_end": discountCouponEnd,
+			"discount_coupon_total_max_usage": discountCouponTotalMaxUsage,
+			"discount_coupon_max_usage_per_user": discountCouponMaxUsagePerUser,
+			"discount_coupon_used_count": discountCouponUsedCount,
+			"discount_coupon_min_order_value": discountCouponMinOrderValue,
+			"discount_coupon_status": discountCouponStatus,
+			"discount_coupon_created_at": discountCouponCreatedAt,
+			"discount_coupon_updated_at": discountCouponUpdatedAt,
+		}
+		results = append(results, product)
+	}
+
+	*entity = results
+	return nil
+}
+
+func (r *Repository[T]) CountDiscountCouponItems(db *gorm.DB, entity *T, search string) (int64, error) {
+	var count int64
+	err := db.Where("discount_coupons.name LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
 }

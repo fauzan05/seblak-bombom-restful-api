@@ -16,7 +16,7 @@ type RouteConfig struct {
 	ProductController           *http.ProductController
 	ImageController             *http.ImageController
 	OrderController             *http.OrderController
-	DiscountController          *http.DiscountCouponController
+	DiscountCouponController          *http.DiscountCouponController
 	DeliveryController          *http.DeliveryController
 	ProductReviewController     *http.ProductReviewController
 	MidtransSnapOrderController *http.MidtransSnapOrderController
@@ -37,8 +37,8 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api")
 	api.Post("/users", c.UserController.Register)
 	api.Post("/users/login", c.UserController.Login)
-	api.Get("/discounts", c.DiscountController.GetAll)
-	api.Get("/discounts/:discountId", c.DiscountController.Get)
+	api.Get("/discount_coupons", c.DiscountCouponController.GetAll)
+	api.Get("/discount_coupons/:discountId", c.DiscountCouponController.Get)
 
 	// Category
 	api.Get("/categories/:categoryId", c.CategoryController.Get)
@@ -137,9 +137,9 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Delete("/images/:imageId", c.ImageController.Remove)
 
 	// discount
-	auth.Post("/discounts", c.DiscountController.Create)
-	auth.Put("/discounts/:discountId", c.DiscountController.Update)
-	auth.Delete("/discounts/:discountId", c.DiscountController.Delete)
+	auth.Post("/discount_coupons", c.DiscountCouponController.Create)
+	auth.Put("/discount_coupons/:discountId", c.DiscountCouponController.Update)
+	auth.Delete("/discount_coupons", c.DiscountCouponController.Delete)
 
 	// delivery
 	auth.Post("/deliveries", c.DeliveryController.Create)

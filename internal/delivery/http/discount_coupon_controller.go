@@ -1,9 +1,11 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -42,15 +44,40 @@ func (c *DiscountCouponController) Create(ctx *fiber.Ctx) error {
 }
 
 func (c *DiscountCouponController) GetAll(ctx *fiber.Ctx) error {
-	response, err := c.UseCase.GetAll(ctx.Context())
+	search := ctx.Query("search", "")
+	trimSearch := strings.TrimSpace(search)
+
+	// ambil data sorting
+	getColumn := ctx.Query("column", "")
+	getSortBy := ctx.Query("sort_by", "desc")
+
+	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
+	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'per_page' parameter")
+		return err
+	}
+
+	// Ambil query parameter 'page' dengan default value 1 jika tidak disediakan
+	page, err := strconv.Atoi(ctx.Query("page", "1"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'page' parameter")
+		return err
+	}
+
+	response, totalDiscountCoupons, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("Failed to get all discounts : %+v", err)
 		return err
 	}
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*[]model.DiscountCouponResponse]{
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.DiscountCouponResponse]{
 		Code:   200,
 		Status: "Success to get all discounts",
 		Data:   response,
+		TotalDatas: totalDiscountCoupons,
+		TotalPages: totalPages,
+		CurrentPages: page,
+		DataPerPages: perPage,
 	})
 }
 
@@ -102,14 +129,33 @@ func (c *DiscountCouponController) Update(ctx *fiber.Ctx) error {
 }
 
 func(c *DiscountCouponController) Delete(ctx *fiber.Ctx) error {
-	getId := ctx.Params("discountId")
-	discountId, err := strconv.Atoi(getId)
-	if err != nil {
-		c.Log.Warnf("Failed to convert discount id : %+v", err)
-		return err
+	idsParam := ctx.Query("ids")
+	if idsParam == "" {
+		ctx.Status(fiber.StatusBadRequest)
+		return ctx.JSON(fiber.Map{
+			"error": "Parameter 'ids' is required",
+		})
 	}
+	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
+	idStrings := strings.Split(idsParam, ",")
+	var discountCouponIds []uint64
+
+	// Konversi setiap elemen menjadi integer
+	for _, idStr := range idStrings {
+		if (idStr != "") {
+			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
+			if err != nil {
+				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": fmt.Sprintf("Invalid ID: %s", idStr),
+				})
+			}
+			discountCouponIds = append(discountCouponIds, id)
+		}
+	}
+
 	discountRequest := new(model.DeleteDiscountCouponRequest)
-	discountRequest.ID = uint64(discountId)
+	discountRequest.IDs = discountCouponIds
+
 	response, err := c.UseCase.Remove(ctx.Context(), discountRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to delete discount by id : %+v", err)

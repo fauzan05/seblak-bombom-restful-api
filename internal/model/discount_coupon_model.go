@@ -5,28 +5,36 @@ import (
 )
 
 type DiscountCouponResponse struct {
-	ID          uint64              `json:"id,omitempty"`
-	Name        string              `json:"name,omitempty"`
-	Description string              `json:"description,omitempty"`
-	Code        string              `json:"code,omitempty"`
-	Value       float32             `json:"value,omitempty"`
-	Type        helper.DiscountType `json:"type,omitempty"`
-	Start       string              `json:"start,omitempty"`
-	End         string              `json:"end,omitempty"`
-	Status      bool                `json:"status,omitempty"`
-	CreatedAt   string              `json:"created_at,omitempty"`
-	UpdatedAt   string              `json:"updated_at,omitempty"`
+	ID              uint64              `json:"id"`
+	Name            string              `json:"name"`
+	Description     string              `json:"description"`
+	Code            string              `json:"code"`
+	Value           float32             `json:"value"`
+	Type            helper.DiscountType `json:"type"`
+	Start           string              `json:"start"`
+	End             string              `json:"end"`
+	Status          bool                `json:"status"`
+	TotalMaxUsage   int                 `json:"total_max_usage"`
+	MaxUsagePerUser int                 `json:"max_usage_per_user"`
+	UsedCount       int                 `json:"used_count"`
+	MinOrderValue   int                 `json:"min_order_value"`
+	CreatedAt       string              `json:"created_at"`
+	UpdatedAt       string              `json:"updated_at"`
 }
 
 type CreateDiscountCouponRequest struct {
-	Name        string              `json:"name" validate:"required,max=100"`
-	Description string              `json:"description" validate:"required"`
-	Code        string              `json:"code" validate:"required,max=100"`
-	Value       float32             `json:"value" validate:"required"`
-	Type        helper.DiscountType `json:"type" validate:"required"`
-	Start       string              `json:"start" validate:"required"`
-	End         string              `json:"end" validate:"required"`
-	Status      bool                `json:"status" validate:"required"`
+	Name            string              `json:"name" validate:"required,max=100"`
+	Description     string              `json:"description" validate:"required"`
+	Code            string              `json:"code" validate:"required,max=100"`
+	Value           float32             `json:"value" validate:"required"`
+	Type            helper.DiscountType `json:"type" validate:"required"`
+	Start           string              `json:"start" validate:"required"`
+	End             string              `json:"end" validate:"required"`
+	TotalMaxUsage   int                 `json:"total_max_usage" validate:"required"`
+	MaxUsagePerUser int                 `json:"max_usage_per_user" validate:"required"`
+	UsedCount       int                 `json:"used_count"`
+	MinOrderValue   int                 `json:"min_order_value"`
+	Status          bool                `json:"status"`
 }
 
 type GetDiscountCouponRequest struct {
@@ -34,17 +42,21 @@ type GetDiscountCouponRequest struct {
 }
 
 type UpdateDiscountCouponRequest struct {
-	ID          uint64              `json:"-" validate:"required"`
-	Name        string              `json:"name" validate:"required,max=100"`
-	Description string              `json:"description" validate:"required"`
-	Code        string              `json:"code" validate:"required,max=100"`
-	Value       float32             `json:"value" validate:"required"`
-	Type        helper.DiscountType `json:"type" validate:"required"`
-	Start       string              `json:"start" validate:"required"`
-	End         string              `json:"end" validate:"required"`
-	Status      bool                `json:"status" validate:"required"`
+	ID              uint64              `json:"-" validate:"required"`
+	Name            string              `json:"name" validate:"required,max=100"`
+	Description     string              `json:"description" validate:"required"`
+	Code            string              `json:"code" validate:"required,max=100"`
+	Value           float32             `json:"value" validate:"required"`
+	Type            helper.DiscountType `json:"type" validate:"required"`
+	Start           string              `json:"start" validate:"required"`
+	End             string              `json:"end" validate:"required"`
+	TotalMaxUsage   int                 `json:"total_max_usage" validate:"required"`
+	MaxUsagePerUser int                 `json:"max_usage_per_user" validate:"required"`
+	UsedCount       int                 `json:"used_count"`
+	MinOrderValue   int                 `json:"min_order_value"`
+	Status          bool                `json:"status"`
 }
 
 type DeleteDiscountCouponRequest struct {
-	ID uint64 `json:"-" validate:"required"`
+	IDs []uint64 `json:"-" validate:"required"`
 }

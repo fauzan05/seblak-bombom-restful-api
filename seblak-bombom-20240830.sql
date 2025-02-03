@@ -200,39 +200,6 @@ LOCK TABLES `deliveries` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `discounts`
---
-
-DROP TABLE IF EXISTS `discounts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `discounts` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `code` varchar(255) NOT NULL,
-  `value` float NOT NULL DEFAULT '0',
-  `type` enum('percent','nominal') NOT NULL DEFAULT 'nominal',
-  `start` datetime DEFAULT CURRENT_TIMESTAMP,
-  `end` datetime DEFAULT CURRENT_TIMESTAMP,
-  `description` text NOT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `discounts`
---
-
-LOCK TABLES `discounts` WRITE;
-/*!40000 ALTER TABLE `discounts` DISABLE KEYS */;
-/*!40000 ALTER TABLE `discounts` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `images`
 --
 

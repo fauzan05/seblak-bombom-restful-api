@@ -93,7 +93,7 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 	}
 
 	var result []map[string]interface{} // entity kosong yang akan diisi
-	if err := c.CategoryRepository.FindCategoriesPagination(tx, &result, page, perPage, search, sortingColumn, sortBy,); err != nil {
+	if err := c.CategoryRepository.FindCategoriesPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
 		c.Log.Warnf("Failed to find all categories : %+v", err)
 		return nil, 0, 0, fiber.ErrInternalServerError
 	}
@@ -106,8 +106,8 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 	}
 
 	var totalPages int = 0
-	getAllCategories := new(entity.Category)
-	totalCategories, err := c.CategoryRepository.CountCategoryItems(tx, getAllCategories, search)
+	newCategory := new(entity.Category)
+	totalCategories, err := c.CategoryRepository.CountCategoryItems(tx, newCategory, search)
 	if err != nil {
 		c.Log.Warnf("Failed to count categories: %+v", err)
 		return nil, 0, 0, fiber.ErrInternalServerError

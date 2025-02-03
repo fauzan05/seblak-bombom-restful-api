@@ -35,7 +35,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productRepository := repository.NewProductRepository(config.Log)
 	imageRepository := repository.NewImageRepository(config.Log)
 	orderRepository := repository.NewOrderRepository(config.Log)
-	discountRepository := repository.NewDiscountRepository(config.Log)
+	discountCouponRepository := repository.NewDiscountRepository(config.Log)
 	deliveryRepository := repository.NewDeliveryRepository(config.Log)
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
@@ -50,8 +50,8 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository, imageRepository)
 	imageUseCase := usecase.NewImageUseCase(config.DB, config.Log, config.Validate, imageRepository)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountRepository, deliveryRepository, orderProductRepository)
-	discountUseCase := usecase.NewDiscountCouponUseCase(config.DB, config.Log, config.Validate, discountRepository)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountCouponRepository, deliveryRepository, orderProductRepository)
+	discountCouponUseCase := usecase.NewDiscountCouponUseCase(config.DB, config.Log, config.Validate, discountCouponRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
 	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository, productRepository)
@@ -65,7 +65,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productController := http.NewProductController(productUseCase, config.Log)
 	imageController := http.NewImageController(imageUseCase, config.Log)
 	orderController := http.NewOrderController(orderUseCase, config.Log)
-	discountController := http.NewDiscountCouponController(discountUseCase, config.Log)
+	discountCouponController := http.NewDiscountCouponController(discountCouponUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
 	midtransSnapOrderController := http.NewMidtransController(midtransSnapOrderUseCase, config.Log)
@@ -84,7 +84,7 @@ func Bootstrap(config *BootstrapConfig) {
 		ProductController:           productController,
 		ImageController:             imageController,
 		OrderController:             orderController,
-		DiscountController:          discountController,
+		DiscountCouponController:          discountCouponController,
 		DeliveryController:          deliveryController,
 		ProductReviewController:     productReviewController,
 		MidtransSnapOrderController: midtransSnapOrderController,
