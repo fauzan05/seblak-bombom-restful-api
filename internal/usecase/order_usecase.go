@@ -123,7 +123,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		}
 
 		newOrder.Distance = request.Distance
-		newOrder.DeliveryCost = newOrder.Distance / newDelivery.Distance * newDelivery.Cost
+		// newOrder.DeliveryCost = newOrder.Distance / newDelivery.Distance * newDelivery.Cost // bagian ini seharusnya mengambil data address utama tiap user yang order
 		// jumlahkan semua total termasuk ongkir
 		newOrder.Amount += newOrder.DeliveryCost
 

@@ -87,8 +87,7 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 	newApplication.ClosingHours = request.ClosingHours
 
 	newApplication.Address = request.Address
-	newApplication.Longitude = request.Longitude
-	newApplication.Latitude = request.Latitude
+	newApplication.GoogleMapsLink = request.GoogleMapsLink
 	newApplication.Description = request.Description
 	newApplication.PhoneNumber = request.PhoneNumber
 	newApplication.Email = request.Email

@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
+	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -41,15 +44,11 @@ func (c *DeliveryUseCase) Add(ctx context.Context, request *model.CreateDelivery
 	}
 
 	newDelivery := new(entity.Delivery)
-
-	err = c.DeliveryRepository.FindFirst(tx, newDelivery)
-	if err == nil {
-		c.Log.Warnf("Delivery settings has been exist/created : %+v", err)
-		return nil, fiber.ErrConflict
-	}
-
+	newDelivery.District = request.District
+	newDelivery.City = request.City
+	newDelivery.Village = request.Village
+	newDelivery.Hamlet = request.Hamlet
 	newDelivery.Cost = request.Cost
-	newDelivery.Distance = request.Distance
 	if err := c.DeliveryRepository.Create(tx, newDelivery); err != nil {
 		c.Log.Warnf("Can't create delivery settings : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -63,19 +62,41 @@ func (c *DeliveryUseCase) Add(ctx context.Context, request *model.CreateDelivery
 	return converter.DeliveryToResponse(newDelivery), nil
 }
 
-func (c *DeliveryUseCase) Get(ctx context.Context) (*model.DeliveryResponse, error) {
+func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.DeliveryResponse, int64, int, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	newDelivery := new(entity.Delivery)
-	c.DeliveryRepository.FindFirst(tx, newDelivery)
+	if page <= 0 {
+		page = 1
+	}
+
+	var result []map[string]interface{} // entity kosong yang akan diisi
+	if err := c.DeliveryRepository.FindDeliveriesPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
+		c.Log.Warnf("Failed to find all deliveries : %+v", err)
+		return nil, 0, 0, fiber.ErrInternalServerError
+	}
+
+	newDelivery := new([]entity.Delivery)
+	err := MapDeliveries(result, newDelivery)
+	if err != nil {
+		c.Log.Warnf("Failed map delivery : %+v", err)
+		return nil, 0, 0, fiber.ErrInternalServerError
+	}
+
+	var totalPages int = 0
+	getAllDelivery := new(entity.Delivery)
+	totalDeliveries, err := c.DeliveryRepository.CountDeliveryItems(tx, getAllDelivery, search)
+	if err != nil {
+		c.Log.Warnf("Failed to count products: %+v", err)
+		return nil, 0, 0, fiber.ErrInternalServerError
+	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.ErrInternalServerError
 	}
 
-	return converter.DeliveryToResponse(newDelivery), nil
+	return converter.DeliveriesToResponse(newDelivery), totalDeliveries, totalPages, nil
 }
 
 func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliveryRequest) (*model.DeliveryResponse, error) {
@@ -100,8 +121,13 @@ func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliver
 		c.Log.Warnf("Delivery settings by id not found : %+v", err)
 		return nil, fiber.ErrNotFound
 	}
+
+	newDelivery.District = request.District
+	newDelivery.City = request.City
+	newDelivery.Village = request.Village
+	newDelivery.Hamlet = request.Hamlet
 	newDelivery.Cost = request.Cost
-	newDelivery.Distance = request.Distance
+
 	if err := c.DeliveryRepository.Update(tx, newDelivery); err != nil {
 		c.Log.Warnf("Can't update delivery settings by : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -138,4 +164,62 @@ func (c *DeliveryUseCase) Delete(ctx context.Context, request *model.DeleteDeliv
 	}
 
 	return true, nil
+}
+
+func MapDeliveries(rows []map[string]interface{}, results *[]entity.Delivery) error {
+	layoutWithZone := "2006-01-02T15:04:05-07:00"
+
+	for _, row := range rows {
+		// Ambil dan validasi delivery_id
+		deliveryIdStr, ok := row["delivery_id"].(string)
+		if !ok || deliveryIdStr == "" {
+			return fmt.Errorf("missing or invalid delivery_id")
+		}
+
+		deliveryId, err := strconv.ParseUint(deliveryIdStr, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse delivery_id: %v", err)
+		}
+
+		// Ambil field kategori
+		deliveryCity, _ := row["delivery_city"].(string)
+		deliveryDistrict, _ := row["delivery_district"].(string)
+		deliveryVillage, _ := row["delivery_village"].(string)
+		deliveryHamlet, _ := row["delivery_hamlet"].(string)
+		deliveryCostStr, _ := row["delivery_cost"].(string)
+		deliveryCost, err := strconv.ParseFloat(deliveryCostStr, 32)
+		if err != nil {
+			return fmt.Errorf("failed to parse delivery_cost : %v", err)
+		}
+
+		// Parse created_at dan updated_at kategori
+		deliveryCreatedAtStr, _ := row["delivery_created_at"].(string)
+		categoryCreatedAt, err := time.Parse(layoutWithZone, deliveryCreatedAtStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse delivery_created_at: %v", err)
+		}
+
+		deliveryUpdatedAtStr, _ := row["delivery_updated_at"].(string)
+		categoryUpdatedAt, err := time.Parse(layoutWithZone, deliveryUpdatedAtStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse delivery_updated_at: %v", err)
+		}
+
+		// Buat objek kategori
+		newDelivery := entity.Delivery{
+			ID:         deliveryId,
+			City:       deliveryCity,
+			District:   deliveryDistrict,
+			Village:    deliveryVillage,
+			Hamlet:     deliveryHamlet,
+			Cost:       float32(deliveryCost),
+			Created_At: categoryCreatedAt,
+			Updated_At: categoryUpdatedAt,
+		}
+
+		// Tambahkan ke hasil
+		*results = append(*results, newDelivery)
+	}
+
+	return nil
 }

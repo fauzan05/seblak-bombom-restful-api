@@ -1,14 +1,13 @@
 CREATE TABLE addresses (
     id INTEGER AUTO_INCREMENT,
     user_id INTEGER NOT NULL,
-    regency VARCHAR(100) NOT NULL,
-    subdistrict VARCHAR(100) NOT NULL,
-    complete_address TEXT NOT NULL, 
-    longitude FLOAT NOT NULL,
-    latitude FLOAT NOT NULL,
+    delivery_id INTEGER NOT NULL,
+    complete_address TEXT DEFAULT NULL,
+    google_maps_link TEXT DEFAULT NULL,
     is_main BOOLEAN NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (delivery_id) REFERENCES deliveries (id)
 ) ENGINE = InnoDB;

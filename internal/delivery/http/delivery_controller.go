@@ -4,6 +4,7 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -41,16 +42,42 @@ func (c *DeliveryController) Create(ctx  *fiber.Ctx) error {
 	})
 }
 
-func (c *DeliveryController) Get(ctx *fiber.Ctx) error {
-	response, err := c.UseCase.Get(ctx.Context())
+func (c *DeliveryController) GetAll(ctx *fiber.Ctx) error {
+	search := ctx.Query("search", "")
+	trimSearch := strings.TrimSpace(search)
+
+	// ambil data sorting
+	getColumn := ctx.Query("column", "")
+	getSortBy := ctx.Query("sort_by", "desc")
+
+	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
+	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'per_page' parameter")
+		return err
+	}
+
+	// Ambil query parameter 'page' dengan default value 1 jika tidak disediakan
+	page, err := strconv.Atoi(ctx.Query("page", "1"))
+	if err != nil {
+		c.Log.Warnf("Invalid 'page' parameter")
+		return err
+	}
+
+	response, totalDeliveries, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("Failed to get a delivery setting data : %+v", err)
 		return err
 	}
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.DeliveryResponse]{
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.DeliveryResponse]{
 		Code:   200,
 		Status: "Success to get a delivery settings",
 		Data:   response,
+		TotalDatas: totalDeliveries,
+		TotalPages: totalPages,
+		CurrentPages: page,
+		DataPerPages: perPage,
 	})
 }
 

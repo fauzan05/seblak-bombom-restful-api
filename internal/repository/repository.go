@@ -479,14 +479,14 @@ func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[stri
 		}
 
 		// Masukkan kategori ke hasil
-		product := map[string]interface{}{
+		category := map[string]interface{}{
 			"category_id":         categoryID,
 			"category_name":       categoryName,
 			"category_desc":       categoryDesc,
 			"category_created_at": categoryCreatedAt,
 			"category_updated_at": categoryUpdatedAt,
 		}
-		results = append(results, product)
+		results = append(results, category)
 	}
 
 	*entity = results
@@ -532,21 +532,21 @@ func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map
 	var results []map[string]interface{}
 	for rows.Next() {
 		var (
-			discountCouponID        string
-			discountCouponName      string
-			discountCouponDesc      string
-			discountCouponCode      string
-			discountCouponValue      string
-			discountCouponType      string
-			discountCouponStart      string
-			discountCouponEnd      string
-			discountCouponTotalMaxUsage      string
-			discountCouponMaxUsagePerUser      string
-			discountCouponUsedCount      string
-			discountCouponMinOrderValue      string
-			discountCouponStatus      string
-			discountCouponCreatedAt string
-			discountCouponUpdatedAt string
+			discountCouponID              string
+			discountCouponName            string
+			discountCouponDesc            string
+			discountCouponCode            string
+			discountCouponValue           string
+			discountCouponType            string
+			discountCouponStart           string
+			discountCouponEnd             string
+			discountCouponTotalMaxUsage   string
+			discountCouponMaxUsagePerUser string
+			discountCouponUsedCount       string
+			discountCouponMinOrderValue   string
+			discountCouponStatus          string
+			discountCouponCreatedAt       string
+			discountCouponUpdatedAt       string
 		)
 
 		// Scan data
@@ -571,24 +571,24 @@ func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map
 		}
 
 		// Masukkan kategori ke hasil
-		product := map[string]interface{}{
-			"discount_coupon_id":         discountCouponID,
-			"discount_coupon_name":       discountCouponName,
-			"discount_coupon_desc":       discountCouponDesc,
-			"discount_coupon_code": discountCouponCode,
-			"discount_coupon_value": discountCouponValue,
-			"discount_coupon_type": discountCouponType,
-			"discount_coupon_start": discountCouponStart,
-			"discount_coupon_end": discountCouponEnd,
-			"discount_coupon_total_max_usage": discountCouponTotalMaxUsage,
+		discount := map[string]interface{}{
+			"discount_coupon_id":                 discountCouponID,
+			"discount_coupon_name":               discountCouponName,
+			"discount_coupon_desc":               discountCouponDesc,
+			"discount_coupon_code":               discountCouponCode,
+			"discount_coupon_value":              discountCouponValue,
+			"discount_coupon_type":               discountCouponType,
+			"discount_coupon_start":              discountCouponStart,
+			"discount_coupon_end":                discountCouponEnd,
+			"discount_coupon_total_max_usage":    discountCouponTotalMaxUsage,
 			"discount_coupon_max_usage_per_user": discountCouponMaxUsagePerUser,
-			"discount_coupon_used_count": discountCouponUsedCount,
-			"discount_coupon_min_order_value": discountCouponMinOrderValue,
-			"discount_coupon_status": discountCouponStatus,
-			"discount_coupon_created_at": discountCouponCreatedAt,
-			"discount_coupon_updated_at": discountCouponUpdatedAt,
+			"discount_coupon_used_count":         discountCouponUsedCount,
+			"discount_coupon_min_order_value":    discountCouponMinOrderValue,
+			"discount_coupon_status":             discountCouponStatus,
+			"discount_coupon_created_at":         discountCouponCreatedAt,
+			"discount_coupon_updated_at":         discountCouponUpdatedAt,
 		}
-		results = append(results, product)
+		results = append(results, discount)
 	}
 
 	*entity = results
@@ -598,6 +598,97 @@ func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map
 func (r *Repository[T]) CountDiscountCouponItems(db *gorm.DB, entity *T, search string) (int64, error) {
 	var count int64
 	err := db.Where("discount_coupons.name LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
+func (r *Repository[T]) FindDeliveriesPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+	offset := (page - 1) * pageSize
+	if sortingColumn == "" {
+		sortingColumn = "deliveries.id"
+	}
+
+	query := db.Table("deliveries").
+		Select(` 
+        deliveries.id as delivery_id, 
+        deliveries.city as delivery_city, 
+        deliveries.district as delivery_district, 
+        deliveries.village as delivery_village, 
+        deliveries.hamlet as delivery_hamlet, 
+        deliveries.cost as delivery_cost, 
+        deliveries.created_at as delivery_created_at, 
+        deliveries.updated_at as delivery_updated_at
+    `).
+		Where("deliveries.city LIKE ?", "%"+search+"%").
+		Or("deliveries.district LIKE ?", "%"+search+"%").
+		Or("deliveries.village LIKE ?", "%"+search+"%").
+		Or("deliveries.hamlet LIKE ?", "%"+search+"%").
+		Or("deliveries.cost LIKE ?", "%"+search+"%").
+		Order(fmt.Sprintf("%s %s", sortingColumn, sortBy)).
+		Offset(offset).
+		Limit(pageSize)
+
+	rows, err := query.Rows()
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	var results []map[string]interface{}
+	for rows.Next() {
+		var (
+			deliveryID        string
+			deliveryCity      string
+			deliveryDistrict  string
+			deliveryVillage   string
+			deliveryHamlet    string
+			deliveryCost      string
+			deliveryCreatedAt string
+			deliveryUpdatedAt string
+		)
+
+		// Scan data
+		if err := rows.Scan(
+			&deliveryID,
+			&deliveryCity,
+			&deliveryDistrict,
+			&deliveryVillage,
+			&deliveryHamlet,
+			&deliveryCost,
+			&deliveryCreatedAt,
+			&deliveryUpdatedAt,
+		); err != nil {
+			return err
+		}
+
+		// Masukkan delivery ke hasil
+		delivery := map[string]interface{}{
+			"delivery_id":         deliveryID,
+			"delivery_city":       deliveryCity,
+			"delivery_district":   deliveryDistrict,
+			"delivery_village":    deliveryVillage,
+			"delivery_hamlet":        deliveryHamlet,
+			"delivery_cost":        deliveryCost,
+			"delivery_created_at":        deliveryCreatedAt,
+			"delivery_updated_at": deliveryUpdatedAt,
+		}
+		results = append(results, delivery)
+	}
+
+	*entity = results
+	return nil
+}
+
+func (r *Repository[T]) CountDeliveryItems(db *gorm.DB, entity *T, search string) (int64, error) {
+	var count int64
+	err := db.Where("deliveries.city LIKE ?", "%"+search+"%").
+	Or("deliveries.district LIKE ?", "%"+search+"%").
+	Or("deliveries.village LIKE ?", "%"+search+"%").
+	Or("deliveries.hamlet LIKE ?", "%"+search+"%").
+	Or("deliveries.cost LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
 	if err != nil {
 		return int64(0), err
 	}

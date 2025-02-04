@@ -45,7 +45,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api.Get("/categories", c.CategoryController.GetAll)
 
 	// delivery
-	api.Get("/deliveries", c.DeliveryController.Get)
+	api.Get("/deliveries", c.DeliveryController.GetAll)
 
 	// Product
 	api.Get("/products", c.ProductController.GetAll)

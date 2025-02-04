@@ -50,10 +50,7 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 	request.OpeningHours = form.Value["opening_hours"][0]
 	request.ClosingHours = form.Value["closing_hours"][0]
 	request.Address = strings.TrimSpace(form.Value["address"][0])
-	parseLongitude, _ := strconv.ParseFloat(strings.TrimSpace(form.Value["longitude"][0]), 64)
-	request.Longitude = parseLongitude
-	parseLatitude, _ := strconv.ParseFloat(strings.TrimSpace(form.Value["latitude"][0]), 64)
-	request.Latitude =  parseLatitude
+	request.GoogleMapsLink = strings.TrimSpace(form.Value["google_maps_link"][0])
 	request.Description = strings.TrimSpace(form.Value["description"][0])
 	request.PhoneNumber = strings.TrimSpace(form.Value["phone_number"][0])
 	request.Email = strings.TrimSpace(form.Value["email"][0])
