@@ -144,7 +144,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	// delivery
 	auth.Post("/deliveries", c.DeliveryController.Create)
 	auth.Put("/deliveries/:deliveryId", c.DeliveryController.Update)
-	auth.Delete("/deliveries/:deliveryId", c.DeliveryController.Remove)
+	auth.Delete("/deliveries", c.DeliveryController.Remove)
 
 	// application
 	auth.Post("/applications", c.ApplicationController.Create) // add & update

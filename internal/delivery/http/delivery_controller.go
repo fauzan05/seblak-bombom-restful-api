@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -91,7 +92,7 @@ func (c *DeliveryController) Update(ctx  *fiber.Ctx) error {
 	getId := ctx.Params("deliveryId")
 	deliveryId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert category id : %+v", err)
+		c.Log.Warnf("Failed to convert delivery id : %+v", err)
 		return err
 	}
 	deliveryRequest.ID = uint64(deliveryId)
@@ -110,15 +111,33 @@ func (c *DeliveryController) Update(ctx  *fiber.Ctx) error {
 }
 
 func (c *DeliveryController) Remove(ctx *fiber.Ctx) error {
-	deliveryRequest := new(model.DeleteDeliveryRequest)
-	getId := ctx.Params("deliveryId")
-	deliveryId, err := strconv.Atoi(getId)
-	if err != nil {
-		c.Log.Warnf("Failed to convert category id : %+v", err)
-		return err
+	idsParam := ctx.Query("ids")
+	if idsParam == "" {
+		ctx.Status(fiber.StatusBadRequest)
+		return ctx.JSON(fiber.Map{
+			"error": "Parameter 'ids' is required",
+		})
 	}
-	deliveryRequest.ID = uint64(deliveryId)
-	response, err := c.UseCase.Delete(ctx.Context(), deliveryRequest)
+	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
+	idStrings := strings.Split(idsParam, ",")
+	var deliveryIds []uint64
+
+	// Konversi setiap elemen menjadi integer
+	for _, idStr := range idStrings {
+		if (idStr != "") {
+			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
+			if err != nil {
+				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": fmt.Sprintf("Invalid ID: %s", idStr),
+				})
+			}
+			deliveryIds = append(deliveryIds, id)
+		}
+	}
+
+	deleteDelivery := new(model.DeleteDeliveryRequest)
+	deleteDelivery.IDs = deliveryIds
+	response, err := c.UseCase.Delete(ctx.Context(), deleteDelivery)
 	if err != nil {
 		c.Log.Warnf("Failed to remove a delivery setting by id : %+v", err)
 		return err

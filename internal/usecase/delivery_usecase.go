@@ -91,6 +91,12 @@ func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 		return nil, 0, 0, fiber.ErrInternalServerError
 	}
 
+	// Hitung total halaman
+	totalPages = int(totalDeliveries / int64(perPage))
+	if totalDeliveries%int64(perPage) > 0 {
+		totalPages++
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return nil, 0, 0, fiber.ErrInternalServerError
@@ -128,6 +134,7 @@ func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliver
 	newDelivery.Hamlet = request.Hamlet
 	newDelivery.Cost = request.Cost
 
+	fmt.Println(newDelivery);
 	if err := c.DeliveryRepository.Update(tx, newDelivery); err != nil {
 		c.Log.Warnf("Can't update delivery settings by : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -151,10 +158,16 @@ func (c *DeliveryUseCase) Delete(ctx context.Context, request *model.DeleteDeliv
 		return false, fiber.ErrBadRequest
 	}
 
-	newDelivery := new(entity.Delivery)
-	newDelivery.ID = request.ID
-	if err := c.DeliveryRepository.Delete(tx, newDelivery); err != nil {
-		c.Log.Warnf("Can't delete delivery setting from database : %+v", err)
+	newDeliveries := []entity.Delivery{}
+	for _, idDelivery := range request.IDs {
+		newDelivery := entity.Delivery{
+			ID: idDelivery,
+		}
+		newDeliveries = append(newDeliveries, newDelivery)
+	}
+
+	if err := c.DeliveryRepository.DeleteInBatch(tx, &newDeliveries); err != nil {
+		c.Log.Warnf("Can't delete delivery from database : %+v", err)
 		return false, fiber.ErrBadRequest
 	}
 

@@ -164,7 +164,6 @@ func (c *CategoryUseCase) Delete(ctx context.Context, request *model.DeleteCateg
 	}
 
 	newCategories := []entity.Category{}
-
 	for _, idProduct := range request.IDs {
 		newCategory := entity.Category{
 			ID: idProduct,

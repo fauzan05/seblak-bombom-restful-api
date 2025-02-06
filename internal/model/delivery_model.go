@@ -29,5 +29,5 @@ type UpdateDeliveryRequest struct {
 }
 
 type DeleteDeliveryRequest struct {
-	ID uint64 `json:"-" validate:"required"`
+	IDs []uint64 `json:"-" validate:"required"`
 }
