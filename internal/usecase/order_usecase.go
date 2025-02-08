@@ -115,28 +115,19 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	newOrder.IsDelivery = request.IsDelivery
 	if newOrder.IsDelivery {
-		// jika ingin dikirim, berarti dikenakan biaya ongkir dan status awalnya adalah 'prepare'
+		// jika ingin dikirim, berarti ambil data delivery pada main address tiap user yang order
 		newDelivery := new(entity.Delivery)
 		if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
 			c.Log.Warnf("Can't find delivery settings : %+v", err)
 			return nil, fiber.ErrNotFound
 		}
-
-		newOrder.Distance = request.Distance
-		// newOrder.DeliveryCost = newOrder.Distance / newDelivery.Distance * newDelivery.Cost // bagian ini seharusnya mengambil data address utama tiap user yang order
+		
 		// jumlahkan semua total termasuk ongkir
 		newOrder.Amount += newOrder.DeliveryCost
+	} 
 
-		// set status pengiriman
-		newOrder.DeliveryStatus = helper.PREPARE_DELIVERY
-	} else {
-		// jika tidak ingin dikirim, berarti ambil sendiri dan tidak dikenakan biaya ongkir dan status awalnya adalah 'take_away'
-		newOrder.DeliveryStatus = helper.TAKE_AWAY
-	}
-
-	// isi longitude dan latitude meskipun datanya 0
-	newOrder.Longitude = request.Longitude
-	newOrder.Latitude = request.Latitude
+	// set status order
+	newOrder.OrderStatus = helper.ORDER_PENDING
 
 	if request.DiscountCode != "" {
 		newDiscount := new(entity.DiscountCoupon)
@@ -290,7 +281,7 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 	}
 
 	newOrder.PaymentStatus = request.PaymentStatus
-	newOrder.DeliveryStatus = request.DeliveryStatus
+	newOrder.OrderStatus = request.OrderStatus
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to update status order by id : %+v", err)
 		return nil, fiber.ErrBadRequest

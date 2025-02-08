@@ -1,10 +1,12 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -116,18 +118,34 @@ func (c *AddressController) Update(ctx *fiber.Ctx) error {
 }
 
 func (c *AddressController) Remove(ctx *fiber.Ctx) error {
-	getId := ctx.Params("addressId")
-	addressId, err := strconv.Atoi(getId)
-	if err != nil {
-		c.Log.Warnf("Failed to convert address id : %+v", err)
-		return err
+	idsParam := ctx.Query("ids")
+	if idsParam == "" {
+		ctx.Status(fiber.StatusBadRequest)
+		return ctx.JSON(fiber.Map{
+			"error": "Parameter 'ids' is required",
+		})
+	}
+	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
+	idStrings := strings.Split(idsParam, ",")
+	var addressIds []uint64
+
+	// Konversi setiap elemen menjadi integer
+	for _, idStr := range idStrings {
+		if (idStr != "") {
+			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
+			if err != nil {
+				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": fmt.Sprintf("Invalid ID: %s", idStr),
+				})
+			}
+			addressIds = append(addressIds, id)
+		}
 	}
 
-	addressRequest := &model.DeleteAddressRequest{
-		ID: uint64(addressId),
-	}
+	deleteAddress := new(model.DeleteAddressRequest)
+	deleteAddress.IDs = addressIds
 
-	response, err := c.UseCase.Delete(ctx.Context(), addressRequest)
+	response, err := c.UseCase.Delete(ctx.Context(), deleteAddress)
 	if err != nil {
 		c.Log.Warnf("Failed to delete address : %+v", err)
 		return err

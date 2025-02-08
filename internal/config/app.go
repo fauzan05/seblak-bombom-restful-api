@@ -46,7 +46,7 @@ func Bootstrap(config *BootstrapConfig) {
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository)
-	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, userUseCase)
+	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, deliveryRepository, userUseCase)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository, imageRepository)
 	imageUseCase := usecase.NewImageUseCase(config.DB, config.Log, config.Validate, imageRepository)

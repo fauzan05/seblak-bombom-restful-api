@@ -35,32 +35,6 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	orderRequest.Email = auth.Email
 	orderRequest.Phone = auth.Phone
 
-	if !orderRequest.IsLonLatTakeManual && orderRequest.IsDelivery {
-		// jika lonlat tidak diambi lagi (manual), maka ambil lonlat dari data address user sekarang yang statusnya is_main = true
-		// filter address yang dimana address is_main = true
-		for _, address := range auth.Addresses {
-			if address.IsMain {
-				orderRequest.CompleteAddress = address.CompleteAddress
-				orderRequest.Longitude = address.Longitude
-				orderRequest.Latitude = address.Latitude
-				break
-			}
-		}
-	} else if (!orderRequest.IsLonLatTakeManual || orderRequest.IsLonLatTakeManual) && !orderRequest.IsDelivery {
-		// jika tidak diantar, maka masukkan complete address saja
-		for _, address := range auth.Addresses {
-			if address.IsMain {
-				orderRequest.CompleteAddress = address.CompleteAddress
-				orderRequest.Distance = 0
-				orderRequest.Longitude = 0
-				orderRequest.Latitude = 0
-				break
-			}
-		}
-	}
-	// WARNING! pastikan data distance diambil dari front-end dan diisi
-
-
 	response, err := c.UseCase.Add(ctx.Context(), orderRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to create new order : %+v", err)

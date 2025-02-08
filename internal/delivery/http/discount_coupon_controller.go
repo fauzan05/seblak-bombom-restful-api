@@ -27,13 +27,13 @@ func (c *DiscountCouponController) Create(ctx *fiber.Ctx) error {
 	discountRequest := new(model.CreateDiscountCouponRequest)
 	if err := ctx.BodyParser(discountRequest); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request format. Please check your input!")
 	}
 
 	response, err := c.UseCase.Add(ctx.Context(), discountRequest)
 	if err != nil {
-		c.Log.Warnf("Failed to create add new discount : %+v", err)
-		return err
+		c.Log.Warnf("Failed to create new discount : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.DiscountCouponResponse]{

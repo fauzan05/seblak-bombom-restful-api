@@ -6,17 +6,20 @@ import (
 )
 
 func AddressToResponse(address *entity.Address) *model.AddressResponse {
-	return &model.AddressResponse{
+	response := &model.AddressResponse{
 		ID: address.ID,
-		Regency: address.Regency,
-		Subdistrict: address.SubDistrict,
 		CompleteAddress: address.CompleteAddress,
-		Longitude: address.Longitude,
-		Latitude: address.Latitude,
+		GoogleMapsLink: address.GoogleMapsLink,
 		IsMain: address.IsMain,
 		CreatedAt: address.Created_At.Format("2006-01-02 15:04:05"),
 		UpdatedAt: address.Updated_At.Format("2006-01-02 15:04:05"),
 	}
+
+	if address.Delivery != nil {
+		response.Delivery = *DeliveryToResponse(address.Delivery)
+	}
+
+	return response
 }
 
 func AddressesToResponse(addresses *[]model.AddressResponse) *[]model.AddressResponse {

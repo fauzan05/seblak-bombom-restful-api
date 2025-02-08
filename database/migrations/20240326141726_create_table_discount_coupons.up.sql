@@ -3,7 +3,7 @@ CREATE TABLE discount_coupons (
     name VARCHAR(255) NOT NULL,
     code VARCHAR(255) NOT NULL unique,
     value FLOAT NOT NULL DEFAULT 0,
-    type ENUM("percent", "nominal") NOT NULL DEFAULT "nominal",
+    type TINYINT(1) NOT NULL COMMENT '1 : nominal | 2 : percent',
     start DATETIME DEFAULT CURRENT_TIMESTAMP,
     end DATETIME DEFAULT CURRENT_TIMESTAMP,
     total_max_usage INT DEFAULT 1,

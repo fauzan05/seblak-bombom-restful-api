@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
@@ -19,17 +20,20 @@ type AddressUseCase struct {
 	Validate          *validator.Validate
 	UserRepository    *repository.UserRepository
 	AddressRepository *repository.AddressRepository
+	DeliveryRepository *repository.DeliveryRepository
 	UserUseCase       *UserUseCase
 }
 
 func NewAddressUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
-	userRepository *repository.UserRepository, addressRepository *repository.AddressRepository, userUseCase *UserUseCase) *AddressUseCase {
+	userRepository *repository.UserRepository, addressRepository *repository.AddressRepository,
+	deliveryRepository *repository.DeliveryRepository, userUseCase *UserUseCase) *AddressUseCase {
 	return &AddressUseCase{
 		DB:                db,
 		Log:               log,
 		Validate:          validate,
 		UserRepository:    userRepository,
 		AddressRepository: addressRepository,
+		DeliveryRepository: deliveryRepository,
 		UserUseCase:       userUseCase,
 	}
 }
@@ -49,14 +53,26 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
+	
+	newDelivery := new(entity.Delivery)
+	newDelivery.ID = request.DeliveryId
+	// cek apakah delivery id ada
+	if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
+		c.Log.Warnf("Failed create new address : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	fmt.Println(newDelivery)
+
+	if (newDelivery.City == "") {
+		c.Log.Warnf("Failed to find delivery data : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
+	}
 
 	address := new(entity.Address)
 	address.UserId = currentUser.ID
-	address.Regency = request.Regency
-	address.SubDistrict = request.Subdistrict
+	address.DeliveryId = request.DeliveryId
 	address.CompleteAddress = request.CompleteAddress
-	address.Longitude = request.Longitude
-	address.Latitude = request.Latitude
+	address.GoogleMapsLink = request.GoogleMapsLink
 	address.IsMain = request.IsMain
 
 	if err := c.AddressRepository.Create(tx, address); err != nil {
@@ -69,10 +85,10 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
+	// if err := tx.Commit().Error; err != nil {
+	// 	c.Log.Warnf("Failed commit transaction : %+v", err)
+	// 	return nil, fiber.ErrInternalServerError
+	// }
 
 	return converter.AddressToResponse(address), nil
 }
@@ -117,11 +133,7 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	newAddress := new(entity.Address)
 	newAddress.ID = request.ID
 	newAddress.UserId = request.UserId
-	newAddress.Regency = request.Regency
-	newAddress.SubDistrict = request.Subdistrict
 	newAddress.CompleteAddress = request.CompleteAddress
-	newAddress.Longitude = request.Longitude
-	newAddress.Latitude = request.Latitude
 	newAddress.IsMain = request.IsMain
 
 	if err := c.AddressRepository.Update(tx, newAddress); err != nil {
@@ -151,9 +163,15 @@ func (c *AddressUseCase) Delete(ctx context.Context, request *model.DeleteAddres
 		return false, fiber.ErrBadRequest
 	}
 
-	newAddress := new(entity.Address)
-	newAddress.ID = request.ID
-	if err := c.AddressRepository.Delete(tx, newAddress); err != nil {
+	newAddresses := []entity.Address{}
+	for _, idAddress := range request.IDs {
+		newAddress := entity.Address{
+			ID: idAddress,
+		}
+		newAddresses = append(newAddresses, newAddress)
+	}
+
+	if err := c.AddressRepository.DeleteInBatch(tx, &newAddresses); err != nil {
 		c.Log.Warnf("Can't delete address by id : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}

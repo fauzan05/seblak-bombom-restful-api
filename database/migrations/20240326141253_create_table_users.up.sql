@@ -5,7 +5,7 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL UNIQUE, 
     phone VARCHAR(100) NOT NULL,
     password VARCHAR(100) NOT NULL,
-    role ENUM("admin", "customer") NOT NULL,
+    role TINYINT(1) NOT NULL COMMENT '1 : admin | 2 : customer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id)

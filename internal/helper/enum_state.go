@@ -1,32 +1,34 @@
 package helper
 
-type Role string
-type PaymentMethod string
-type PaymentStatus string
-type DeliveryStatus string
-type DiscountType string
-type NotificationType string
+type Role int
+type PaymentMethod int
+type PaymentStatus int
+type OrderStatus int
+type DiscountType int
+type NotificationType int
 
 const (
 	// role
-	ADMIN    Role = "admin"
-	CUSTOMER Role = "customer"
+	ADMIN    Role = 1
+	CUSTOMER Role = 2
 	// payment method
-	ONLINE PaymentMethod = "online"
-	ONSITE PaymentMethod = "onsite"
+	ONLINE PaymentMethod = 1
+	ONSITE PaymentMethod = 2
 	// payment status
-	PENDING_PAYMENT PaymentStatus = "pending"
-	PAID_PAYMENT    PaymentStatus = "paid"
-	FAILED_PAYMENT  PaymentStatus = "failed"
-	// delivery status
-	PREPARE_DELIVERY DeliveryStatus = "prepare"
-	ON_THE_WAY       DeliveryStatus = "on_the_way"
-	SENT             DeliveryStatus = "sent"
-	TAKE_AWAY        DeliveryStatus = "take_away"
+	PENDING_PAYMENT PaymentStatus = 1
+	PAID_PAYMENT    PaymentStatus = 2
+	FAILED_PAYMENT  PaymentStatus = 0
+	// order status
+	ORDER_PENDING         OrderStatus = 1
+	ORDER_RECEIVED        OrderStatus = 2
+	ORDER_BEING_DELIVERED OrderStatus = 3
+	ORDER_DELIVERED       OrderStatus = 4
+	READY_FOR_PICKUP      OrderStatus = 5
+	ORDER_REJECTED        OrderStatus = 0
 	// discount type
-	PERCENT DiscountType = "percent"
-	NOMINAL DiscountType = "nominal"
+	NOMINAL DiscountType = 1
+	PERCENT DiscountType = 2
 	// notification type
-	TRANSACTION NotificationType = "transaction"
-	PROMOTION   NotificationType = "promotion"
+	TRANSACTION NotificationType = 1
+	PROMOTION   NotificationType = 2
 )

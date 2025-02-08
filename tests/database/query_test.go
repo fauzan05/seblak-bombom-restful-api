@@ -62,11 +62,7 @@ func TestCreateNewUser(t *testing.T) {
 		Addresses: []entity.Address{
 			{
 				UserId: 1,
-				Regency: "Kebumen",
-				SubDistrict: "Pejagoan",
 				CompleteAddress: "Jl tembana-peniron km.12, Dukuh jetis, Desa Peniron RT01/05, Kecamatan Pejagoan, Kabupaten Kebumen, Provinsi Jawa Tengah 54361",
-				Longitude: -74.00898606,
-				Latitude: 40.71727401,
 				IsMain: true,
 			},
 		},
