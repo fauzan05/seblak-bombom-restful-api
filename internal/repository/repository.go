@@ -33,6 +33,10 @@ func (r *Repository[T]) FindAndUpdateAddressToNonPrimary(db *gorm.DB, entity *T)
 	}
 }
 
+func (r *Repository[T]) UpdateWalletBalance(db *gorm.DB, entity *T, userId uint64, balance float32) error {
+	return db.Model(entity).Where("user_id = ?", userId).Update("balance", balance).Error
+}
+
 func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) error {
 	return db.Where("user_id = ?", userId).First(&token).Error
 }

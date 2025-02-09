@@ -13,8 +13,9 @@ const (
 	ADMIN    Role = 1
 	CUSTOMER Role = 2
 	// payment status
-	PAID_PAYMENT   PaymentStatus = 1
-	FAILED_PAYMENT PaymentStatus = 0
+	PAID_PAYMENT    PaymentStatus = 2
+	PENDING_PAYMENT PaymentStatus = 1
+	FAILED_PAYMENT  PaymentStatus = 0
 	// order status
 	ORDER_PENDING         OrderStatus = 1
 	ORDER_RECEIVED        OrderStatus = 2
@@ -33,8 +34,9 @@ const (
 	INACIVE WalletStatus = 2
 	SUSPEND WalletStatus = 3
 	// payment method
-	GOPAY PaymentMethod = "gopay"
+	GOPAY     PaymentMethod = "gopay"
 	SHOPEEPAY PaymentMethod = "shopeepay"
-	DANA PaymentMethod = "dana"
-	QRIS PaymentMethod = "qris"
+	DANA      PaymentMethod = "dana"
+	QRIS      PaymentMethod = "qris"
+	WALLET    PaymentMethod = "wallet"
 )

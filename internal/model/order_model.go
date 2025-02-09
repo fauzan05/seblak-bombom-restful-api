@@ -30,17 +30,19 @@ type OrderResponse struct {
 }
 
 type CreateOrderRequest struct {
-	DiscountCode       string                      `json:"discount_code"`
-	UserId             uint64                      `json:"user_id" validate:"required"`
-	FirstName          string                      `json:"first_name" validate:"required"`
-	LastName           string                      `json:"last_name" validate:"required"`
-	Email              string                      `json:"email" validate:"required"`
-	Phone              string                      `json:"phone" validate:"required"`
-	PaymentMethod      helper.PaymentMethod        `json:"payment_method" validate:"required"`
-	IsDelivery         bool                        `json:"is_delivery"`
-	CompleteAddress    string                      `json:"complete_address" validate:"required"`
-	Note               string                      `json:"note"`
-	OrderProducts      []CreateOrderProductRequest `json:"order_products" validate:"required"`
+	DiscountId      uint64                      `json:"discount_id"`
+	UserId          uint64                      `json:"user_id" validate:"required"`
+	FirstName       string                      `json:"first_name" validate:"required"`
+	LastName        string                      `json:"last_name" validate:"required"`
+	Email           string                      `json:"email" validate:"required"`
+	Phone           string                      `json:"phone" validate:"required"`
+	PaymentMethod   helper.PaymentMethod        `json:"payment_method" validate:"required"`
+	IsDelivery      bool                        `json:"is_delivery"`
+	DeliveryId      uint64                      `json:"delivery_id"`
+	CompleteAddress string                      `json:"complete_address" validate:"required"`
+	Note            string                      `json:"note"`
+	CurrentBalance  float32                     `json:"current_balance"`
+	OrderProducts   []CreateOrderProductRequest `json:"order_products" validate:"required"`
 }
 
 type GetOrderByCurrentRequest struct {

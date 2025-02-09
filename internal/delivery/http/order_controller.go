@@ -34,7 +34,21 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	orderRequest.LastName = auth.LastName
 	orderRequest.Email = auth.Email
 	orderRequest.Phone = auth.Phone
+	if auth.Addresses == nil {
+		c.Log.Warnf("Address not found/selected!")
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Address not set yet!",
+		})
+	}
 
+	for _, address := range auth.Addresses {
+		if address.IsMain {
+			orderRequest.CompleteAddress = address.CompleteAddress
+			orderRequest.DeliveryId = address.Delivery.ID
+		}
+	}
+
+	orderRequest.CurrentBalance = auth.Wallet.Balance
 	response, err := c.UseCase.Add(ctx.Context(), orderRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to create new order : %+v", err)

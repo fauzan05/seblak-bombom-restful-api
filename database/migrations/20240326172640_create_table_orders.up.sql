@@ -10,7 +10,7 @@ CREATE TABLE orders (
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(100) NOT NULL,
-    payment_method ENUM("gopay", "shopeepay", "dana", "qris") NOT NULL,
+    payment_method ENUM("gopay", "shopeepay", "dana", "qris", "wallet") NOT NULL,
     payment_status TINYINT(1) NOT NULL COMMENT '1 : paid | 0 : unpaid',
     order_status TINYINT(1) NOT NULL COMMENT '1 : pending order | 2 : order received | 3 : order being delivered | 4 : order delivered | 5 : ready for pickup | 0 : order rejected',
     is_delivery BOOLEAN NOT NULL,

@@ -27,13 +27,14 @@ type OrderUseCase struct {
 	DiscountRepository     *repository.DiscountCouponRepository
 	DeliveryRepository     *repository.DeliveryRepository
 	OrderProductRepository *repository.OrderProductRepository
+	WalletRepository       *repository.WalletRepository
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
 	discountRepository *repository.DiscountCouponRepository, deliveryRepository *repository.DeliveryRepository,
-	orderProductRepository *repository.OrderProductRepository) *OrderUseCase {
+	orderProductRepository *repository.OrderProductRepository, walletRepository *repository.WalletRepository) *OrderUseCase {
 	return &OrderUseCase{
 		DB:                     db,
 		Log:                    log,
@@ -45,6 +46,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 		DiscountRepository:     discountRepository,
 		DeliveryRepository:     deliveryRepository,
 		OrderProductRepository: orderProductRepository,
+		WalletRepository:       walletRepository,
 	}
 }
 
@@ -64,31 +66,32 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	for _, orderProductRequest := range request.OrderProducts {
 		if orderProductRequest.Quantity < 0 {
 			c.Log.Warnf("Quantity must be positive number : %+v", err)
-			return nil, fiber.ErrBadRequest
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "Quantity must be positive number!")
 		}
 		newProduct := new(entity.Product)
 		newProduct.ID = orderProductRequest.ProductId
 		count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
 		if count < 1 {
 			c.Log.Warnf("Find product by id not found : %+v", err)
-			return nil, fiber.ErrNotFound
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "Product selected is not found!")
 		}
 
 		if newProduct.Stock < 1 {
 			c.Log.Warnf("Product out of stock : %+v", err)
-			return nil, fiber.ErrNotFound
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Product selected is out of stock!")
 		}
 
 		// pastikan permintaan tidak melebihi stok produk yang terkini
 		newProduct.Stock -= orderProductRequest.Quantity
 		if newProduct.Stock < 0 {
 			c.Log.Warnf("Quantity order of product is out of limit : %+v", err)
-			return nil, fiber.ErrInternalServerError
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Quantity order of product is out of limit")
 		}
+
 		// setelah dipastikan tidak melebihi stok produk yang terkini, kurangi stok produk terkini
 		if err := c.ProductRepository.Update(tx, newProduct); err != nil {
 			c.Log.Warnf("Failed to update stock of product : %+v", err)
-			return nil, fiber.ErrInternalServerError
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "An error occurred on the server. Please try again later!")
 		}
 
 		orderProduct := entity.OrderProduct{
@@ -101,6 +104,20 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newOrder.Amount += orderProduct.Price * float32(orderProduct.Quantity)
 	}
 
+	newOrder.IsDelivery = request.IsDelivery
+	if newOrder.IsDelivery {
+		// jika ingin dikirim, berarti ambil data delivery pada main address tiap user yang order
+		newDelivery := new(entity.Delivery)
+		newDelivery.ID = request.DeliveryId
+		if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
+			c.Log.Warnf("Can't find delivery settings : %+v", err)
+			return nil, fiber.ErrNotFound
+		}
+
+		// jumlahkan semua total termasuk ongkir
+		newOrder.Amount += newDelivery.Cost
+	}
+
 	// user/customer data
 	newOrder.UserId = request.UserId
 	newOrder.FirstName = request.FirstName
@@ -108,30 +125,14 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	newOrder.Email = request.Email
 	newOrder.Phone = request.Phone
 	newOrder.Note = request.Note
-
-	// payment
-	newOrder.PaymentMethod = request.PaymentMethod
-	// newOrder.PaymentStatus = helper.PENDING_PAYMENT
-
-	newOrder.IsDelivery = request.IsDelivery
-	if newOrder.IsDelivery {
-		// jika ingin dikirim, berarti ambil data delivery pada main address tiap user yang order
-		newDelivery := new(entity.Delivery)
-		if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
-			c.Log.Warnf("Can't find delivery settings : %+v", err)
-			return nil, fiber.ErrNotFound
-		}
-		
-		// jumlahkan semua total termasuk ongkir
-		newOrder.Amount += newOrder.DeliveryCost
-	} 
-
 	// set status order
 	newOrder.OrderStatus = helper.ORDER_PENDING
 
-	if request.DiscountCode != "" {
+	newOrder.DiscountType = 0
+	if request.DiscountId > 0 {
 		newDiscount := new(entity.DiscountCoupon)
-		count, err := c.DiscountRepository.CountDiscountByCode(tx, newDiscount, request.DiscountCode)
+		newDiscount.ID = request.DiscountId
+		count, err := c.DiscountRepository.FindAndCountById(tx, newDiscount)
 		if err != nil {
 			c.Log.Warnf("Failed to find discount by code : %+v", err)
 			return nil, fiber.ErrInternalServerError
@@ -162,9 +163,27 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			c.Log.Warnf("Discount has disabled or doesn't exists : %+v", err)
 			return nil, fiber.ErrBadRequest
 		}
-	} else if request.DiscountCode == "" {
-		// default nominal
-		newOrder.DiscountType = helper.NOMINAL
+	}
+
+	// payment
+	newOrder.PaymentMethod = request.PaymentMethod
+	newOrder.PaymentStatus = helper.PENDING_PAYMENT
+	if newOrder.PaymentMethod == helper.WALLET {
+		// langsung paid dan proses walletnya
+		if request.CurrentBalance < newOrder.Amount {
+			// tampilkan error bahwa saldo kurang
+			c.Log.Warnf("Insufficient balance : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
+		}
+
+		newBalance := request.CurrentBalance - newOrder.Amount
+		newWallet := new(entity.Wallet)
+		if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
+			c.Log.Warnf("Failed to update new balance : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, "An error occurred on the server. Please try again later!")
+		}
+
+		newOrder.PaymentStatus = helper.PAID_PAYMENT
 	}
 
 	// mengambil alamat utama yang diambil oleh user
@@ -199,10 +218,10 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		return nil, fiber.ErrInternalServerError
 	}
 
-	// if err := tx.Commit().Error; err != nil {
-	// 	c.Log.Warnf("Failed to commit transaction : %+v", err)
-	// 	return nil, fiber.ErrInternalServerError
-	// }
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
 
 	return converter.OrderToResponse(newOrder), nil
 }
