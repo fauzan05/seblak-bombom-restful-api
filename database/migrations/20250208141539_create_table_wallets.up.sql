@@ -1,0 +1,10 @@
+CREATE TABLE wallets (
+    id INTEGER AUTO_INCREMENT,
+    user_id INTEGER NOT NULL,
+    balance INTEGER NOT NULL,
+    status TINYINT(1) NOT NULL COMMENT '1 : active | 2 : inactive | 3 : suspend',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE = InnoDB;

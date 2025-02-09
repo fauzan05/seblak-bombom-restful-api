@@ -23,6 +23,16 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(&entity).Error
 }
 
+func (r *Repository[T]) FindAndUpdateAddressToNonPrimary(db *gorm.DB, entity *T) error {
+	var totalAddress int64
+	db.Model(entity).Where("is_main = ?", true).Count(&totalAddress);
+	if totalAddress > 0 {
+		return db.Model(entity).Where("is_main = ?", true).Update("is_main", false).Error
+	} else {
+		return nil
+	}
+}
+
 func (r *Repository[T]) FindTokenByUserId(db *gorm.DB, token *T, userId int) error {
 	return db.Where("user_id = ?", userId).First(&token).Error
 }
@@ -51,7 +61,7 @@ func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string)
 	if tokenWithUser != nil {
 		return tokenWithUser //return errornya
 	}
-	return db.Where("id = ?", token.UserId).Preload("Token").Preload("Addresses").Find(user).Error
+	return db.Where("id = ?", token.UserId).Preload("Token").Preload("Addresses").Preload("Addresses.Delivery").Preload("Wallet").Find(user).Error
 }
 
 func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
@@ -68,6 +78,10 @@ func (r *Repository[T]) DeleteByProductId(db *gorm.DB, entity *T, productId uint
 
 func (r *Repository[T]) FindById(db *gorm.DB, entity *T) error {
 	return db.First(&entity).Error
+}
+
+func (r *Repository[T]) FindAddressById(db *gorm.DB, entity *T) error {
+	return db.Preload("Delivery").First(&entity).Error
 }
 
 func (r *Repository[T]) FindAndCountById(db *gorm.DB, entity *T) (int64, error) {
@@ -670,9 +684,9 @@ func (r *Repository[T]) FindDeliveriesPagination(db *gorm.DB, entity *[]map[stri
 			"delivery_city":       deliveryCity,
 			"delivery_district":   deliveryDistrict,
 			"delivery_village":    deliveryVillage,
-			"delivery_hamlet":        deliveryHamlet,
-			"delivery_cost":        deliveryCost,
-			"delivery_created_at":        deliveryCreatedAt,
+			"delivery_hamlet":     deliveryHamlet,
+			"delivery_cost":       deliveryCost,
+			"delivery_created_at": deliveryCreatedAt,
 			"delivery_updated_at": deliveryUpdatedAt,
 		}
 		results = append(results, delivery)
@@ -685,10 +699,10 @@ func (r *Repository[T]) FindDeliveriesPagination(db *gorm.DB, entity *[]map[stri
 func (r *Repository[T]) CountDeliveryItems(db *gorm.DB, entity *T, search string) (int64, error) {
 	var count int64
 	err := db.Where("deliveries.city LIKE ?", "%"+search+"%").
-	Or("deliveries.district LIKE ?", "%"+search+"%").
-	Or("deliveries.village LIKE ?", "%"+search+"%").
-	Or("deliveries.hamlet LIKE ?", "%"+search+"%").
-	Or("deliveries.cost LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
+		Or("deliveries.district LIKE ?", "%"+search+"%").
+		Or("deliveries.village LIKE ?", "%"+search+"%").
+		Or("deliveries.hamlet LIKE ?", "%"+search+"%").
+		Or("deliveries.cost LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
 	if err != nil {
 		return int64(0), err
 	}

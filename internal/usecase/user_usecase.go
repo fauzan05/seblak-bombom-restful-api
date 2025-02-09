@@ -24,10 +24,12 @@ type UserUseCase struct {
 	UserRepository    *repository.UserRepository
 	TokenRepository   *repository.TokenRepository
 	AddressRepository *repository.AddressRepository
+	WalletRepository  *repository.WalletRepository
 }
 
 func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
-	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository, addressRepository *repository.AddressRepository) *UserUseCase {
+	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository,
+	addressRepository *repository.AddressRepository, walletRepository *repository.WalletRepository) *UserUseCase {
 	return &UserUseCase{
 		DB:                db,
 		Log:               log,
@@ -35,6 +37,7 @@ func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 		UserRepository:    userRepository,
 		TokenRepository:   tokenRepository,
 		AddressRepository: addressRepository,
+		WalletRepository:  walletRepository,
 	}
 }
 
@@ -74,6 +77,16 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	if err := c.UserRepository.Create(tx, user); err != nil {
 		c.Log.Warnf("Failed create user into database : %+v", err)
 		return nil, fiber.ErrInternalServerError
+	}
+
+	// setelah itu buat wallet
+	newWallet := &entity.Wallet{}
+	newWallet.UserId = user.ID
+	newWallet.Balance = 0
+	newWallet.Status = helper.ACTIVE
+	if err := c.WalletRepository.Create(tx, newWallet); err != nil {
+		c.Log.Warnf("Failed to create a new wallet: %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to create new user, please try again later!")
 	}
 
 	if err := tx.Commit().Error; err != nil {

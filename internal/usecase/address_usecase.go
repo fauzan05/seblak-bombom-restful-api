@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
@@ -15,26 +14,26 @@ import (
 )
 
 type AddressUseCase struct {
-	DB                *gorm.DB
-	Log               *logrus.Logger
-	Validate          *validator.Validate
-	UserRepository    *repository.UserRepository
-	AddressRepository *repository.AddressRepository
+	DB                 *gorm.DB
+	Log                *logrus.Logger
+	Validate           *validator.Validate
+	UserRepository     *repository.UserRepository
+	AddressRepository  *repository.AddressRepository
 	DeliveryRepository *repository.DeliveryRepository
-	UserUseCase       *UserUseCase
+	UserUseCase        *UserUseCase
 }
 
 func NewAddressUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	userRepository *repository.UserRepository, addressRepository *repository.AddressRepository,
 	deliveryRepository *repository.DeliveryRepository, userUseCase *UserUseCase) *AddressUseCase {
 	return &AddressUseCase{
-		DB:                db,
-		Log:               log,
-		Validate:          validate,
-		UserRepository:    userRepository,
-		AddressRepository: addressRepository,
+		DB:                 db,
+		Log:                log,
+		Validate:           validate,
+		UserRepository:     userRepository,
+		AddressRepository:  addressRepository,
 		DeliveryRepository: deliveryRepository,
-		UserUseCase:       userUseCase,
+		UserUseCase:        userUseCase,
 	}
 }
 
@@ -53,22 +52,30 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
-	
+
 	newDelivery := new(entity.Delivery)
 	newDelivery.ID = request.DeliveryId
+
 	// cek apakah delivery id ada
 	if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
 		c.Log.Warnf("Failed create new address : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
-	fmt.Println(newDelivery)
 
-	if (newDelivery.City == "") {
+	if newDelivery.City == "" {
 		c.Log.Warnf("Failed to find delivery data : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Delivery data is not found!")
 	}
 
 	address := new(entity.Address)
+	// update yang tadinya is_main = 1 menjadi 0
+	if request.IsMain {
+		if err := c.AddressRepository.FindAndUpdateAddressToNonPrimary(tx, address); err != nil {
+			c.Log.Warnf("Failed to update address is main to non-primary : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+
 	address.UserId = currentUser.ID
 	address.DeliveryId = request.DeliveryId
 	address.CompleteAddress = request.CompleteAddress
@@ -80,15 +87,15 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err := c.AddressRepository.FindById(tx, address); err != nil {
+	if err := c.AddressRepository.FindAddressById(tx, address); err != nil {
 		c.Log.Warnf("Failed find updated address by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	// if err := tx.Commit().Error; err != nil {
-	// 	c.Log.Warnf("Failed commit transaction : %+v", err)
-	// 	return nil, fiber.ErrInternalServerError
-	// }
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
 
 	return converter.AddressToResponse(address), nil
 }

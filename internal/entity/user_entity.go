@@ -18,6 +18,7 @@ type User struct {
 	Token      Token       `gorm:"foreignKey:user_id;references:id"`
 	Addresses  []Address   `gorm:"foreignKey:user_id;references:id"`
 	Cart       *Cart       `gorm:"foreignKey:user_id;references:id"`
+	Wallet     *Wallet     `gorm:"foreignKey:user_id;references:id"`
 }
 
 func (u *User) TableName() string {

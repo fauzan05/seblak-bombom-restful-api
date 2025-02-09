@@ -11,7 +11,7 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 	for i, address := range user.Addresses {
 		addresses[i] = *AddressToResponse(&address)
 	}
-	return &model.UserResponse{
+	response := &model.UserResponse{
 		ID:        user.ID,
 		FirstName: user.Name.FirstName,
 		LastName:  user.Name.LastName,
@@ -22,6 +22,12 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		CreatedAt: user.Created_At.Format("2006-01-02 15:04:05"),
 		UpdatedAt: user.Updated_At.Format("2006-01-02 15:04:05"),
 	}
+
+	if user.Wallet != nil {
+		response.Wallet =  *WalletToResponse(user.Wallet)
+	}
+
+	return response
 }
 
 func UserTokenToResponse(token *entity.Token) *model.UserTokenResponse {

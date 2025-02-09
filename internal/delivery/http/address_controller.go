@@ -131,7 +131,7 @@ func (c *AddressController) Remove(ctx *fiber.Ctx) error {
 
 	// Konversi setiap elemen menjadi integer
 	for _, idStr := range idStrings {
-		if (idStr != "") {
+		if idStr != "" {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
 				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{

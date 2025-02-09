@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	// "seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
@@ -63,11 +63,6 @@ func (c *MidtransSnapOrderUseCase) Add(ctx context.Context, request *model.Creat
 	if err := c.OrderRepository.FindWithPreloads(tx, selectedOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("Failed to find order by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
-	}
-
-	if selectedOrder.PaymentMethod != helper.ONLINE {
-		c.Log.Warnf("This order has an onsite payment method : %+v", err)
-		return nil, fiber.ErrBadRequest
 	}
 
 	var midtransItemDetails []midtrans.ItemDetails
@@ -172,69 +167,69 @@ func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMi
 	} else {
 		if transactionStatusResponse != nil {
 			// 5. Do set transaction status based on response from check transaction status
-			if transactionStatusResponse.TransactionStatus == "capture" {
-				if transactionStatusResponse.FraudStatus == "challenge" {
-					// TODO set transaction status on your database to 'challenge'
-					// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
-					selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
-					if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
-						c.Log.Warnf("Failed to update status success order by id : %+v", err)
-						return nil, fiber.ErrInternalServerError
-					}
-				} else if transactionStatusResponse.FraudStatus == "accept" {
-					// TODO set transaction status on your database to 'success'
-					selectedOrder.PaymentStatus = helper.PAID_PAYMENT
-					if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
-						c.Log.Warnf("Failed to update status success order by id : %+v", err)
-						return nil, fiber.ErrInternalServerError
-					}
-				}
-			} else if transactionStatusResponse.TransactionStatus == "settlement" {
-				// TODO set transaction status on your databaase to 'success'
-				selectedOrder.PaymentStatus = helper.PAID_PAYMENT
-				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
-					c.Log.Warnf("Failed to update status success order by id : %+v", err)
-					return nil, fiber.ErrInternalServerError
-				}
-			} else if transactionStatusResponse.TransactionStatus == "deny" {
-				// TODO you can ignore 'deny', because most of the time it allows payment retries
-				// and later can become success
-				selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
-				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
-					c.Log.Warnf("Failed to update status pending order by id : %+v", err)
-					return nil, fiber.ErrInternalServerError
-				}
-			} else if transactionStatusResponse.TransactionStatus == "cancel" || transactionStatusResponse.TransactionStatus == "expire" {
-				// TODO set transaction status on your databaase to 'failure'
-				for _, orderProduct := range selectedOrder.OrderProducts {
-					newProduct := new(entity.Product)
-					newProduct.ID = orderProduct.ProductId
-					// mencari data terkini dari produk dengan id
-					if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
-						c.Log.Warnf("Failed to find product by id : %+v", err)
-						return nil, fiber.ErrInternalServerError
-					}
-					// tambahkan/kembalikan stok produk karena transaksinya gagal
-					newProduct.Stock += orderProduct.Quantity
-					// perbarui stok barang sekarang
-					if err := c.ProductRepository.Update(tx, newProduct); err != nil {
-						c.Log.Warnf("Failed to update product stock : %+v", err)
-						return nil, fiber.ErrInternalServerError
-					}
-				}
-				selectedOrder.PaymentStatus = helper.FAILED_PAYMENT
-				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
-					c.Log.Warnf("Failed to update status failed order by id : %+v", err)
-					return nil, fiber.ErrInternalServerError
-				}
-			} else if transactionStatusResponse.TransactionStatus == "pending" {
-				// TODO set transaction status on your databaase to 'pending' / waiting payment
-				selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
-				if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
-					c.Log.Warnf("Failed to update status pending order by id : %+v", err)
-					return nil, fiber.ErrInternalServerError
-				}
-			}
+			// if transactionStatusResponse.TransactionStatus == "capture" {
+			// 	if transactionStatusResponse.FraudStatus == "challenge" {
+			// 		// TODO set transaction status on your database to 'challenge'
+			// 		// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
+			// 		selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
+			// 		if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+			// 			c.Log.Warnf("Failed to update status success order by id : %+v", err)
+			// 			return nil, fiber.ErrInternalServerError
+			// 		}
+			// 	} else if transactionStatusResponse.FraudStatus == "accept" {
+			// 		// TODO set transaction status on your database to 'success'
+			// 		selectedOrder.PaymentStatus = helper.PAID_PAYMENT
+			// 		if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+			// 			c.Log.Warnf("Failed to update status success order by id : %+v", err)
+			// 			return nil, fiber.ErrInternalServerError
+			// 		}
+			// 	}
+			// } else if transactionStatusResponse.TransactionStatus == "settlement" {
+			// 	// TODO set transaction status on your databaase to 'success'
+			// 	selectedOrder.PaymentStatus = helper.PAID_PAYMENT
+			// 	if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+			// 		c.Log.Warnf("Failed to update status success order by id : %+v", err)
+			// 		return nil, fiber.ErrInternalServerError
+			// 	}
+			// } else if transactionStatusResponse.TransactionStatus == "deny" {
+			// 	// TODO you can ignore 'deny', because most of the time it allows payment retries
+			// 	// and later can become success
+			// 	selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
+			// 	if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+			// 		c.Log.Warnf("Failed to update status pending order by id : %+v", err)
+			// 		return nil, fiber.ErrInternalServerError
+			// 	}
+			// } else if transactionStatusResponse.TransactionStatus == "cancel" || transactionStatusResponse.TransactionStatus == "expire" {
+			// 	// TODO set transaction status on your databaase to 'failure'
+			// 	for _, orderProduct := range selectedOrder.OrderProducts {
+			// 		newProduct := new(entity.Product)
+			// 		newProduct.ID = orderProduct.ProductId
+			// 		// mencari data terkini dari produk dengan id
+			// 		if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
+			// 			c.Log.Warnf("Failed to find product by id : %+v", err)
+			// 			return nil, fiber.ErrInternalServerError
+			// 		}
+			// 		// tambahkan/kembalikan stok produk karena transaksinya gagal
+			// 		newProduct.Stock += orderProduct.Quantity
+			// 		// perbarui stok barang sekarang
+			// 		if err := c.ProductRepository.Update(tx, newProduct); err != nil {
+			// 			c.Log.Warnf("Failed to update product stock : %+v", err)
+			// 			return nil, fiber.ErrInternalServerError
+			// 		}
+			// 	}
+			// 	selectedOrder.PaymentStatus = helper.FAILED_PAYMENT
+			// 	if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+			// 		c.Log.Warnf("Failed to update status failed order by id : %+v", err)
+			// 		return nil, fiber.ErrInternalServerError
+			// 	}
+			// } else if transactionStatusResponse.TransactionStatus == "pending" {
+			// 	// TODO set transaction status on your databaase to 'pending' / waiting payment
+			// 	selectedOrder.PaymentStatus = helper.PENDING_PAYMENT
+			// 	if err := c.OrderRepository.Update(tx, selectedOrder); err != nil {
+			// 		c.Log.Warnf("Failed to update status pending order by id : %+v", err)
+			// 		return nil, fiber.ErrInternalServerError
+			// 	}
+			// }
 		}
 	}
 

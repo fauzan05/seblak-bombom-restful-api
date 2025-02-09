@@ -111,7 +111,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	// payment
 	newOrder.PaymentMethod = request.PaymentMethod
-	newOrder.PaymentStatus = helper.PENDING_PAYMENT
+	// newOrder.PaymentStatus = helper.PENDING_PAYMENT
 
 	newOrder.IsDelivery = request.IsDelivery
 	if newOrder.IsDelivery {
@@ -199,10 +199,10 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
+	// if err := tx.Commit().Error; err != nil {
+	// 	c.Log.Warnf("Failed to commit transaction : %+v", err)
+	// 	return nil, fiber.ErrInternalServerError
+	// }
 
 	return converter.OrderToResponse(newOrder), nil
 }
