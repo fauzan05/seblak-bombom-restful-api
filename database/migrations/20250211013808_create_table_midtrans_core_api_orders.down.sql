@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS midtrans_core_api_orders;

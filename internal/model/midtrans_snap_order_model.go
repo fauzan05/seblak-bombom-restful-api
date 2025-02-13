@@ -1,12 +1,12 @@
 package model
 
 type MidtransSnapOrderResponse struct {
-	ID          uint64 `json:"id,omitempty"`
-	OrderId     uint64 `json:"order_id,omitempty"`
-	Token       string `json:"token,omitempty"`
-	RedirectUrl string `json:"redirect_url,omitempty"`
-	CreatedAt   string `json:"created_at,omitempty"`
-	UpdatedAt   string `json:"updated_at,omitempty"`
+	ID          uint64 `json:"id"`
+	OrderId     uint64 `json:"order_id"`
+	Token       string `json:"token"`
+	RedirectUrl string `json:"redirect_url"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type CreateMidtransSnapOrderRequest struct {

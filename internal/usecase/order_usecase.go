@@ -104,6 +104,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newOrder.Amount += orderProduct.Price * float32(orderProduct.Quantity)
 	}
 
+	newOrder.DeliveryCost = 0
 	newOrder.IsDelivery = request.IsDelivery
 	if newOrder.IsDelivery {
 		// jika ingin dikirim, berarti ambil data delivery pada main address tiap user yang order
@@ -116,6 +117,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 		// jumlahkan semua total termasuk ongkir
 		newOrder.Amount += newDelivery.Cost
+		newOrder.DeliveryCost = newDelivery.Cost
 	}
 
 	// user/customer data
@@ -194,7 +196,8 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		return nil, fiber.ErrInternalServerError
 	}
 
-	invoice := fmt.Sprintf("INV/%d/CUST/%d", newOrder.ID, newOrder.UserId)
+	timestamp := time.Now().Unix()
+	invoice := fmt.Sprintf("INV/%d/%d/CUST/%d", timestamp, newOrder.ID, newOrder.UserId)
 	newOrder.Invoice = invoice
 
 	// memasukkan order_id ke order product

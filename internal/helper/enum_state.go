@@ -7,6 +7,8 @@ type OrderStatus int
 type DiscountType int
 type NotificationType int
 type WalletStatus int
+type TransactionStatus string
+type RequestMethod string
 
 const (
 	// role
@@ -36,7 +38,22 @@ const (
 	// payment method
 	GOPAY     PaymentMethod = "gopay"
 	SHOPEEPAY PaymentMethod = "shopeepay"
-	DANA      PaymentMethod = "dana"
 	QRIS      PaymentMethod = "qris"
 	WALLET    PaymentMethod = "wallet"
+
+	CAPTURE        TransactionStatus = "capture"
+	SETTLEMENT     TransactionStatus = "settlement"
+	PENDING        TransactionStatus = "pending"
+	DENY           TransactionStatus = "deny"
+	CANCEL         TransactionStatus = "cancel"
+	EXPIRE         TransactionStatus = "expire"
+	REFUND         TransactionStatus = "refund"
+	PARTIAL_REFUND TransactionStatus = "partial_refund"
+	AUTHORIZE      TransactionStatus = "authorize"
+
+	GET    RequestMethod = "GET"
+	POST   RequestMethod = "POST"
+	PUT    RequestMethod = "PUT"
+	PATCH  RequestMethod = "PATCH"
+	DELETE RequestMethod = "DELETE"
 )

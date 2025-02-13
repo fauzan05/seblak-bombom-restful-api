@@ -14,7 +14,7 @@ type MidtransSnapOrderController struct {
 	UseCase *usecase.MidtransSnapOrderUseCase
 }
 
-func NewMidtransController(useCase *usecase.MidtransSnapOrderUseCase, logger *logrus.Logger) *MidtransSnapOrderController {
+func NewMidtransSnapOrderController(useCase *usecase.MidtransSnapOrderUseCase, logger *logrus.Logger) *MidtransSnapOrderController {
 	return &MidtransSnapOrderController{
 		Log:     logger,
 		UseCase: useCase,

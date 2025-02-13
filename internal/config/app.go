@@ -40,6 +40,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
 	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
+	midtransCoreAPIOrderRepository := repository.NewMidtransCoreAPIOrderRepository(config.Log)
 	applicationRepository := repository.NewApplicationRepository(config.Log)
 	cartRepository := repository.NewCartRepository(config.Log)
 	cartItemRepository := repository.NewCartItemRepository(config.Log)
@@ -56,6 +57,7 @@ func Bootstrap(config *BootstrapConfig) {
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
 	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository, productRepository)
+	midtransCoreApiOrderUseCase := usecase.NewMidtransCoreAPIOrderUseCase(config.Log, config.Validate, orderRepository, config.CoreAPIClient, config.DB, midtransCoreAPIOrderRepository, productRepository)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
 	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository, cartItemRepository)
 
@@ -69,7 +71,8 @@ func Bootstrap(config *BootstrapConfig) {
 	discountCouponController := http.NewDiscountCouponController(discountCouponUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
-	midtransSnapOrderController := http.NewMidtransController(midtransSnapOrderUseCase, config.Log)
+	midtransSnapOrderController := http.NewMidtransSnapOrderController(midtransSnapOrderUseCase, config.Log)
+	midtransCoreAPIOrderController := http.NewMidtransCoreAPIOrderController(midtransCoreApiOrderUseCase, config.Log)
 	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
 	cartController := http.NewCartController(cartUseCase, config.Log)
 
@@ -89,6 +92,7 @@ func Bootstrap(config *BootstrapConfig) {
 		DeliveryController:          deliveryController,
 		ProductReviewController:     productReviewController,
 		MidtransSnapOrderController: midtransSnapOrderController,
+		MidtransCoreAPIOrderController: midtransCoreAPIOrderController,
 		ApplicationController:       applicationController,
 		CartController:              cartController,
 		AuthMiddleware:              authMiddleware,

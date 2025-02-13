@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"seblak-bombom-restful-api/internal/entity"
+
 	// "seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
@@ -67,16 +68,16 @@ func (c *MidtransSnapOrderUseCase) Add(ctx context.Context, request *model.Creat
 
 	var midtransItemDetails []midtrans.ItemDetails
 	for _, product := range selectedOrder.OrderProducts {
-		newMidtransItemsDetails := midtrans.ItemDetails{
+		newMidtransItemDetail := midtrans.ItemDetails{
 			ID:    strconv.Itoa(int(product.ID)),
 			Qty:   int32(product.Quantity),
 			Price: int64(product.Price),
 			Name:  product.ProductName,
 		}
-		midtransItemDetails = append(midtransItemDetails, newMidtransItemsDetails)
+		midtransItemDetails = append(midtransItemDetails, newMidtransItemDetail)
 	}
 	// cek apakah ada biaya pengiriman, jika ada maka tambahkan ke midtransItemDetails agar value-nya sama
-	if selectedOrder.DeliveryCost != 0 {
+	if selectedOrder.DeliveryCost > 0 {
 		newMidtransItemsDetails := midtrans.ItemDetails{
 			ID:    "1",
 			Qty:   1,
@@ -139,8 +140,7 @@ func (c *MidtransSnapOrderUseCase) Add(ctx context.Context, request *model.Creat
 }
 
 func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMidtransSnapOrderRequest) (*model.OrderResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
+	tx := c.DB.WithContext(ctx)
 
 	err := c.Validate.Struct(request)
 	if err != nil {
@@ -235,11 +235,6 @@ func (c *MidtransSnapOrderUseCase) Get(ctx context.Context, request *model.GetMi
 
 	if err := c.OrderRepository.FindWithJoins(tx, selectedOrder, "MidtransSnapOrder"); err != nil {
 		c.Log.Warnf("Failed to find order by id with joins midtrans snap order : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 

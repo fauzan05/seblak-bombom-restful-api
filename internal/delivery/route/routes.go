@@ -9,21 +9,22 @@ import (
 )
 
 type RouteConfig struct {
-	App                         *fiber.App
-	UserController              *http.UserController
-	AddressController           *http.AddressController
-	CategoryController          *http.CategoryController
-	ProductController           *http.ProductController
-	ImageController             *http.ImageController
-	OrderController             *http.OrderController
-	DiscountCouponController          *http.DiscountCouponController
-	DeliveryController          *http.DeliveryController
-	ProductReviewController     *http.ProductReviewController
-	MidtransSnapOrderController *http.MidtransSnapOrderController
-	ApplicationController       *http.ApplicationController
-	CartController              *http.CartController
-	AuthMiddleware              fiber.Handler
-	RoleMiddleware              fiber.Handler
+	App                            *fiber.App
+	UserController                 *http.UserController
+	AddressController              *http.AddressController
+	CategoryController             *http.CategoryController
+	ProductController              *http.ProductController
+	ImageController                *http.ImageController
+	OrderController                *http.OrderController
+	DiscountCouponController       *http.DiscountCouponController
+	DeliveryController             *http.DeliveryController
+	ProductReviewController        *http.ProductReviewController
+	MidtransSnapOrderController    *http.MidtransSnapOrderController
+	MidtransCoreAPIOrderController *http.MidtransCoreAPIOrderController
+	ApplicationController          *http.ApplicationController
+	CartController                 *http.CartController
+	AuthMiddleware                 fiber.Handler
+	RoleMiddleware                 fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -107,6 +108,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Midtrans
 	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
+	api.Post("/midtrans/core-api/orders", c.MidtransCoreAPIOrderController.CreateCoreAPI)
+	api.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrderNotification)
 
 	// Cart
 	api.Post("/carts", c.CartController.Create)
