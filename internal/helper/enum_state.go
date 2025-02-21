@@ -20,6 +20,7 @@ const (
 	// payment status
 	PAID_PAYMENT    PaymentStatus = 2
 	PENDING_PAYMENT PaymentStatus = 1
+	CANCEL_PAYMENT  PaymentStatus = -1
 	FAILED_PAYMENT  PaymentStatus = 0
 	// order status
 	ORDER_PENDING         OrderStatus = 1
@@ -41,7 +42,7 @@ const (
 	// payment method
 	PAYMENT_METHOD_QR_CODE PaymentMethod = "QR_CODE"
 	PAYMENT_METHOD_EWALLET PaymentMethod = "EWALLET"
-	PAYMENT_METHOD_WALLET         PaymentMethod = "WALLET"
+	PAYMENT_METHOD_WALLET  PaymentMethod = "WALLET"
 
 	PAYMENT_GATEWAY_MIDTRANS PaymentGateway = "MIDTRANS"
 	PAYMENT_GATEWAY_XENDIT   PaymentGateway = "XENDIT"

@@ -23,9 +23,13 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(&entity).Error
 }
 
+func (r *Repository[T]) UpdateCustomColumns(db *gorm.DB, entity *T, updateFields map[string]interface{}) error {
+	return db.Model(entity).Updates(updateFields).Error
+}
+
 func (r *Repository[T]) FindAndUpdateAddressToNonPrimary(db *gorm.DB, entity *T) error {
 	var totalAddress int64
-	db.Model(entity).Where("is_main = ?", true).Count(&totalAddress);
+	db.Model(entity).Where("is_main = ?", true).Count(&totalAddress)
 	if totalAddress > 0 {
 		return db.Model(entity).Where("is_main = ?", true).Update("is_main", false).Error
 	} else {
@@ -172,6 +176,14 @@ func (r *Repository[T]) FindCurrentUserCartWithPreloads(db *gorm.DB, entity *T, 
 }
 
 func (r *Repository[T]) FindWith2Preloads(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
+	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+}
+
+func (r *Repository[T]) FirstXenditTransactionByOrderId(db *gorm.DB, entity *T, orderId uint64, preload1 string, preload2 string) error {
+	return db.Where("order_id = ?", orderId).Preload(preload1).Preload(preload2).First(&entity).Error
+}
+
+func (r *Repository[T]) FindXenditTransactionByOrderId(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
 	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
 }
 

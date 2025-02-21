@@ -166,7 +166,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		newXenditTransaction.Metadata = jsonMetadata
 	}
 	newXenditTransaction.Description = resp.GetDescription()
-	expiresAt := resp.PaymentMethod.QrCode.Get().ChannelProperties.ExpiresAt.Format("2006-01-02 15:04:05")
+	expiresAt := resp.PaymentMethod.QrCode.Get().ChannelProperties.ExpiresAt.Format(time.DateTime)
 	newXenditTransaction.ExpiresAt = expiresAt
 	parseCreatedAt, err := ParseToRFC3339(resp.Created)
 	if err != nil {
@@ -200,7 +200,7 @@ func ParseToRFC3339(TimeRFC3339Nano string) (string, error) {
 		return "", err
 	}
 	timeAtUTC := parse.UTC()
-	parseToRFC3339 := timeAtUTC.Format("2006-01-02 15:04:05")
+	parseToRFC3339 := timeAtUTC.Format(time.DateTime)
 	return parseToRFC3339, nil
 }
 
@@ -215,17 +215,72 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 	}
 
 	newXenditTransaction := new(entity.XenditTransactions)
-	
-	if err := c.XenditTransactionRepository.FindFirst(tx, newXenditTransaction); err != nil {
-		c.Log.Warnf("Failed to find xendit transaction by id : %+v", err)
+	if err := c.XenditTransactionRepository.FirstXenditTransactionByOrderId(tx, newXenditTransaction, request.OrderId, "Order", "Order.OrderProducts"); err != nil {
+		c.Log.Warnf("Failed to find order by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	newOrder := new(entity.Order)
-	newOrder.ID = newXenditTransaction.OrderId
-	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
-		c.Log.Warnf("Failed to find order by id : %+v", err)
+	resp, _, resErr := c.XenditClient.PaymentRequestApi.GetPaymentRequestByID(ctx.Context(), newXenditTransaction.ID).
+		Execute()
+
+	if resErr != nil {
+		c.Log.Warnf("failed to find xendit transaction : %+v", resErr.FullError())
 		return nil, fiber.ErrInternalServerError
+	}
+
+	if newXenditTransaction.Status != string(resp.Status) {
+		// update status payment
+		hasPaymentStatusUpdated := false
+		newXenditTransaction.Status = string(resp.Status)
+		parseUpdatedAt, err := time.Parse(time.RFC3339Nano, resp.Updated)
+		if err != nil {
+			c.Log.Warnf("failed to parse updated_at into UTC : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+
+		newXenditTransaction.Updated_At = parseUpdatedAt.Format(time.RFC3339)
+		updatePaymentStatus := map[string]interface{}{
+			"status":     string(resp.Status),
+			"updated_at": parseUpdatedAt.Format(time.DateTime),
+		}
+		xenditTransactionObj := new(entity.XenditTransactions)
+		xenditTransactionObj.ID = newXenditTransaction.ID
+		if err := c.XenditTransactionRepository.UpdateCustomColumns(tx, xenditTransactionObj, updatePaymentStatus); err != nil {
+			c.Log.Warnf("failed to update xendit transaction : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+
+		// update juga di orders
+		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED {
+			// paid
+			newXenditTransaction.Order.PaymentStatus = 2
+			hasPaymentStatusUpdated = true
+		}
+
+		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_FAILED {
+			// not paid
+			newXenditTransaction.Order.PaymentStatus = 0
+			hasPaymentStatusUpdated = true
+		}
+
+		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_CANCELED {
+			// cancelled
+			newXenditTransaction.Order.PaymentStatus = -1
+			hasPaymentStatusUpdated = true
+		}
+
+		if hasPaymentStatusUpdated {
+			updatePaymentStatus = map[string]interface{}{
+				"payment_status": newXenditTransaction.Order.PaymentStatus,
+				"updated_at":     time.Now().Format(time.DateTime),
+			}
+			orderObj := new(entity.Order)
+			orderObj.ID = newXenditTransaction.Order.ID
+			if err := c.OrderRepository.UpdateCustomColumns(tx, orderObj, updatePaymentStatus); err != nil {
+				c.Log.Warnf("failed to update order payment status : %+v", err)
+				return nil, fiber.ErrInternalServerError
+			}
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {

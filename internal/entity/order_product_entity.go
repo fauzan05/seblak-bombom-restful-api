@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-// user is a struct that represents a user entity in database table
 type OrderProduct struct {
 	ID          uint64    `gorm:"primary_key;column:id;autoIncrement"`
 	OrderId     uint64    `gorm:"column:order_id"`

@@ -118,8 +118,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 	api.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrder)
 
 	// Xendit
-	api.Post("/xendit/orders/transaction", c.XenditQRCodeTransactionController.Create)
-	api.Get("/xendit/qr_code/transaction/:orderId", c.XenditQRCodeTransactionController.GetTransactionQRCode)
+	api.Post("/xendit/orders/qr_code/transaction", c.XenditQRCodeTransactionController.Create)
+	api.Get("/xendit/orders/:orderId/qr_code/transaction", c.XenditQRCodeTransactionController.GetTransaction)
 
 	// Cart
 	api.Post("/carts", c.CartController.Create)

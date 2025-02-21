@@ -228,7 +228,6 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				c.Log.Warnf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway)
 				return nil, fiber.ErrBadRequest
 			}
-			
 		}
 	}
 

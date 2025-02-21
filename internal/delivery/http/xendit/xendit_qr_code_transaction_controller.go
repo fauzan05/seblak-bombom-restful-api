@@ -43,7 +43,7 @@ func (c *XenditQRCodeTransctionController) Create(ctx *fiber.Ctx) error {
 }
 
 
-func (c *XenditQRCodeTransctionController) GetTransactionQRCode(ctx *fiber.Ctx) error {
+func (c *XenditQRCodeTransctionController) GetTransaction(ctx *fiber.Ctx) error {
 	getId := ctx.Params("orderId")
 	orderId, err := strconv.Atoi(getId)
 	if err != nil {
