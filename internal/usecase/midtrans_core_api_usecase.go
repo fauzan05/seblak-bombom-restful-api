@@ -102,10 +102,12 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 		return nil, fiber.ErrBadRequest
 	}
 
-	if selectedOrder.PaymentMethod == helper.GOPAY {
-		paymentType = coreapi.PaymentTypeGopay
-	} else if selectedOrder.PaymentMethod == helper.QRIS {
+	if selectedOrder.PaymentMethod == helper.PAYMENT_METHOD_QR_CODE {
 		paymentType = coreapi.PaymentTypeQris
+	}
+
+	customExpiry := coreapi.CustomExpiry{
+		ExpiryDuration: 360,
 	}
 
 	midtransRequest := coreapi.ChargeReq{
@@ -115,6 +117,7 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 			GrossAmt: int64(selectedOrder.Amount),
 		},
 		Items: &midtransItemDetails,
+		CustomExpiry: &customExpiry,
 	}
 
 	coreApiResponse, coreApiErr := newCoreAPIClient.ChargeTransaction(&midtransRequest)
@@ -204,3 +207,14 @@ func (c *MidtransCoreAPIOrderUseCase) Get(ctx context.Context, request *model.Ge
 	
 	return converter.MidtransCoreAPIToResponse(selectedMidtransOrder), nil
 }
+
+// func (c *MidtransCoreAPIOrderUseCase) GetCallback(ctx context.Context, request *model.GetMidtransCoreAPIOrderRequest) (*model.MidtransCoreAPIOrderResponse, error) {
+// 	tx := c.DB.WithContext(ctx)
+
+// 	err := c.Validate.Struct(request)
+// 	if err != nil {
+// 		c.Log.Warnf("Invalid request body : %+v", err)
+// 		return nil, fiber.ErrBadRequest
+// 	}
+
+// }

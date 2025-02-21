@@ -2,10 +2,12 @@ package config
 
 import (
 	"seblak-bombom-restful-api/internal/delivery/http"
+	xenditController "seblak-bombom-restful-api/internal/delivery/http/xendit"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/delivery/route"
 	"seblak-bombom-restful-api/internal/repository"
 	"seblak-bombom-restful-api/internal/usecase"
+	xenditUseCase "seblak-bombom-restful-api/internal/usecase/xendit"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -13,6 +15,7 @@ import (
 	"github.com/midtrans/midtrans-go/snap"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/xendit/xendit-go/v6"
 	"gorm.io/gorm"
 )
 
@@ -24,6 +27,7 @@ type BootstrapConfig struct {
 	Config        *viper.Viper
 	SnapClient    *snap.Client
 	CoreAPIClient *coreapi.Client
+	XenditClient  *xendit.APIClient
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -41,6 +45,7 @@ func Bootstrap(config *BootstrapConfig) {
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
 	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
 	midtransCoreAPIOrderRepository := repository.NewMidtransCoreAPIOrderRepository(config.Log)
+	xenditTransactionRepository := repository.NewXenditTransactionRepository(config.Log)
 	applicationRepository := repository.NewApplicationRepository(config.Log)
 	cartRepository := repository.NewCartRepository(config.Log)
 	cartItemRepository := repository.NewCartItemRepository(config.Log)
@@ -58,6 +63,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
 	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository, productRepository)
 	midtransCoreApiOrderUseCase := usecase.NewMidtransCoreAPIOrderUseCase(config.Log, config.Validate, orderRepository, config.CoreAPIClient, config.DB, midtransCoreAPIOrderRepository, productRepository)
+	xenditTransactionQRCodeUseCase := xenditUseCase.NewXenditTransactionQRCodeUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
 	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository, cartItemRepository)
 
@@ -73,6 +79,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
 	midtransSnapOrderController := http.NewMidtransSnapOrderController(midtransSnapOrderUseCase, config.Log)
 	midtransCoreAPIOrderController := http.NewMidtransCoreAPIOrderController(midtransCoreApiOrderUseCase, config.Log)
+	xenditQRCodeTransactionController := xenditController.NewXenditQRCodeTransctionController(xenditTransactionQRCodeUseCase, config.Log)
 	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
 	cartController := http.NewCartController(cartUseCase, config.Log)
 
@@ -81,22 +88,23 @@ func Bootstrap(config *BootstrapConfig) {
 	roleMiddleware := middleware.NewRole(userUseCase)
 
 	routeConfig := route.RouteConfig{
-		App:                         config.App,
-		UserController:              userController,
-		AddressController:           addressController,
-		CategoryController:          categoryController,
-		ProductController:           productController,
-		ImageController:             imageController,
-		OrderController:             orderController,
+		App:                               config.App,
+		UserController:                    userController,
+		AddressController:                 addressController,
+		CategoryController:                categoryController,
+		ProductController:                 productController,
+		ImageController:                   imageController,
+		OrderController:                   orderController,
 		DiscountCouponController:          discountCouponController,
-		DeliveryController:          deliveryController,
-		ProductReviewController:     productReviewController,
-		MidtransSnapOrderController: midtransSnapOrderController,
-		MidtransCoreAPIOrderController: midtransCoreAPIOrderController,
-		ApplicationController:       applicationController,
-		CartController:              cartController,
-		AuthMiddleware:              authMiddleware,
-		RoleMiddleware:              roleMiddleware,
+		DeliveryController:                deliveryController,
+		ProductReviewController:           productReviewController,
+		MidtransSnapOrderController:       midtransSnapOrderController,
+		MidtransCoreAPIOrderController:    midtransCoreAPIOrderController,
+		XenditQRCodeTransactionController: xenditQRCodeTransactionController,
+		ApplicationController:             applicationController,
+		CartController:                    cartController,
+		AuthMiddleware:                    authMiddleware,
+		RoleMiddleware:                    roleMiddleware,
 	}
 	routeConfig.Setup()
 }

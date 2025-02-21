@@ -31,8 +31,8 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		UpdatedAt:       order.Updated_At.Format("2006-01-02 15:04:05"),
 	}
 
-	if order.MidtransSnapOrder != nil {
-		response.MidtransSnapOrder = *MidtransSnapOrderToResponse(order.MidtransSnapOrder)
+	if order.XenditTransaction != nil {
+		response.XenditTransaction = XenditTransactionToResponse(*order.XenditTransaction)
 	}
 
 	return response

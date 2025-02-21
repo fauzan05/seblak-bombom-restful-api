@@ -70,7 +70,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		}
 		newProduct := new(entity.Product)
 		newProduct.ID = orderProductRequest.ProductId
-		count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
+		count, err := c.ProductRepository.FindAndCountProductById(tx, newProduct)
 		if count < 1 {
 			c.Log.Warnf("Find product by id not found : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, "Product selected is not found!")
@@ -97,6 +97,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		orderProduct := entity.OrderProduct{
 			ProductId:   orderProductRequest.ProductId,
 			ProductName: newProduct.Name,
+			Category:    newProduct.Category.Name,
 			Price:       newProduct.Price,
 			Quantity:    orderProductRequest.Quantity,
 		}
@@ -167,14 +168,76 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		}
 	}
 
-	// payment
+	if !helper.IsValidPaymentMethod(request.PaymentMethod) {
+		c.Log.Warnf("Invalid payment method!")
+		return nil, fiber.ErrBadRequest
+	}
 	newOrder.PaymentMethod = request.PaymentMethod
+
+	if !helper.IsValidChannelCode(request.ChannelCode) {
+		c.Log.Warnf("Invalid channel code!")
+		return nil, fiber.ErrBadRequest
+	}
+	newOrder.ChannelCode = request.ChannelCode
+
+	if !helper.IsValidPaymentGateway(request.PaymentGateway) {
+		c.Log.Warnf("Invalid payment gateway!")
+		return nil, fiber.ErrBadRequest
+	}
+	newOrder.PaymentGateway = request.PaymentGateway
+
+	if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
+		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
+			c.Log.Warnf("Payment method %s is not available on payment gateway System!", request.PaymentMethod)
+			return nil, fiber.ErrBadRequest
+		}
+	}
+
+	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
+		if (request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE && request.PaymentMethod != helper.PAYMENT_METHOD_EWALLET) {
+			c.Log.Warnf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
+			return nil, fiber.ErrBadRequest
+		} else {
+
+			validChannelCodes := map[helper.PaymentMethod][]helper.ChannelCode{
+				helper.PAYMENT_METHOD_QR_CODE: {
+					helper.XENDIT_QR_DANA_CHANNEL_CODE,
+					helper.XENDIT_QR_LINKAJA_CHANNEL_CODE,
+				},
+				helper.PAYMENT_METHOD_EWALLET: {
+					helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
+					helper.XENDIT_EWALLET_LINKAJA_CHANNEL_CODE,
+					helper.XENDIT_EWALLET_OVO_CHANNEL_CODE,
+					helper.XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE,
+				},
+			}
+			
+			// Cek apakah ChannelCode valid untuk PaymentMethod yang dipilih
+			isValid := false
+			if validCodes, exists := validChannelCodes[request.PaymentMethod]; exists {
+				for _, code := range validCodes {
+					if request.ChannelCode == code {
+						isValid = true
+						break
+					}
+				}
+			}
+			
+			// Jika tidak valid, berikan error
+			if !isValid {
+				c.Log.Warnf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway)
+				return nil, fiber.ErrBadRequest
+			}
+			
+		}
+	}
+
 	newOrder.PaymentStatus = helper.PENDING_PAYMENT
-	if newOrder.PaymentMethod == helper.WALLET {
+	if newOrder.PaymentMethod == helper.PAYMENT_METHOD_WALLET {
 		// langsung paid dan proses walletnya
 		if request.CurrentBalance < newOrder.Amount {
 			// tampilkan error bahwa saldo kurang
-			c.Log.Warnf("Insufficient balance : %+v", err)
+			c.Log.Warnf("Insufficient balance!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
 		}
 
@@ -197,7 +260,8 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	}
 
 	timestamp := time.Now().Unix()
-	invoice := fmt.Sprintf("INV/%d/%d/CUST/%d", timestamp, newOrder.ID, newOrder.UserId)
+	dateStr := time.Now().Format("20060102")
+	invoice := fmt.Sprintf("INV/%s/%d/ORDER/%d/CUST/%d", dateStr, timestamp, newOrder.ID, newOrder.UserId)
 	newOrder.Invoice = invoice
 
 	// memasukkan order_id ke order product

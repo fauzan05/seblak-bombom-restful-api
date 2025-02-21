@@ -4,27 +4,29 @@ import (
 	"os"
 	"path/filepath"
 	"seblak-bombom-restful-api/internal/delivery/http"
+	xenditController "seblak-bombom-restful-api/internal/delivery/http/xendit"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type RouteConfig struct {
-	App                            *fiber.App
-	UserController                 *http.UserController
-	AddressController              *http.AddressController
-	CategoryController             *http.CategoryController
-	ProductController              *http.ProductController
-	ImageController                *http.ImageController
-	OrderController                *http.OrderController
-	DiscountCouponController       *http.DiscountCouponController
-	DeliveryController             *http.DeliveryController
-	ProductReviewController        *http.ProductReviewController
-	MidtransSnapOrderController    *http.MidtransSnapOrderController
-	MidtransCoreAPIOrderController *http.MidtransCoreAPIOrderController
-	ApplicationController          *http.ApplicationController
-	CartController                 *http.CartController
-	AuthMiddleware                 fiber.Handler
-	RoleMiddleware                 fiber.Handler
+	App                               *fiber.App
+	UserController                    *http.UserController
+	AddressController                 *http.AddressController
+	CategoryController                *http.CategoryController
+	ProductController                 *http.ProductController
+	ImageController                   *http.ImageController
+	OrderController                   *http.OrderController
+	DiscountCouponController          *http.DiscountCouponController
+	DeliveryController                *http.DeliveryController
+	ProductReviewController           *http.ProductReviewController
+	MidtransSnapOrderController       *http.MidtransSnapOrderController
+	MidtransCoreAPIOrderController    *http.MidtransCoreAPIOrderController
+	XenditQRCodeTransactionController *xenditController.XenditQRCodeTransctionController
+	ApplicationController             *http.ApplicationController
+	CartController                    *http.CartController
+	AuthMiddleware                    fiber.Handler
+	RoleMiddleware                    fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -54,6 +56,10 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 	// Midtrans
 	api.Get("/midtrans/snap/orders/notification", c.MidtransSnapOrderController.GetSnapOrderNotification)
+	api.Get("/midtrans/core-api/orders/notification", c.MidtransCoreAPIOrderController.GetCoreAPIOrderNotification)
+
+	// Xendit
+	api.Post("/xendits/transactions/notifications/callback", c.XenditQRCodeTransactionController.GetCallbacks)
 
 	// Images
 	uploadsDir := "../uploads/images"
@@ -109,7 +115,11 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Midtrans
 	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
 	api.Post("/midtrans/core-api/orders", c.MidtransCoreAPIOrderController.CreateCoreAPI)
-	api.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrderNotification)
+	api.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrder)
+
+	// Xendit
+	api.Post("/xendit/orders/transaction", c.XenditQRCodeTransactionController.Create)
+	api.Get("/xendit/qr_code/transaction/:orderId", c.XenditQRCodeTransactionController.GetTransactionQRCode)
 
 	// Cart
 	api.Post("/carts", c.CartController.Create)

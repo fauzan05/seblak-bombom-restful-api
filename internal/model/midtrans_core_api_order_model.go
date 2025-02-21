@@ -16,7 +16,7 @@ type MidtransCoreAPIOrderResponse struct {
 	TransactionTime   string                   `json:"transaction_time"`
 	TransactionStatus helper.TransactionStatus `json:"transaction_status"`
 	FraudStatus       string                   `json:"fraud_status"`
-	Actions           *[]ActionResponse         `json:"actions"`
+	Actions           *[]ActionResponse        `json:"actions"`
 	CreatedAt         string                   `json:"created_at"`
 	UpdatedAt         string                   `json:"updated_at"`
 }
@@ -33,4 +33,13 @@ type CreateMidtransCoreAPIOrderRequest struct {
 
 type GetMidtransCoreAPIOrderRequest struct {
 	OrderId uint64 `json:"order_id" validate:"required"`
+}
+
+type GetMidtransNotification struct {
+	OrderId           string `json:"order_id"`
+	StatusCode string `json:"status_code"`
+	GrossAmount       string `json:"gross_amount"`
+	TransactionTime   string `json:"transaction_time"`
+	SignatureKey      string `json:"signature_key"`
+	// Tambahkan field lain sesuai kebutuhan
 }

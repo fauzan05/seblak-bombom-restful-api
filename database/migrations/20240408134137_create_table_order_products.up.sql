@@ -3,6 +3,7 @@ CREATE TABLE order_products (
     order_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
     product_name VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
     price FLOAT NOT NULL,
     quantity INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

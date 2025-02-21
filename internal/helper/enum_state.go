@@ -9,6 +9,9 @@ type NotificationType int
 type WalletStatus int
 type TransactionStatus string
 type RequestMethod string
+type XenditTransactionStatus string
+type ChannelCode string
+type PaymentGateway string
 
 const (
 	// role
@@ -36,10 +39,13 @@ const (
 	INACIVE WalletStatus = 2
 	SUSPEND WalletStatus = 3
 	// payment method
-	GOPAY     PaymentMethod = "gopay"
-	SHOPEEPAY PaymentMethod = "shopeepay"
-	QRIS      PaymentMethod = "qris"
-	WALLET    PaymentMethod = "wallet"
+	PAYMENT_METHOD_QR_CODE PaymentMethod = "QR_CODE"
+	PAYMENT_METHOD_EWALLET PaymentMethod = "EWALLET"
+	PAYMENT_METHOD_WALLET         PaymentMethod = "WALLET"
+
+	PAYMENT_GATEWAY_MIDTRANS PaymentGateway = "MIDTRANS"
+	PAYMENT_GATEWAY_XENDIT   PaymentGateway = "XENDIT"
+	PAYMENT_GATEWAY_SYSTEM   PaymentGateway = "SYSTEM"
 
 	CAPTURE        TransactionStatus = "capture"
 	SETTLEMENT     TransactionStatus = "settlement"
@@ -56,4 +62,45 @@ const (
 	PUT    RequestMethod = "PUT"
 	PATCH  RequestMethod = "PATCH"
 	DELETE RequestMethod = "DELETE"
+
+	X_SUCCESS  XenditTransactionStatus = "SUCCESS"
+	X_PENDING  XenditTransactionStatus = "PENDING"
+	X_FAILED   XenditTransactionStatus = "FAILED"
+	X_VOIDED   XenditTransactionStatus = "VOIDED"
+	X_REVERSED XenditTransactionStatus = "REVERSED"
+
+	XENDIT_QR_DANA_CHANNEL_CODE           ChannelCode = "QR_DANA"
+	XENDIT_QR_LINKAJA_CHANNEL_CODE        ChannelCode = "QR_LINKAJA"
+	XENDIT_EWALLET_LINKAJA_CHANNEL_CODE   ChannelCode = "EWALLET_LINKAJA"
+	XENDIT_EWALLET_DANA_CHANNEL_CODE      ChannelCode = "EWALLET_DANA"
+	XENDIT_EWALLET_OVO_CHANNEL_CODE       ChannelCode = "EWALLET_OVO"
+	XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE ChannelCode = "EWALLET_SHOPEEPAY"
+	WALLET_CHANNEL_CODE                   ChannelCode = "WALLET"
 )
+
+func IsValidChannelCode(pm ChannelCode) bool {
+	switch pm {
+	case XENDIT_QR_DANA_CHANNEL_CODE, XENDIT_QR_LINKAJA_CHANNEL_CODE, XENDIT_EWALLET_LINKAJA_CHANNEL_CODE, XENDIT_EWALLET_DANA_CHANNEL_CODE, XENDIT_EWALLET_OVO_CHANNEL_CODE, XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE, WALLET_CHANNEL_CODE:
+		return true
+	default:
+		return false
+	}
+}
+
+func IsValidPaymentMethod(pm PaymentMethod) bool {
+	switch pm {
+	case PAYMENT_METHOD_QR_CODE, PAYMENT_METHOD_EWALLET, PAYMENT_METHOD_WALLET:
+		return true
+	default:
+		return false
+	}
+}
+
+func IsValidPaymentGateway(pm PaymentGateway) bool {
+	switch pm {
+	case PAYMENT_GATEWAY_MIDTRANS, PAYMENT_GATEWAY_XENDIT, PAYMENT_GATEWAY_SYSTEM:
+		return true
+	default:
+		return false
+	}
+}

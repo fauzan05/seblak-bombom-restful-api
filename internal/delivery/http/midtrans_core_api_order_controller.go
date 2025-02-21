@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -41,7 +42,7 @@ func (c *MidtransCoreAPIOrderController) CreateCoreAPI(ctx *fiber.Ctx) error {
 	})
 }
 
-func (c *MidtransCoreAPIOrderController) GetCoreAPIOrderNotification(ctx *fiber.Ctx) error {
+func (c *MidtransCoreAPIOrderController) GetCoreAPIOrder(ctx *fiber.Ctx) error {
 	coreApiRequest := new(model.GetMidtransCoreAPIOrderRequest)
 	getId := ctx.Params("orderId")
 	orderId, err := strconv.Atoi(getId)
@@ -61,5 +62,32 @@ func (c *MidtransCoreAPIOrderController) GetCoreAPIOrderNotification(ctx *fiber.
 		Code:   200,
 		Status: "Success to get a midtrans notification order",
 		Data:   response,
+	})
+}
+
+func (c *MidtransCoreAPIOrderController) GetCoreAPIOrderNotification(ctx *fiber.Ctx) error {
+	// coreAPIRequest := new(model.GetMidtransCoreAPIOrderRequest)
+	getId := ctx.Queries()
+	// orderId, err := strconv.Atoi(getId)
+	// if err != nil {
+	// 	c.Log.Warnf("Failed to convert order id : %+v", err)
+	// 	return err
+	// }
+
+	// coreAPIRequest.OrderId = uint64(orderId)
+	response := getId
+	for _, data := range response {
+		fmt.Println("FIELD : ", data)
+	}
+	// response, err := c.UseCase.Get(ctx.Context(), coreAPIRequest)
+	// if err != nil {
+	// 	c.Log.Warnf("Failed to get a notification order : %+v", err)
+	// 	return err
+	// }
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.OrderResponse]{
+		Code:   200,
+		Status: "Success to get a notification order",
+		// Data:   response,
 	})
 }

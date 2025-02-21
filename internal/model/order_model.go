@@ -5,28 +5,28 @@ import (
 )
 
 type OrderResponse struct {
-	ID                uint64                    `json:"id"`
-	Invoice           string                    `json:"invoice"`
-	OrderProducts     []OrderProductResponse    `json:"order_products"`
-	Amount            string                    `json:"amount"`
-	DiscountType      helper.DiscountType       `json:"discount_type"`
-	DiscountValue     float32                   `json:"discount_value"`
-	TotalDiscount     float32                   `json:"total_discount"`
-	UserId            uint64                    `json:"user_id"`
-	FirstName         string                    `json:"first_name"`
-	LastName          string                    `json:"last_name"`
-	Email             string                    `json:"email"`
-	Phone             string                    `json:"phone"`
-	PaymentMethod     helper.PaymentMethod      `json:"payment_method"`
-	PaymentStatus     helper.PaymentStatus      `json:"payment_status"`
-	OrderStatus       helper.OrderStatus        `json:"order_status"`
-	IsDelivery        bool                      `json:"delivery"`
-	DeliveryCost      string                    `json:"delivery_cost"`
-	CompleteAddress   string                    `json:"complete_address"`
-	Note              string                    `json:"note"`
-	CreatedAt         string                    `json:"created_at"`
-	UpdatedAt         string                    `json:"updated_at"`
-	MidtransSnapOrder MidtransSnapOrderResponse `json:"midtrans_snap_order"`
+	ID                uint64                     `json:"id"`
+	Invoice           string                     `json:"invoice"`
+	OrderProducts     []OrderProductResponse     `json:"order_products"`
+	Amount            string                     `json:"amount"`
+	DiscountType      helper.DiscountType        `json:"discount_type"`
+	DiscountValue     float32                    `json:"discount_value"`
+	TotalDiscount     float32                    `json:"total_discount"`
+	UserId            uint64                     `json:"user_id"`
+	FirstName         string                     `json:"first_name"`
+	LastName          string                     `json:"last_name"`
+	Email             string                     `json:"email"`
+	Phone             string                     `json:"phone"`
+	PaymentMethod     helper.PaymentMethod       `json:"payment_method"`
+	PaymentStatus     helper.PaymentStatus       `json:"payment_status"`
+	OrderStatus       helper.OrderStatus         `json:"order_status"`
+	IsDelivery        bool                       `json:"delivery"`
+	DeliveryCost      string                     `json:"delivery_cost"`
+	CompleteAddress   string                     `json:"complete_address"`
+	Note              string                     `json:"note"`
+	CreatedAt         string                     `json:"created_at"`
+	UpdatedAt         string                     `json:"updated_at"`
+	XenditTransaction *XenditTransactionResponse `json:"xendit_transaction_response"`
 }
 
 type CreateOrderRequest struct {
@@ -37,6 +37,8 @@ type CreateOrderRequest struct {
 	Email           string                      `json:"email" validate:"required"`
 	Phone           string                      `json:"phone" validate:"required"`
 	PaymentMethod   helper.PaymentMethod        `json:"payment_method" validate:"required"`
+	ChannelCode     helper.ChannelCode          `json:"channel_code" validate:"required"`
+	PaymentGateway  helper.PaymentGateway       `json:"payment_gateway" validate:"required"`
 	IsDelivery      bool                        `json:"is_delivery"`
 	DeliveryId      uint64                      `json:"delivery_id"`
 	CompleteAddress string                      `json:"complete_address" validate:"required"`

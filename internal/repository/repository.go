@@ -108,6 +108,15 @@ func (r *Repository[T]) FindAndCountById(db *gorm.DB, entity *T) (int64, error) 
 	return count, nil
 }
 
+func (r *Repository[T]) FindAndCountProductById(db *gorm.DB, entity *T) (int64, error) {
+	var count int64
+	err := db.Preload("Category").Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
 func (c *Repository[T]) DeleteToken(db *gorm.DB, entity *T, token string) *gorm.DB {
 	result := db.Where("token = ?", token).Delete(&entity)
 	return result

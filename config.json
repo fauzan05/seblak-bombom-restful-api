@@ -6,7 +6,7 @@
     },
     "web" : {
         "prefork" : false,
-        "port" : 8010
+        "port" : 80
     },
     "log" : {
         "level" : 6
@@ -63,11 +63,24 @@
             "is_prod": true
         },
         "sandbox": {
-            "merchant_id": "G052483594",
-            "client_key": "SB-Mid-client-htMPQcokP-jhOnhT",
-            "server_key": "SB-Mid-server-6VjtitmAsI90UNv4n5tPUDK2",
+            "merchant_id": "",
+            "client_key": "",
+            "server_key": "",
             "is_prod": false
-        }
-        
+        } 
+    },
+    "xendit": {
+        "test": {
+            "secret_key" : "",
+            "callback_token": "",
+            "api_key": "xnd_development_mx1NzYLx26gWN2VmlGBhCEucaClpsefZrKhH42AsPplD0Z1pOymGPVsUQ3sJHCn",
+            "business_id": "67b0a48e849911e2a452452b",
+            "ewallet": {
+                "qris": {
+                    "invoice": false
+                }
+            }
+        },
+        "live": {}
     }
 }

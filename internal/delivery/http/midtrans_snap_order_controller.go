@@ -46,7 +46,7 @@ func (c *MidtransSnapOrderController) GetSnapOrderNotification(ctx *fiber.Ctx) e
 	getId := ctx.Query("order_id")
 	orderId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert product id : %+v", err)
+		c.Log.Warnf("Failed to convert order id : %+v", err)
 		return err
 	}
 	
