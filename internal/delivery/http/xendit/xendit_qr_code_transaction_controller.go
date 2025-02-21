@@ -11,8 +11,9 @@ import (
 )
 
 type XenditQRCodeTransctionController struct {
-	Log     *logrus.Logger
-	UseCase *usecase.XenditTransactionQRCodeUseCase
+	Log                 *logrus.Logger
+	UseCase             *usecase.XenditTransactionQRCodeUseCase
+	
 }
 
 func NewXenditQRCodeTransctionController(useCase *usecase.XenditTransactionQRCodeUseCase, logger *logrus.Logger) *XenditQRCodeTransctionController {
@@ -42,7 +43,6 @@ func (c *XenditQRCodeTransctionController) Create(ctx *fiber.Ctx) error {
 	})
 }
 
-
 func (c *XenditQRCodeTransctionController) GetTransaction(ctx *fiber.Ctx) error {
 	getId := ctx.Params("orderId")
 	orderId, err := strconv.Atoi(getId)
@@ -68,25 +68,30 @@ func (c *XenditQRCodeTransctionController) GetTransaction(ctx *fiber.Ctx) error 
 }
 
 func (c *XenditQRCodeTransctionController) GetCallbacks(ctx *fiber.Ctx) error {
-    // Struct untuk menampung data JSON dari request body
-    var requestData map[string]interface{}
+	// Menangkap semua header
+	rawHeader := ctx.GetReqHeaders()
+	for key, values := range rawHeader {
+		fmt.Printf("Header: %s = %s\n", key, values)
+	}
+	getCallbackToken := rawHeader["X-Callback-Token"]
+	fmt.Println("TOKEN : ", getCallbackToken)
 
-    // Parsing body JSON ke dalam struct
-    if err := ctx.BodyParser(&requestData); err != nil {
-        return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "code":    400,
-            "status":  "Failed to parse request body",
-            "message": err.Error(),
-        })
-    }
+	// Menangkap raw body
+	rawBody := ctx.Body()
+	fmt.Println("Raw Body:", string(rawBody))
 
-	for _, data := range requestData {
-		fmt.Println("DATANYA : ", data)
+	// Struct untuk menampung data JSON dari request body
+	var requestData map[string]interface{}
+
+	// Parsing body JSON ke dalam struct
+	if err := ctx.BodyParser(&requestData); err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return err
 	}
 
-    return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-        "code":   200,
-        "status": "Success to get a new xendit transaction callback",
-        "data":   requestData,
-    })
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"code":   200,
+		"status": "Success to get xendit transaction callback",
+		"data":   requestData,
+	})
 }

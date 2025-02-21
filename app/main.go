@@ -34,7 +34,7 @@ func main() {
 		Config:   viperConfig,
 		// SnapClient:    snapClient,
 		// CoreAPIClient: coreAPIClient,
-		XenditClient: xenditClient,
+		XenditClient:        xenditClient,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

@@ -27,12 +27,21 @@ type RouteConfig struct {
 	CartController                    *http.CartController
 	AuthMiddleware                    fiber.Handler
 	RoleMiddleware                    fiber.Handler
+	AuthXenditMiddleware              fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
+	c.SetupXenditCallbacksRoute()
 	c.SetupGuestRoute()
 	c.SetupAuthRoute()
 	c.SetupAuthAdminRoute()
+}
+
+func (c *RouteConfig) SetupXenditCallbacksRoute() {
+	api := c.App.Group("/api")
+	authToken := api.Use(c.AuthXenditMiddleware)
+	// Xendit QR Code Callback
+	authToken.Post("/xendits/transactions/notifications/qr_code/callback", c.XenditQRCodeTransactionController.GetCallbacks)
 }
 
 // GUEST
@@ -57,9 +66,6 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// Midtrans
 	api.Get("/midtrans/snap/orders/notification", c.MidtransSnapOrderController.GetSnapOrderNotification)
 	api.Get("/midtrans/core-api/orders/notification", c.MidtransCoreAPIOrderController.GetCoreAPIOrderNotification)
-
-	// Xendit
-	api.Post("/xendits/transactions/notifications/callback", c.XenditQRCodeTransactionController.GetCallbacks)
 
 	// Images
 	uploadsDir := "../uploads/images"

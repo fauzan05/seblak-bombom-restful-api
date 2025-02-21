@@ -86,6 +86,7 @@ func Bootstrap(config *BootstrapConfig) {
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
 	roleMiddleware := middleware.NewRole(userUseCase)
+	authXenditMiddleware := middleware.NewAuthXenditCallback(*config.Config, config.Log)
 
 	routeConfig := route.RouteConfig{
 		App:                               config.App,
@@ -105,6 +106,7 @@ func Bootstrap(config *BootstrapConfig) {
 		CartController:                    cartController,
 		AuthMiddleware:                    authMiddleware,
 		RoleMiddleware:                    roleMiddleware,
+		AuthXenditMiddleware:              authXenditMiddleware,
 	}
 	routeConfig.Setup()
 }
