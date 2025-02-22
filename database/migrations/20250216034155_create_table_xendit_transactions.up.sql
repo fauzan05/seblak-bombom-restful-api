@@ -11,8 +11,8 @@ CREATE TABLE xendit_transactions (
     status VARCHAR(20) NOT NULL,
     description TEXT,
     expires_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     failure_code VARCHAR(50),
     metadata JSON,
     FOREIGN KEY (order_id) REFERENCES orders (id)
