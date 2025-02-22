@@ -1,23 +1,30 @@
-FROM golang:1.22.2-alpine
+# Menggunakan image Golang berbasis Debian untuk kompatibilitas lebih baik
+FROM golang:1.22.2
 
-# Environment variables which CompileDaemon requires to run
+# Environment variables untuk CompileDaemon
 ENV GO111MODULE=on \
     CGO_ENABLED=0
 
+# Menentukan working directory di dalam container
 WORKDIR /app
 
-RUN mkdir "/build"
+# Membuat folder untuk hasil build
+RUN mkdir -p /build
 
+# Menyalin semua file dari project ke dalam container
 COPY . .
 
-COPY go.mod .
+# Menyalin go.mod dan go.sum untuk dependency management
+COPY go.mod go.sum ./
 
-# bisa juga menggunakan tidy
+# Mengunduh semua dependency
 RUN go mod download
 
-RUN go get github.com/githubnemo/CompileDaemon
-RUN go install github.com/githubnemo/CompileDaemon
+# Menginstal CompileDaemon
+RUN go install github.com/githubnemo/CompileDaemon@latest
 
-EXPOSE 8010
+# Mengekspos port aplikasi
+EXPOSE 80
 
-ENTRYPOINT CompileDaemon -build="go build -o /build/app ./app/main.go" -command="/build/app"
+# Menjalankan CompileDaemon agar otomatis rebuild dan restart saat ada perubahan kode
+ENTRYPOINT ["CompileDaemon", "-build=go build -o /build/app ./app/main.go", "-command=/build/app"]

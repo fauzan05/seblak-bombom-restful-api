@@ -28,7 +28,7 @@ services:
     environment:
       TZ: "Asia/Jakarta"
     ports:
-      - "8010:8010"
+      - "80:80"
     volumes:
       - ./:/app
     networks:
