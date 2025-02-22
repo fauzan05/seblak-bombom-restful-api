@@ -23,6 +23,7 @@ type RouteConfig struct {
 	MidtransSnapOrderController       *http.MidtransSnapOrderController
 	MidtransCoreAPIOrderController    *http.MidtransCoreAPIOrderController
 	XenditQRCodeTransactionController *xenditController.XenditQRCodeTransctionController
+	XenditCallbackController          *xenditController.XenditCallbackController
 	ApplicationController             *http.ApplicationController
 	CartController                    *http.CartController
 	AuthMiddleware                    fiber.Handler
@@ -31,8 +32,8 @@ type RouteConfig struct {
 }
 
 func (c *RouteConfig) Setup() {
-	c.SetupXenditCallbacksRoute()
 	c.SetupGuestRoute()
+	c.SetupXenditCallbacksRoute()
 	c.SetupAuthRoute()
 	c.SetupAuthAdminRoute()
 }
@@ -41,7 +42,7 @@ func (c *RouteConfig) SetupXenditCallbacksRoute() {
 	api := c.App.Group("/api")
 	authToken := api.Use(c.AuthXenditMiddleware)
 	// Xendit QR Code Callback
-	authToken.Post("/xendits/transactions/notifications/qr_code/callback", c.XenditQRCodeTransactionController.GetCallbacks)
+	authToken.Post("/xendits/transactions/notifications/qr_code/callback", c.XenditCallbackController.GetPaymentRequestCallbacks)
 }
 
 // GUEST

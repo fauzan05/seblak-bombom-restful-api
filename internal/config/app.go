@@ -66,6 +66,7 @@ func Bootstrap(config *BootstrapConfig) {
 	xenditTransactionQRCodeUseCase := xenditUseCase.NewXenditTransactionQRCodeUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
 	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository, cartItemRepository)
+	xenditCallbackUseCase := xenditUseCase.NewXenditCallbackUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
@@ -80,6 +81,7 @@ func Bootstrap(config *BootstrapConfig) {
 	midtransSnapOrderController := http.NewMidtransSnapOrderController(midtransSnapOrderUseCase, config.Log)
 	midtransCoreAPIOrderController := http.NewMidtransCoreAPIOrderController(midtransCoreApiOrderUseCase, config.Log)
 	xenditQRCodeTransactionController := xenditController.NewXenditQRCodeTransctionController(xenditTransactionQRCodeUseCase, config.Log)
+	xenditCallbackController := xenditController.NewXenditCallbackController(xenditCallbackUseCase, config.Log)
 	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
 	cartController := http.NewCartController(cartUseCase, config.Log)
 
@@ -102,6 +104,7 @@ func Bootstrap(config *BootstrapConfig) {
 		MidtransSnapOrderController:       midtransSnapOrderController,
 		MidtransCoreAPIOrderController:    midtransCoreAPIOrderController,
 		XenditQRCodeTransactionController: xenditQRCodeTransactionController,
+		XenditCallbackController:          xenditCallbackController,
 		ApplicationController:             applicationController,
 		CartController:                    cartController,
 		AuthMiddleware:                    authMiddleware,

@@ -56,6 +56,36 @@ func (r *Repository[T]) FindFirst(db *gorm.DB, entity *T) error {
 	return result.Error // Kembalikan error jika ada kesalahan lain
 }
 
+func (r *Repository[T]) FindFirstAndCount(db *gorm.DB, entity *T) (int64, error) {
+	var count int64
+	err := db.Model(&entity).Count(&count)
+	if err.Error != nil {
+		return 0, err.Error
+	}
+
+	result := db.First(&entity)
+	if result.Error == gorm.ErrRecordNotFound {
+		// Jika data tidak ditemukan, kamu bisa mengembalikan nil atau menangani sesuai kebutuhan
+		return 0, nil // Tidak ada error jika data tidak ditemukan
+	}
+	return count, result.Error // Kembalikan error jika ada kesalahan lain
+}
+
+func (r *Repository[T]) FindXenditTransactionByPaymentMethodId(db *gorm.DB, entity *T, paymentMethodId string) (int64, error) {
+	var count int64
+	err := db.Model(&entity).Where("payment_method_id = ?", paymentMethodId).Count(&count)
+	if err.Error != nil {
+		return 0, err.Error
+	}
+
+	result := db.Where("payment_method_id = ?", paymentMethodId).First(&entity)
+	if result.Error == gorm.ErrRecordNotFound {
+		// Jika data tidak ditemukan, kamu bisa mengembalikan nil atau menangani sesuai kebutuhan
+		return 0, nil // Tidak ada error jika data tidak ditemukan
+	}
+	return count, result.Error // Kembalikan error jika ada kesalahan lain
+}
+
 func (r *Repository[T]) FindMidtransCoreAPIOrderByOrderId(db *gorm.DB, entity *T, orderId uint64) error {
 	result := db.Where("order_id = ?", orderId).Preload("Actions").First(&entity)
 

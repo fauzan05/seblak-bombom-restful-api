@@ -34,3 +34,22 @@ type XenditTransactionResponse struct {
 	CreatedAt       string        `json:"created_at"`
 	UpdatedAt       string        `json:"updated_at"`
 }
+
+type XenditGetPaymentRequestCallbackStatus struct {
+	Data struct {
+		PaymentRequestId string `json:"payment_request_id"`
+		PaymentMethod    struct {
+			ID string `json:"id"`
+		} `json:"payment_method" validate:"required"`
+		Status    string    `json:"status" validate:"required"`
+		UpdatedAt time.Time `json:"updated" validate:"required"`
+	} `json:"data" validate:"required"`
+}
+
+type XenditGetPaymentMethodCallbackStatus struct {
+	Data struct {
+		PaymentMethodId string    `json:"id"`
+		Status          string    `json:"status" validate:"required"`
+		UpdatedAt       time.Time `json:"updated" validate:"required"`
+	} `json:"data" validate:"required"`
+}

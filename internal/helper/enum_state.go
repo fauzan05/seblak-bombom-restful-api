@@ -12,16 +12,18 @@ type RequestMethod string
 type XenditTransactionStatus string
 type ChannelCode string
 type PaymentGateway string
+type ItemType string
 
 const (
 	// role
 	ADMIN    Role = 1
 	CUSTOMER Role = 2
 	// payment status
-	PAID_PAYMENT    PaymentStatus = 2
-	PENDING_PAYMENT PaymentStatus = 1
+	PAID_PAYMENT    PaymentStatus = 1
+	PENDING_PAYMENT PaymentStatus = 0
 	CANCEL_PAYMENT  PaymentStatus = -1
-	FAILED_PAYMENT  PaymentStatus = 0
+	EXPIRED_PAYMENT PaymentStatus = -2
+	FAILED_PAYMENT  PaymentStatus = -3
 	// order status
 	ORDER_PENDING         OrderStatus = 1
 	ORDER_RECEIVED        OrderStatus = 2
@@ -77,6 +79,14 @@ const (
 	XENDIT_EWALLET_OVO_CHANNEL_CODE       ChannelCode = "EWALLET_OVO"
 	XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE ChannelCode = "EWALLET_SHOPEEPAY"
 	WALLET_CHANNEL_CODE                   ChannelCode = "WALLET"
+
+	ITEM_TYPE_DIGITAL_PRODUCT  ItemType = "DIGITAL_PRODUCT"
+	ITEM_TYPE_PHYSICAL_PRODUCT ItemType = "PHYSICAL_PRODUCT"
+	ITEM_TYPE_DIGITAL_SERVICE  ItemType = "DIGITAL_SERVICE"
+	ITEM_TYPE_PHYSICAL_SERVICE ItemType = "PHYSICAL_SERVICE"
+	ITEM_TYPE_FEE              ItemType = "FEE"
+	ITEM_TYPE_DELIVERY_FEE     ItemType = "DELIVERY_FEE"
+	ITEM_TYPE_DISCOUNT         ItemType = "DISCOUNT"
 )
 
 func IsValidChannelCode(pm ChannelCode) bool {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"time"
@@ -62,14 +63,15 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	paymentRequestBasketItems := new([]payment_request.PaymentRequestBasketItem)
 	for _, product := range selectedOrder.OrderProducts {
 		refId := strconv.FormatUint(product.ProductId, 10)
+		itemType := string(helper.ITEM_TYPE_PHYSICAL_PRODUCT)
 		paymentRequestBasketItem := &payment_request.PaymentRequestBasketItem{
 			ReferenceId: &refId,
 			Name:        product.ProductName,
 			Currency:    string(payment_request.PAYMENTREQUESTCURRENCY_IDR),
 			Quantity:    float64(product.Quantity),
 			Price:       float64(product.Price),
-			Category:    "product",
-			Type:        &product.Category,
+			Category:    product.Category,
+			Type:        &itemType,
 		}
 		*paymentRequestBasketItems = append(*paymentRequestBasketItems, *paymentRequestBasketItem)
 	}
@@ -77,7 +79,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	// cek apakah ada biaya pengiriman
 	if selectedOrder.DeliveryCost > 0 {
 		refId := fmt.Sprintf("DELIVERY/%s", strconv.FormatUint(selectedOrder.ID, 10))
-		types := "shipping"
+		itemType := string(helper.ITEM_TYPE_DELIVERY_FEE)
 		paymentRequestBasketItem := &payment_request.PaymentRequestBasketItem{
 			ReferenceId: &refId,
 			Name:        "Delivery Cost",
@@ -85,14 +87,14 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 			Quantity:    1,
 			Price:       float64(selectedOrder.DeliveryCost),
 			Category:    "delivery",
-			Type:        &types,
+			Type:        &itemType,
 		}
 		*paymentRequestBasketItems = append(*paymentRequestBasketItems, *paymentRequestBasketItem)
 	}
 
 	if selectedOrder.TotalDiscount > 0 {
 		refId := fmt.Sprintf("DISCOUNT/%s", strconv.FormatUint(selectedOrder.ID, 10))
-		types := "discount"
+		itemType := string(helper.ITEM_TYPE_DISCOUNT)
 		paymentRequestBasketItem := &payment_request.PaymentRequestBasketItem{
 			ReferenceId: &refId,
 			Name:        "Discount",
@@ -100,7 +102,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 			Quantity:    1,
 			Price:       float64(selectedOrder.TotalDiscount),
 			Category:    "discount",
-			Type:        &types,
+			Type:        &itemType,
 		}
 		*paymentRequestBasketItems = append(*paymentRequestBasketItems, *paymentRequestBasketItem)
 	}
