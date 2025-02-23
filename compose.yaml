@@ -30,6 +30,6 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./:/app
+      - .:/app
     networks:
       - seblak-bombom-net
