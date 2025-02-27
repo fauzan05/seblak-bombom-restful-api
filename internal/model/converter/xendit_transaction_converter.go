@@ -9,6 +9,7 @@ func XenditTransactionToResponse(xenditTransaction entity.XenditTransactions) *m
 	response := &model.XenditTransactionResponse{
 		ID:              xenditTransaction.ID,
 		ReferenceId:     xenditTransaction.ReferenceId,
+		OrderId:         xenditTransaction.OrderId,
 		Amount:          xenditTransaction.Amount,
 		Currency:        xenditTransaction.Currency,
 		PaymentMethod:   xenditTransaction.PaymentMethod,
@@ -20,10 +21,6 @@ func XenditTransactionToResponse(xenditTransaction entity.XenditTransactions) *m
 		ExpiresAt:       xenditTransaction.ExpiresAt,
 		CreatedAt:       xenditTransaction.Created_At,
 		UpdatedAt:       xenditTransaction.Updated_At,
-	}
-
-	if xenditTransaction.Order != nil {
-		response.Orders = *OrderToResponse(xenditTransaction.Order)
 	}
 
 	return response

@@ -62,16 +62,12 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	})
 }
 
-func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {
-	request := new(model.GetUserByTokenRequest)
-	// tangkap token dari header
-	result := ctx.GetReqHeaders()
-	request.Token = result["Authorization"][0]
+func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {	
 	response := middleware.GetCurrentUser(ctx)
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
 		Code:   200,
-		Status: "Success to get user data",
+		Status: "Success to get user data by token",
 		Data:   response,
 	})
 }

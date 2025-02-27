@@ -57,7 +57,7 @@ type UserTokenResponse struct {
 }
 
 type GetUserByTokenRequest struct {
-	Token string `json:"-" validate:"required"`
+	Token string `validate:"required"`
 }
 
 type DeleteCurrentUserRequest struct {

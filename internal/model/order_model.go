@@ -26,7 +26,7 @@ type OrderResponse struct {
 	Note              string                     `json:"note"`
 	CreatedAt         string                     `json:"created_at"`
 	UpdatedAt         string                     `json:"updated_at"`
-	XenditTransaction *XenditTransactionResponse `json:"xendit_transaction_response"`
+	XenditTransaction *XenditTransactionResponse `json:"xendit_transaction_response,omitempty"`
 }
 
 type CreateOrderRequest struct {
@@ -53,8 +53,8 @@ type GetOrderByCurrentRequest struct {
 
 type UpdateOrderRequest struct {
 	ID            uint64               `json:"-" validate:"required"` //order id
-	PaymentStatus helper.PaymentStatus `json:"payment_status" validate:"required"`
 	OrderStatus   helper.OrderStatus   `json:"order_status" validate:"required"`
+
 }
 
 type GetOrdersByUserIdRequest struct {

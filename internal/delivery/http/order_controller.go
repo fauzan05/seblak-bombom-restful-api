@@ -79,7 +79,7 @@ func (c *OrderController) GetAllCurrent(ctx *fiber.Ctx) error {
 	})
 }
 
-func (c *OrderController) Update(ctx *fiber.Ctx) error {
+func (c *OrderController) UpdateOrderStatus(ctx *fiber.Ctx) error {
 	getId := ctx.Params("orderId")
 	orderId, err := strconv.Atoi(getId)
 	if err != nil {
@@ -93,6 +93,7 @@ func (c *OrderController) Update(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Cannot parse data : %+v", err)
 		return err
 	}
+
 	response, err := c.UseCase.EditStatus(ctx.Context(), orderRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to update order by id : %+v", err)
@@ -101,7 +102,7 @@ func (c *OrderController) Update(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.OrderResponse]{
 		Code:   200,
-		Status: "Success to update order by id",
+		Status: "Success to update order status by order id",
 		Data:   response,
 	})
 }

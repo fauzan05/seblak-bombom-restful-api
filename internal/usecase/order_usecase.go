@@ -113,7 +113,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newDelivery.ID = request.DeliveryId
 		if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
 			c.Log.Warnf("Can't find delivery settings : %+v", err)
-			return nil, fiber.ErrNotFound
+			return nil, fiber.NewError(fiber.StatusNotFound, "Can't find delivery settings because not yet exist or not yet created")
 		}
 
 		// jumlahkan semua total termasuk ongkir
@@ -328,44 +328,17 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 
 	newOrder := new(entity.Order)
 	newOrder.ID = request.ID
-	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
+	count, err := c.OrderRepository.FindAndCountById(tx, newOrder)
+	if err != nil {
 		c.Log.Warnf("Failed to find order by id into database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
-
-	// cari apakah order by id itu ada di database
-	if newOrder.Invoice == "" {
-		c.Log.Warnf("Failed to find order by id (order not found) : %+v", err)
-		return nil, fiber.ErrInternalServerError
+	
+	if count == 0 {
+		c.Log.Warnf("Order not found by order id : %+v", err)
+		return nil, fiber.ErrNotFound
 	}
 
-	if newOrder.PaymentStatus == helper.FAILED_PAYMENT || newOrder.PaymentStatus == helper.PAID_PAYMENT {
-		// jika ordernya statusnya ternyata sudah failed atau paid (berusaha untuk melakukan request ke 2x), maka tolak request tersebut agar stock produknya tidak ikut bertambah
-		c.Log.Warnf("Failed to edit status order with has failed or paid payment status : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
-	// jika ingin mengubah status menjadi gagal atau terbayar
-	if request.PaymentStatus == helper.FAILED_PAYMENT {
-		for _, orderProduct := range newOrder.OrderProducts {
-			newProduct := new(entity.Product)
-			newProduct.ID = orderProduct.ProductId
-			// mencari data terkini dari produk dengan id
-			if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
-				c.Log.Warnf("Failed to find product by id : %+v", err)
-				return nil, fiber.ErrInternalServerError
-			}
-			// tambahkan/kembalikan quantitas produk karena transaksinya gagal
-			newProduct.Stock += orderProduct.Quantity
-			// perbarui stok barang sekarang
-			if err := c.ProductRepository.Update(tx, newProduct); err != nil {
-				c.Log.Warnf("Failed to update product stock : %+v", err)
-				return nil, fiber.ErrInternalServerError
-			}
-		}
-	}
-
-	newOrder.PaymentStatus = request.PaymentStatus
 	newOrder.OrderStatus = request.OrderStatus
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to update status order by id : %+v", err)
