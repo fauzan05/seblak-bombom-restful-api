@@ -20,10 +20,10 @@ func main() {
 
 	// cors setting
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:8000",                                         // Frontend yang diizinkan (port 8000)
-		AllowMethods:     "GET,POST,PATCH,PUT,DELETE",                                     // Metode HTTP yang diizinkan
-		AllowHeaders:     "Origin, Content-Type, X-Requested-With, Accept, Authorization", // Header yang diizinkan
-		AllowCredentials: true,                                                            // Mengizinkan pengiriman cookie
+		AllowOrigins:     "http://seblak-bombom-api-consumer-app, http://localhost:8000",   // Frontend are allowed (port 8000), if you use docker so you have to list the container name of api consumer (seblak-bombom-api-consumer) 
+		AllowMethods:     "GET,POST,PATCH,PUT,DELETE",                                     // HTTP method are allowed
+		AllowHeaders:     "Origin, Content-Type, X-Requested-With, Accept, Authorization", // Header are allowed
+		AllowCredentials: true,                                                            
 	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
@@ -34,7 +34,7 @@ func main() {
 		Config:   viperConfig,
 		// SnapClient:    snapClient,
 		// CoreAPIClient: coreAPIClient,
-		XenditClient:        xenditClient,
+		XenditClient: xenditClient,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

@@ -101,7 +101,10 @@ go get github.com/google/uuid
 <br>
 
 # How to run
-Before proceeding further, make sure you have an account on Midtrans. Just create one, and it's free. After finishing creating the account, input the environment such as **MerchantID**, **Client Key**, and **Server Key** in the config.json file located in the root directory. So, after that because I'm using Docker Compose environment, what needs to be done is to execute the following command:
+Before proceeding further, make sure you have an account on Xendit. Just create one, and it's free. After finishing creating the account, input the environment such as **Secret Key**, **Public Key**, **Business Id** and **Callback Token** in the config.json file located in the root directory. Because config.json is listed on .gitignore file, so you have to create another one with copying the config-example.json and then renamed it into config.json. So, after that because I'm using Docker Compose environment, first you have to create a docker network so this app can communicate with api consumer (seblak-bombom-api-consumer) inside the docker environment. What needs to be done is to execute the following command
+```
+docker network create seblak-bombom-network
+```
 ```
 docker compose build
 ```

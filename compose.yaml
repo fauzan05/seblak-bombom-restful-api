@@ -1,8 +1,9 @@
 version: "3.8"
 
 networks:
-  seblak-bombom-net:
-    name: seblak-bombom-net
+  seblak-bombom-network:
+    name: seblak-bombom-network
+    external: true
     driver: bridge
 
 services:
@@ -17,13 +18,19 @@ services:
       MYSQL_DATABASE: seblak_bombom
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     networks:
-      - seblak-bombom-net
+      - seblak-bombom-network
+    healthcheck:  # <-- Add healthcheck for be sure of MySQL has ready to use
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+
   app:
-    container_name: seblak-bombom-app
+    container_name: seblak-bombom-api-app
     build:
       context: "."
       dockerfile: Dockerfile
-    image: "seblak-bombom-img"
+    image: "seblak-bombom-api-img"
     restart: always
     environment:
       TZ: "Asia/Jakarta"
@@ -32,4 +39,7 @@ services:
     volumes:
       - .:/app
     networks:
-      - seblak-bombom-net
+      - seblak-bombom-network
+    depends_on:
+      mysql:
+        condition: service_healthy  # <-- Make sure the app only runs if MySQL is healthy.
