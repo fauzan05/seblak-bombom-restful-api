@@ -42,7 +42,7 @@ func (c *RouteConfig) SetupXenditCallbacksRoute() {
 	api := c.App.Group("/api")
 	authToken := api.Use(c.AuthXenditMiddleware)
 	// Xendit QR Code Callback
-	authToken.Post("/xendits/transactions/notifications/qr_code/callback", c.XenditCallbackController.GetPaymentRequestCallbacks)
+	authToken.Post("/xendits/payment-request/notifications/callback", c.XenditCallbackController.GetPaymentRequestCallbacks)
 }
 
 // GUEST
@@ -50,8 +50,8 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api")
 	api.Post("/users", c.UserController.Register)
 	api.Post("/users/login", c.UserController.Login)
-	api.Get("/discount_coupons", c.DiscountCouponController.GetAll)
-	api.Get("/discount_coupons/:discountId", c.DiscountCouponController.Get)
+	api.Get("/discount-coupons", c.DiscountCouponController.GetAll)
+	api.Get("/discount-coupons/:discountId", c.DiscountCouponController.Get)
 
 	// Category
 	api.Get("/categories/:categoryId", c.CategoryController.Get)
@@ -125,8 +125,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 	api.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrder)
 
 	// Xendit
-	api.Post("/xendit/orders/qr_code/transaction", c.XenditQRCodeTransactionController.Create)
-	api.Get("/xendit/orders/:orderId/qr_code/transaction", c.XenditQRCodeTransactionController.GetTransaction)
+	api.Post("/xendit/orders/qr-code/transaction", c.XenditQRCodeTransactionController.Create)
+	api.Get("/xendit/orders/:orderId/qr-code/transaction", c.XenditQRCodeTransactionController.GetTransaction)
 
 	// Cart
 	api.Post("/carts", c.CartController.Create)
@@ -157,9 +157,9 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Delete("/images/:imageId", c.ImageController.Remove)
 
 	// discount
-	auth.Post("/discount_coupons", c.DiscountCouponController.Create)
-	auth.Put("/discount_coupons/:discountId", c.DiscountCouponController.Update)
-	auth.Delete("/discount_coupons", c.DiscountCouponController.Delete)
+	auth.Post("/discount-coupons", c.DiscountCouponController.Create)
+	auth.Put("/discount-coupons/:discountId", c.DiscountCouponController.Update)
+	auth.Delete("/discount-coupons", c.DiscountCouponController.Delete)
 
 	// delivery
 	auth.Post("/deliveries", c.DeliveryController.Create)
