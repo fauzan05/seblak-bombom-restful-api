@@ -3,7 +3,7 @@ CREATE TABLE midtrans_snap_orders (
     order_id INTEGER NOT NULL,
     token TEXT NOT NULL,
     redirect_url TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (order_id) REFERENCES orders (id)

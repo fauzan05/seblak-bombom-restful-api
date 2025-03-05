@@ -52,11 +52,10 @@ func Bootstrap(config *BootstrapConfig) {
 	walletRepository := repository.NewWalletRepository(config.Log)
 
 	// setup use case
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository, cartRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, deliveryRepository, userUseCase)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository, imageRepository)
-	imageUseCase := usecase.NewImageUseCase(config.DB, config.Log, config.Validate, imageRepository)
 	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountCouponRepository, deliveryRepository, orderProductRepository, walletRepository)
 	discountCouponUseCase := usecase.NewDiscountCouponUseCase(config.DB, config.Log, config.Validate, discountCouponRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
@@ -73,7 +72,6 @@ func Bootstrap(config *BootstrapConfig) {
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
-	imageController := http.NewImageController(imageUseCase, config.Log)
 	orderController := http.NewOrderController(orderUseCase, config.Log)
 	discountCouponController := http.NewDiscountCouponController(discountCouponUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
@@ -96,7 +94,6 @@ func Bootstrap(config *BootstrapConfig) {
 		AddressController:                 addressController,
 		CategoryController:                categoryController,
 		ProductController:                 productController,
-		ImageController:                   imageController,
 		OrderController:                   orderController,
 		DiscountCouponController:          discountCouponController,
 		DeliveryController:                deliveryController,

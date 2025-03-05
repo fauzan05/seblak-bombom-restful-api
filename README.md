@@ -114,6 +114,8 @@ docker compose up
 ```
 This command is used to run the configurations that have been set up in the Dockerfile as well as the MariaDB container. At this stage, when we make changes to any files in this application, they will be automatically recompiled without the need for manual compilation. This is because I'm using CompileDaemon, which has been fetched in the Dockerfile.
 <br>
+docker-compose logs -f
+
 
 If you're not using Docker, simply run **go run main.go** in the app directory. Beforehand, make sure the database is running and the database is created according to the configuration in the config.json file in the root directory. Once done, perform operations on the API by referring to api-specs.json to understand the request and response of each endpoint.
 <br>

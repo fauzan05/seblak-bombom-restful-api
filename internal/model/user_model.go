@@ -11,11 +11,12 @@ type UserResponse struct {
 	LastName  string            `json:"last_name"`
 	Email     string            `json:"email"`
 	Phone     string            `json:"phone"`
-	Addresses []AddressResponse `json:"addresses"`
+	Addresses []AddressResponse `json:"addresses,omitempty"`
 	Role      helper.Role       `json:"role"`
 	Wallet    WalletResponse    `json:"wallet"`
-	CreatedAt string            `json:"created_at"`
-	UpdatedAt string            `json:"updated_at"`
+	Cart      CartResponse      `json:"cart"`
+	CreatedAt time.Time         `json:"created_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type RegisterUserRequest struct {
@@ -52,8 +53,8 @@ type LoginUserRequst struct {
 type UserTokenResponse struct {
 	Token      string    `json:"token"`
 	ExpiryDate time.Time `json:"expiry_date"`
-	CreatedAt  string    `json:"created_at"`
-	UpdatedAt  string    `json:"updated_at"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type GetUserByTokenRequest struct {

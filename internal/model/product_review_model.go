@@ -1,13 +1,15 @@
 package model
 
+import "time"
+
 type ProductReviewResponse struct {
-	ID        uint64 `json:"id,omitempty"`
-	ProductId uint64 `json:"product_id,omitempty"`
-	UserId    uint64 `json:"user_id,omitempty"`
-	Rate      int    `json:"rate,omitempty"`
-	Comment   string `json:"comment,omitempty"`
-	CreatedAt string `json:"created_at,omitempty"`
-	UpdatedAt string `json:"updated_at,omitempty"`
+	ID        uint64    `json:"id,omitempty"`
+	ProductId uint64    `json:"product_id,omitempty"`
+	UserId    uint64    `json:"user_id,omitempty"`
+	Rate      int       `json:"rate,omitempty"`
+	Comment   string    `json:"comment,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
 type CreateProductReviewRequest struct {

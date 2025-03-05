@@ -1,14 +1,16 @@
 package model
 
+import "time"
+
 type DeliveryResponse struct {
-	ID        uint64  `json:"id"`
-	City      string  `json:"city"`
-	District  string  `json:"district"`
-	Village   string  `json:"village"`
-	Hamlet    string  `json:"hamlet"`
-	Cost      float32 `json:"cost"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
+	ID        uint64    `json:"id"`
+	City      string    `json:"city"`
+	District  string    `json:"district"`
+	Village   string    `json:"village"`
+	Hamlet    string    `json:"hamlet"`
+	Cost      float32   `json:"cost"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type CreateDeliveryRequest struct {

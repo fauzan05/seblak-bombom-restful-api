@@ -12,8 +12,8 @@ func ProductReviewToResponse(productReview *entity.ProductReview) *model.Product
 		UserId:    productReview.UserId,
 		Rate:      productReview.Rate,
 		Comment:   productReview.Comment,
-		CreatedAt: productReview.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt: productReview.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt: productReview.Created_At,
+		UpdatedAt: productReview.Updated_At,
 	}
 }
 

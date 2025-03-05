@@ -1,14 +1,16 @@
 package model
 
+import "time"
+
 type OrderProductResponse struct {
-	ID          uint64 `json:"id,omitempty"`
-	OrderId     uint64 `json:"order_id,omitempty"`
-	ProductId   uint64 `json:"product_id,omitempty"`
-	ProductName string `json:"product_name,omitempty"`
-	Price       string `json:"price,omitempty"`
-	Quantity    int    `json:"quantity,omitempty"`
-	CreatedAt   string `json:"created_at,omitempty"`
-	UpdatedAt   string `json:"updated_at,omitempty"`
+	ID          uint64    `json:"id,omitempty"`
+	OrderId     uint64    `json:"order_id,omitempty"`
+	ProductId   uint64    `json:"product_id,omitempty"`
+	ProductName string    `json:"product_name,omitempty"`
+	Price       string    `json:"price,omitempty"`
+	Quantity    int       `json:"quantity,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 }
 
 type CreateOrderProductRequest struct {

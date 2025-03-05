@@ -19,12 +19,16 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		Phone:     user.Phone,
 		Addresses: addresses,
 		Role:      user.Role,
-		CreatedAt: user.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt: user.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 
 	if user.Wallet != nil {
 		response.Wallet =  *WalletToResponse(user.Wallet)
+	}
+
+	if user.Cart != nil {
+		response.Cart = *CartToResponse(user.Cart)
 	}
 
 	return response
@@ -34,7 +38,7 @@ func UserTokenToResponse(token *entity.Token) *model.UserTokenResponse {
 	return &model.UserTokenResponse{
 		Token:      token.Token,
 		ExpiryDate: token.ExpiryDate,
-		CreatedAt:  token.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt:  token.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt:  token.Created_At,
+		UpdatedAt:  token.Updated_At,
 	}
 }

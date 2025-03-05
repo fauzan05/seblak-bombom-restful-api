@@ -11,8 +11,8 @@ func CartItemToResponse(cartItem *entity.CartItem) *model.CartItemResponse {
 		CartId:    cartItem.CartId,
 		Product:   *ProductToResponse(cartItem.Product),
 		Quantity:  cartItem.Quantity,
-		CreatedAt: cartItem.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt: cartItem.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt: cartItem.Created_At,
+		UpdatedAt: cartItem.Updated_At,
 	}
 }
 

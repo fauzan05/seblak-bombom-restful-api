@@ -1,13 +1,16 @@
 package model
 
-import "seblak-bombom-restful-api/internal/helper"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+	"time"
+)
 
 type WalletResponse struct {
 	ID        uint64              `json:"id"`
 	Balance   float32             `json:"balance"`
 	Status    helper.WalletStatus `json:"status"`
-	CreatedAt string              `json:"created_at"`
-	UpdatedAt string              `json:"updated_at"`
+	CreatedAt time.Time           `json:"created_at"`
+	UpdatedAt time.Time           `json:"updated_at"`
 }
 
 type TopUpWalletBalance struct {

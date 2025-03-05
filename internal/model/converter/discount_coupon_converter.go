@@ -13,15 +13,15 @@ func DiscountCouponToResponse(discount *entity.DiscountCoupon) *model.DiscountCo
 		Code:            discount.Code,
 		Value:           discount.Value,
 		Type:            discount.Type,
-		Start:           discount.Start.Format("2006-01-02 15:04"),
-		End:             discount.End.Format("2006-01-02 15:04"),
+		Start:           discount.Start,
+		End:             discount.End,
 		Status:          discount.Status,
 		MaxUsagePerUser: discount.MaxUsagePerUser,
 		TotalMaxUsage:   discount.TotalMaxUsage,
 		UsedCount:       discount.UsedCount,
 		MinOrderValue:   discount.MinOrderValue,
-		CreatedAt:       discount.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt:       discount.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt:       discount.Created_At,
+		UpdatedAt:       discount.Updated_At,
 	}
 }
 

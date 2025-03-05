@@ -10,8 +10,8 @@ func CategoryToResponse(category *entity.Category) *model.CategoryResponse {
 		ID:          category.ID,
 		Name:        category.Name,
 		Description: category.Description,
-		CreatedAt:   category.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   category.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt:   category.Created_At,
+		UpdatedAt:   category.Updated_At,
 	}
 }
 

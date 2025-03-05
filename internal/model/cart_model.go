@@ -1,11 +1,13 @@
 package model
 
+import "time"
+
 type CartResponse struct {
 	ID        uint64             `json:"id,omitempty"`
 	UserID    uint64             `json:"user_id,omitempty"`
 	CartItems []CartItemResponse `json:"cart_items,omitempty"`
-	CreatedAt string             `json:"created_at,omitempty"`
-	UpdatedAt string             `json:"updated_at,omitempty"`
+	CreatedAt time.Time          `json:"created_at,omitempty"`
+	UpdatedAt time.Time          `json:"updated_at,omitempty"`
 }
 
 type CreateCartRequest struct {

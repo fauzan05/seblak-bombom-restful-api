@@ -293,8 +293,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 }
 
 func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrderByCurrentRequest) (*[]model.OrderResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
+	tx := c.DB.WithContext(ctx)
 
 	err := c.Validate.Struct(request)
 	if err != nil {
@@ -305,11 +304,6 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	newOrders := new([]entity.Order)
 	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
 		c.Log.Warnf("Failed to find all orders by user id : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 

@@ -1,13 +1,15 @@
 package model
 
+import "time"
+
 type ImageResponse struct {
-	ID        uint64 `json:"id,omitempty"`
-	ProductId uint64 `json:"product_id,omitempty"`
-	FileName  string `json:"file_name,omitempty"`
-	Type      string `json:"type,omitempty"`
-	Position  int    `json:"position,omitempty"`
-	CreatedAt string `json:"created_at,omitempty"`
-	UpdatedAt string `json:"updated_at,omitempty"`
+	ID        uint64    `json:"id,omitempty"`
+	ProductId uint64    `json:"product_id,omitempty"`
+	FileName  string    `json:"file_name,omitempty"`
+	Type      string    `json:"type,omitempty"`
+	Position  int       `json:"position,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
 type AddImagesRequest struct {
@@ -26,8 +28,8 @@ type UpdateImagesRequest struct {
 }
 
 type ImageUpdateRequest struct {
-	ID        uint64 `json:"id" validate:"required"`
-	Position  int    `json:"position" validate:"required"`
+	ID       uint64 `json:"id" validate:"required"`
+	Position int    `json:"position" validate:"required"`
 }
 
 type DeleteImagesRequest struct {
@@ -35,5 +37,5 @@ type DeleteImagesRequest struct {
 }
 
 type DeleteImageRequest struct {
-	ID        uint64 `json:"id" validate:"required"`
+	ID uint64 `json:"id" validate:"required"`
 }

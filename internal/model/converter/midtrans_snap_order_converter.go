@@ -10,7 +10,7 @@ func MidtransSnapOrderToResponse(midtransSnapOrder *entity.MidtransSnapOrder) *m
 		ID: midtransSnapOrder.ID,
 		Token: midtransSnapOrder.Token,
 		RedirectUrl: midtransSnapOrder.RedirectUrl,
-		CreatedAt: midtransSnapOrder.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt: midtransSnapOrder.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt: midtransSnapOrder.Created_At,
+		UpdatedAt: midtransSnapOrder.Updated_At,
 	}
 }

@@ -81,7 +81,6 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 	address.CompleteAddress = request.CompleteAddress
 	address.GoogleMapsLink = request.GoogleMapsLink
 	address.IsMain = request.IsMain
-
 	if err := c.AddressRepository.Create(tx, address); err != nil {
 		c.Log.Warnf("Failed create new address : %+v", err)
 		return nil, fiber.ErrInternalServerError

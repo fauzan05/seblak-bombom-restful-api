@@ -13,8 +13,8 @@ func DeliveryToResponse(delivery *entity.Delivery) *model.DeliveryResponse {
 		District:  delivery.District,
 		Village:   delivery.Village,
 		Hamlet:    delivery.Hamlet,
-		CreatedAt: delivery.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt: delivery.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt: delivery.CreatedAt,
+		UpdatedAt: delivery.UpdatedAt,
 	}
 }
 

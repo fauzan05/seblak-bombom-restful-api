@@ -10,9 +10,9 @@ CREATE TABLE xendit_transactions (
     qr_string TEXT,
     status VARCHAR(20) NOT NULL,
     description TEXT,
-    expires_at TIMESTAMP,
+    expires_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     failure_code VARCHAR(50),
     metadata JSON,
     FOREIGN KEY (order_id) REFERENCES orders (id)

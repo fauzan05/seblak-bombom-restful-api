@@ -180,7 +180,6 @@ func (c *DeliveryUseCase) Delete(ctx context.Context, request *model.DeleteDeliv
 }
 
 func MapDeliveries(rows []map[string]interface{}, results *[]entity.Delivery) error {
-	layoutWithZone := "2006-01-02T15:04:05-07:00"
 
 	for _, row := range rows {
 		// Ambil dan validasi delivery_id
@@ -207,13 +206,13 @@ func MapDeliveries(rows []map[string]interface{}, results *[]entity.Delivery) er
 
 		// Parse created_at dan updated_at kategori
 		deliveryCreatedAtStr, _ := row["delivery_created_at"].(string)
-		categoryCreatedAt, err := time.Parse(layoutWithZone, deliveryCreatedAtStr)
+		categoryCreatedAt, err := time.Parse(time.RFC3339, deliveryCreatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse delivery_created_at: %v", err)
 		}
 
 		deliveryUpdatedAtStr, _ := row["delivery_updated_at"].(string)
-		categoryUpdatedAt, err := time.Parse(layoutWithZone, deliveryUpdatedAtStr)
+		categoryUpdatedAt, err := time.Parse(time.RFC3339, deliveryUpdatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse delivery_updated_at: %v", err)
 		}
@@ -226,8 +225,8 @@ func MapDeliveries(rows []map[string]interface{}, results *[]entity.Delivery) er
 			Village:    deliveryVillage,
 			Hamlet:     deliveryHamlet,
 			Cost:       float32(deliveryCost),
-			Created_At: categoryCreatedAt,
-			Updated_At: categoryUpdatedAt,
+			CreatedAt: categoryCreatedAt,
+			UpdatedAt: categoryUpdatedAt,
 		}
 
 		// Tambahkan ke hasil

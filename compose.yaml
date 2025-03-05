@@ -32,8 +32,8 @@ services:
       dockerfile: Dockerfile
     image: "seblak-bombom-api-img"
     restart: always
-    environment:
-      TZ: "Asia/Jakarta"
+    # environment:
+    #   TZ: "Asia/Jakarta"
     ports:
       - "80:80"
     volumes:

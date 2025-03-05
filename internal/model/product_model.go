@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type ProductResponse struct {
 	ID          uint64                  `json:"id,omitempty"`
 	Category    CategoryResponse        `json:"category,omitempty"`
@@ -9,8 +11,8 @@ type ProductResponse struct {
 	Stock       int                     `json:"stock,omitempty"`
 	Images      []ImageResponse         `json:"images,omitempty"`
 	Reviews     []ProductReviewResponse `json:"product_reviews,omitempty"`
-	CreatedAt   string                  `json:"created_at,omitempty"`
-	UpdatedAt   string                  `json:"updated_at,omitempty"`
+	CreatedAt   time.Time               `json:"created_at,omitempty"`
+	UpdatedAt   time.Time               `json:"updated_at,omitempty"`
 }
 
 type CreateProductRequest struct {

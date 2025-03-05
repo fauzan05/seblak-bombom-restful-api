@@ -14,8 +14,8 @@ func OrderProductToResponse(orderProduct *entity.OrderProduct) *model.OrderProdu
 		ProductName: orderProduct.ProductName,
 		Price: fmt.Sprintf("%.2f", orderProduct.Price),
 		Quantity: orderProduct.Quantity,
-		CreatedAt: orderProduct.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt: orderProduct.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt: orderProduct.Created_At,
+		UpdatedAt: orderProduct.Updated_At,
 	}
 }
 

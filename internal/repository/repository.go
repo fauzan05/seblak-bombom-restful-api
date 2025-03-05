@@ -110,7 +110,7 @@ func (r *Repository[T]) FindUserByToken(db *gorm.DB, user *T, token_code string)
 	if tokenWithUser != nil {
 		return tokenWithUser //return errornya
 	}
-	return db.Where("id = ?", token.UserId).Preload("Token").Preload("Addresses").Preload("Addresses.Delivery").Preload("Wallet").Find(user).Error
+	return db.Where("id = ?", token.UserId).Preload("Token").Preload("Addresses").Preload("Addresses.Delivery").Preload("Wallet").Preload("Cart").Preload("Cart.CartItems").Find(user).Error
 }
 
 func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
@@ -207,6 +207,25 @@ func (r *Repository[T]) FindCurrentUserCartWithPreloads(db *gorm.DB, entity *T, 
 
 func (r *Repository[T]) FindWith2Preloads(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
 	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+}
+
+func (r *Repository[T]) FindCartItemByUserId(db *gorm.DB, entity *T, userId uint64) error {
+	return db.Where(" = ?", userId).Preload("CartItems").Find(&entity).Error
+}
+
+func (r *Repository[T]) FindCartItemByUserIdAndProductId(db *gorm.DB, entity *T, cartId uint64, productId uint64) (int64, error) {
+	var count int64
+	err := db.Model(&entity).Where("cart_id = ?", cartId).Where("product_id = ?", productId).Count(&count)
+	if err.Error != nil {
+		return 0, err.Error
+	}
+
+	result := db.Where("cart_id = ?", cartId).Where("product_id = ?", productId).First(&entity)
+	if result.Error == gorm.ErrRecordNotFound {
+		// Jika data tidak ditemukan, kamu bisa mengembalikan nil atau menangani sesuai kebutuhan
+		return 0, nil // Tidak ada error jika data tidak ditemukan
+	}
+	return count, result.Error // Kembalikan error jika ada kesalahan lain
 }
 
 func (r *Repository[T]) FirstXenditTransactionByOrderId(db *gorm.DB, entity *T, orderId uint64, preload1 string, preload2 string) error {
@@ -486,7 +505,7 @@ func (r *Repository[T]) CountCategoryItems(db *gorm.DB, entity *T, search string
 }
 
 func (r *Repository[T]) FindAllOrdersByUserId(db *gorm.DB, entity *[]T, userId uint64) error {
-	return db.Where("user_id = ?", userId).Joins("MidtransSnapOrder").Preload("OrderProducts").Find(&entity).Error
+	return db.Where("user_id = ?", userId).Joins("XenditTransaction").Preload("OrderProducts").Find(&entity).Error
 }
 
 func (r *Repository[T]) FindMidtransSnapOrderByOrderId(db *gorm.DB, entity *T, orderId uint64) error {

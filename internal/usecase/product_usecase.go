@@ -85,7 +85,6 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		newImages[i].FileName = hashedFilename
 		newImages[i].Type = file.Header.Get("Content-Type")
 		newImages[i].Position = position
-		newImages[i].Created_At = time.Now()
 
 		// Simpan file ke direktori uploads
 		err := fiberContext.SaveFile(file, fmt.Sprintf("../uploads/images/products/%s", hashedFilename))
@@ -341,7 +340,6 @@ func hashFileName(originalName string) string {
 }
 
 func MapProducts(rows []map[string]interface{}, results *[]entity.Product) (error) {
-	layoutWithZone := "2006-01-02T15:04:05-07:00"
 
 	for _, row := range rows {
 		// fmt.Printf("Produk Id : %s | DATANYA : %d\n", row["product_id"], len(row["images"].([]map[string]interface{})))
@@ -366,16 +364,16 @@ func MapProducts(rows []map[string]interface{}, results *[]entity.Product) (erro
 			imagePosition, _ := strconv.Atoi(image["image_position"].(string))
 			imageType, _ := image["image_type"].(string)
 
-			imageCreatedAtStr, _ := row["category_created_at"].(string)
-			imageCreatedAt, err := time.Parse(layoutWithZone, imageCreatedAtStr)
+			imageCreatedAtStr, _ := image["image_created_at"].(string)
+			imageCreatedAt, err := time.Parse(time.RFC3339, imageCreatedAtStr)
 			if err != nil {
-				return fmt.Errorf("failed to parse category_created_at: %v", err)
+				return fmt.Errorf("failed to parse image_created_at: %v", err)
 			}
 
-			imageUpdatedAtStr, _ := row["category_created_at"].(string)
-			imageUpdatedAt, err := time.Parse(layoutWithZone, imageUpdatedAtStr)
+			imageUpdatedAtStr, _ := image["image_created_at"].(string)
+			imageUpdatedAt, err := time.Parse(time.RFC3339, imageUpdatedAtStr)
 			if err != nil {
-				return fmt.Errorf("failed to parse category_created_at: %v", err)
+				return fmt.Errorf("failed to parse image_created_at: %v", err)
 			}
 
 			newImage := entity.Image{
@@ -407,13 +405,13 @@ func MapProducts(rows []map[string]interface{}, results *[]entity.Product) (erro
 
 		// Parse created_at dan updated_at kategori
 		categoryCreatedAtStr, _ := row["category_created_at"].(string)
-		categoryCreatedAt, err := time.Parse(layoutWithZone, categoryCreatedAtStr)
+		categoryCreatedAt, err := time.Parse(time.RFC3339, categoryCreatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse category_created_at: %v", err)
 		}
 
 		categoryUpdatedAtStr, _ := row["category_updated_at"].(string)
-		categoryUpdatedAt, err := time.Parse(layoutWithZone, categoryUpdatedAtStr)
+		categoryUpdatedAt, err := time.Parse(time.RFC3339, categoryUpdatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse category_updated_at: %v", err)
 		}
@@ -455,12 +453,12 @@ func MapProducts(rows []map[string]interface{}, results *[]entity.Product) (erro
 
 		// Parse created_at dan updated_at produk
 		productCreatedAtStr, _ := row["product_created_at"].(string)
-		productCreatedAt, err := time.Parse(layoutWithZone, productCreatedAtStr)
+		productCreatedAt, err := time.Parse(time.RFC3339, productCreatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse product_created_at: %v", err)
 		}
 		productUpdatedAtStr, _ := row["product_updated_at"].(string)
-		productUpdatedAt, err := time.Parse(layoutWithZone, productUpdatedAtStr)
+		productUpdatedAt, err := time.Parse(time.RFC3339, productUpdatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse product_updated_at: %v", err)
 		}

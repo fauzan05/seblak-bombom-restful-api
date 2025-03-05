@@ -27,8 +27,8 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		CompleteAddress: order.CompleteAddress,
 		Note:            order.Note,
 		OrderProducts:   *OrderProductsToResponse(&order.OrderProducts),
-		CreatedAt:       order.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt:       order.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt:       order.Created_At,
+		UpdatedAt:       order.Updated_At,
 	}
 
 	if order.XenditTransaction != nil {

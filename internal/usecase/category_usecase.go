@@ -141,6 +141,7 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 	newCategory.ID = request.ID
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
+	newCategory.Updated_At = time.Now().UTC()
 	if err := c.CategoryRepository.Update(tx, newCategory); err != nil {
 		c.Log.Warnf("Failed to update category : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -185,8 +186,7 @@ func (c *CategoryUseCase) Delete(ctx context.Context, request *model.DeleteCateg
 	return true, nil
 }
 
-func MapCategories(rows []map[string]interface{}, results *[]entity.Category) (error) {
-	layoutWithZone := "2006-01-02T15:04:05-07:00"
+func MapCategories(rows []map[string]interface{}, results *[]entity.Category) error {
 
 	for _, row := range rows {
 		// Ambil dan validasi category_id
@@ -206,13 +206,13 @@ func MapCategories(rows []map[string]interface{}, results *[]entity.Category) (e
 
 		// Parse created_at dan updated_at kategori
 		categoryCreatedAtStr, _ := row["category_created_at"].(string)
-		categoryCreatedAt, err := time.Parse(layoutWithZone, categoryCreatedAtStr)
+		categoryCreatedAt, err := time.Parse(time.RFC3339, categoryCreatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse category_created_at: %v", err)
 		}
 
 		categoryUpdatedAtStr, _ := row["category_updated_at"].(string)
-		categoryUpdatedAt, err := time.Parse(layoutWithZone, categoryUpdatedAtStr)
+		categoryUpdatedAt, err := time.Parse(time.RFC3339, categoryUpdatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse category_updated_at: %v", err)
 		}

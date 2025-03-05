@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // product is a struct that represents a product entity in database table
 type Product struct {
@@ -12,6 +16,7 @@ type Product struct {
 	Stock       int             `gorm:"column:stock"`
 	Created_At  time.Time       `gorm:"column:created_at;autoCreateTime;<-:create"`
 	Updated_At  time.Time       `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	Deleted_At  gorm.DeletedAt  `gorm:"column:deleted_at"`
 	Category    *Category       `gorm:"foreignKey:category_id;references:id"`
 	Images      []Image         `gorm:"foreignKey:product_id;references:id"`
 	Reviews     []ProductReview `gorm:"foreignKey:product_id;references:id"`

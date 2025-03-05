@@ -15,7 +15,6 @@ type RouteConfig struct {
 	AddressController                 *http.AddressController
 	CategoryController                *http.CategoryController
 	ProductController                 *http.ProductController
-	ImageController                   *http.ImageController
 	OrderController                   *http.OrderController
 	DiscountCouponController          *http.DiscountCouponController
 	DeliveryController                *http.DeliveryController
@@ -150,11 +149,6 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Post("/products", c.ProductController.Create)
 	auth.Put("/products/:productId", c.ProductController.Edit)
 	auth.Delete("/products", c.ProductController.Remove)
-
-	// image
-	auth.Post("/images", c.ImageController.Creates)
-	auth.Put("/images", c.ImageController.EditPosition)
-	auth.Delete("/images/:imageId", c.ImageController.Remove)
 
 	// discount
 	auth.Post("/discount-coupons", c.DiscountCouponController.Create)

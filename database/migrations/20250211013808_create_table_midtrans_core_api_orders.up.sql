@@ -11,7 +11,7 @@ CREATE TABLE midtrans_core_api_orders (
     transaction_time DATETIME NOT NULL,
     transaction_status VARCHAR(20),
     fraud_status VARCHAR(20),
-    expiry_time DATETIME NOT NULL,
+    expiry_time DATETIME NULL DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

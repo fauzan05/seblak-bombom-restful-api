@@ -23,8 +23,8 @@ func ApplicationToResponse(application *entity.Application) *model.ApplicationRe
 		TwitterLink: application.SocialMedia.TwitterLink,
 		FacebookName: application.SocialMedia.FacebookName,
 		FacebookLink: application.SocialMedia.FacebookLink,
-		CreatedAt: application.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt: application.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt: application.Created_At,
+		UpdatedAt: application.Updated_At,
 	}
 	
 }

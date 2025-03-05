@@ -12,8 +12,8 @@ func ImageToResponse(image *entity.Image) *model.ImageResponse {
 		FileName: image.FileName,
 		Type: image.Type,
 		Position: image.Position,
-		CreatedAt:   image.Created_At.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   image.Updated_At.Format("2006-01-02 15:04:05"),
+		CreatedAt:   image.Created_At,
+		UpdatedAt:   image.Updated_At,
 	}
 }
 

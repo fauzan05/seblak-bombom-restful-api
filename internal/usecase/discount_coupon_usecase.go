@@ -34,8 +34,6 @@ func NewDiscountCouponUseCase(db *gorm.DB, log *logrus.Logger, validate *validat
 	}
 }
 
-var layoutTime string = "2006-01-02 15:04"
-
 func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDiscountCouponRequest) (*model.DiscountCouponResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -63,13 +61,13 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 	newDiscount.Code = request.Code
 	newDiscount.Value = request.Value
 	newDiscount.Type = request.Type
-	newDiscount.Start, err = time.ParseInLocation(layoutTime, request.Start, time.Local)
+	newDiscount.Start, err = time.Parse(time.RFC3339, request.Start)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
 		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid request format. Please check your input!")
 	}
 
-	newDiscount.End, err = time.ParseInLocation(layoutTime, request.End, time.Local)
+	newDiscount.End, err = time.Parse(time.RFC3339, request.End)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
 		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid request format. Please check your input!")
@@ -190,13 +188,13 @@ func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateD
 	newDiscount.Code = request.Code
 	newDiscount.Value = request.Value
 	newDiscount.Type = request.Type
-	newDiscount.Start, err = time.ParseInLocation(layoutTime, request.Start, time.Local)
+	newDiscount.Start, err = time.Parse(time.RFC3339, request.Start)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
 
-	newDiscount.End, err = time.ParseInLocation(layoutTime, request.End, time.Local)
+	newDiscount.End, err = time.Parse(time.RFC3339, request.End)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
 		return nil, fiber.ErrBadRequest
@@ -255,7 +253,6 @@ func (c *DiscountCouponUseCase) Remove(ctx context.Context, request *model.Delet
 }
 
 func MapDiscountCoupon(rows []map[string]interface{}, results *[]entity.DiscountCoupon) error {
-	layoutWithZone := "2006-01-02T15:04:05-07:00"
 
 	for _, row := range rows {
 		discountCouponIdStr, ok := row["discount_coupon_id"].(string)
@@ -275,12 +272,12 @@ func MapDiscountCoupon(rows []map[string]interface{}, results *[]entity.Discount
 
 		discountCouponType, _ := strconv.Atoi(row["discount_coupon_type"].(string))
 		discountCouponStartStr, _ := row["discount_coupon_start"].(string)
-		discountCouponStart, err := time.Parse(layoutWithZone, discountCouponStartStr)
+		discountCouponStart, err := time.Parse(time.RFC3339, discountCouponStartStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse discount_coupon_start: %v", err)
 		}
 		discountCouponEndStr, _ := row["discount_coupon_end"].(string)
-		discountCouponEnd, err := time.Parse(layoutWithZone, discountCouponEndStr)
+		discountCouponEnd, err := time.Parse(time.RFC3339, discountCouponEndStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse discount_coupon_end: %v", err)
 		}
@@ -291,13 +288,13 @@ func MapDiscountCoupon(rows []map[string]interface{}, results *[]entity.Discount
 		discountCouponStatus, _ := strconv.ParseBool(row["discount_coupon_status"].(string))
 
 		discountCouponCreatedAtStr, _ := row["discount_coupon_created_at"].(string)
-		discountCouponCreatedAt, err := time.Parse(layoutWithZone, discountCouponCreatedAtStr)
+		discountCouponCreatedAt, err := time.Parse(time.RFC3339, discountCouponCreatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse discount_coupon_created_at: %v", err)
 		}
 
 		discountCouponUpdatedAtStr, _ := row["discount_coupon_updated_at"].(string)
-		discountCouponUpdatedAt, err := time.Parse(layoutWithZone, discountCouponUpdatedAtStr)
+		discountCouponUpdatedAt, err := time.Parse(time.RFC3339, discountCouponUpdatedAtStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse discount_coupon_updated_at: %v", err)
 		}

@@ -19,20 +19,20 @@ type GetXenditQRCodeTransaction struct {
 }
 
 type XenditTransactionResponse struct {
-	ID              string  `json:"id"`
-	ReferenceId     string  `json:"reference_id"`
-	OrderId         uint64  `json:"order_id"`
-	Amount          float64 `json:"amount"`
-	Currency        string  `json:"currency"`
-	PaymentMethod   string  `json:"payment_method"`
-	PaymentMethodId string  `json:"payment_method_id"`
-	ChannelCode     string  `json:"channel_code"`
-	QrString        string  `json:"qr_string,omitempty"`
-	Status          string  `json:"status"`
-	Description     string  `json:"description"`
-	ExpiresAt       string  `json:"expires_at"`
-	CreatedAt       string  `json:"created_at"`
-	UpdatedAt       string  `json:"updated_at"`
+	ID              string    `json:"id"`
+	ReferenceId     string    `json:"reference_id"`
+	OrderId         uint64    `json:"order_id"`
+	Amount          float64   `json:"amount"`
+	Currency        string    `json:"currency"`
+	PaymentMethod   string    `json:"payment_method"`
+	PaymentMethodId string    `json:"payment_method_id"`
+	ChannelCode     string    `json:"channel_code"`
+	QrString        string    `json:"qr_string,omitempty"`
+	Status          string    `json:"status"`
+	Description     string    `json:"description"`
+	ExpiresAt       *time.Time `json:"expires_at"`
+	CreatedAt       *time.Time `json:"created_at"`
+	UpdatedAt       *time.Time `json:"updated_at"`
 }
 
 type XenditGetPaymentRequestCallbackStatus struct {

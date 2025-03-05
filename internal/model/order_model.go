@@ -2,6 +2,7 @@ package model
 
 import (
 	"seblak-bombom-restful-api/internal/helper"
+	"time"
 )
 
 type OrderResponse struct {
@@ -24,8 +25,8 @@ type OrderResponse struct {
 	DeliveryCost      string                     `json:"delivery_cost"`
 	CompleteAddress   string                     `json:"complete_address"`
 	Note              string                     `json:"note"`
-	CreatedAt         string                     `json:"created_at"`
-	UpdatedAt         string                     `json:"updated_at"`
+	CreatedAt         time.Time                  `json:"created_at"`
+	UpdatedAt         time.Time                  `json:"updated_at"`
 	XenditTransaction *XenditTransactionResponse `json:"xendit_transaction_response,omitempty"`
 }
 
@@ -52,9 +53,8 @@ type GetOrderByCurrentRequest struct {
 }
 
 type UpdateOrderRequest struct {
-	ID            uint64               `json:"-" validate:"required"` //order id
-	OrderStatus   helper.OrderStatus   `json:"order_status" validate:"required"`
-
+	ID          uint64             `json:"-" validate:"required"` //order id
+	OrderStatus helper.OrderStatus `json:"order_status" validate:"required"`
 }
 
 type GetOrdersByUserIdRequest struct {

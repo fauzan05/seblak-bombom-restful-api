@@ -2,6 +2,7 @@ package model
 
 import (
 	"seblak-bombom-restful-api/internal/helper"
+	"time"
 )
 
 type DiscountCouponResponse struct {
@@ -11,15 +12,15 @@ type DiscountCouponResponse struct {
 	Code            string              `json:"code"`
 	Value           float32             `json:"value"`
 	Type            helper.DiscountType `json:"type"`
-	Start           string              `json:"start"`
-	End             string              `json:"end"`
+	Start           time.Time           `json:"start"`
+	End             time.Time           `json:"end"`
 	Status          bool                `json:"status"`
 	TotalMaxUsage   int                 `json:"total_max_usage"`
 	MaxUsagePerUser int                 `json:"max_usage_per_user"`
 	UsedCount       int                 `json:"used_count"`
 	MinOrderValue   int                 `json:"min_order_value"`
-	CreatedAt       string              `json:"created_at"`
-	UpdatedAt       string              `json:"updated_at"`
+	CreatedAt       time.Time           `json:"created_at"`
+	UpdatedAt       time.Time           `json:"updated_at"`
 }
 
 type CreateDiscountCouponRequest struct {

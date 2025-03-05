@@ -168,7 +168,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		newXenditTransaction.Metadata = jsonMetadata
 	}
 	newXenditTransaction.Description = resp.GetDescription()
-	expiresAt := resp.PaymentMethod.QrCode.Get().ChannelProperties.ExpiresAt.Format(time.DateTime)
+	expiresAt := resp.PaymentMethod.QrCode.Get().ChannelProperties.ExpiresAt
 	newXenditTransaction.ExpiresAt = expiresAt
 	parseCreatedAt, err := ParseToRFC3339(resp.Created)
 	if err != nil {
@@ -196,14 +196,13 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	return converter.XenditTransactionToResponse(*newXenditTransaction), nil
 }
 
-func ParseToRFC3339(TimeRFC3339Nano string) (string, error) {
-	parse, err := time.Parse(time.RFC3339Nano, TimeRFC3339Nano)
+func ParseToRFC3339(TimeRFC3339Nano string) (*time.Time, error) {
+	parsedTime, err := time.Parse(time.RFC3339Nano, TimeRFC3339Nano)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	timeAtUTC := parse.UTC()
-	parseToRFC3339 := timeAtUTC.Format(time.DateTime)
-	return parseToRFC3339, nil
+	utcTime := parsedTime.UTC()
+	return &utcTime, nil
 }
 
 func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request *model.GetXenditQRCodeTransaction) (*model.XenditTransactionResponse, error) {
@@ -240,7 +239,7 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 			return nil, fiber.ErrInternalServerError
 		}
 
-		newXenditTransaction.Updated_At = parseUpdatedAt.Format(time.RFC3339)
+		newXenditTransaction.Updated_At = &parseUpdatedAt
 		updatePaymentStatus := map[string]interface{}{
 			"status":     string(resp.Status),
 			"updated_at": parseUpdatedAt.Format(time.DateTime),
