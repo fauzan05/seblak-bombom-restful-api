@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
@@ -46,6 +45,12 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 		return nil, fiber.ErrBadRequest
 	}
 
+	// dicek apakah quantity yang dikirim itu negatif/nol
+	if request.Quantity < 1 {
+		c.Log.Warnf("Quantity must be more than 0 if first time adding product to cart!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Quantity must be more than 0 if first time adding product to cart!")
+	}
+
 	// dicek apakah produknya ada atau tidak
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ProductID
@@ -83,6 +88,7 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 			c.Log.Warnf("Failed to create cart by user id into cart table : %+v", err)
 			return nil, fiber.ErrInternalServerError
 		}
+
 		// setelah itu insert datanya ke tabel cart_items
 		newCartItem.CartId = newCart.ID
 		newCartItem.ProductID = request.ProductID
@@ -91,6 +97,7 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 			c.Log.Warnf("Failed to create cart item by user id into cart table : %+v", err)
 			return nil, fiber.ErrInternalServerError
 		}
+
 		// kurangi stok produknya
 		if err := c.ProductRepository.Update(tx, newProduct); err != nil {
 			c.Log.Warnf("Failed to update product quantity into product table : %+v", err)
@@ -125,7 +132,7 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 		} else {
 			// update quantitynya saja
 			newCartItem.Quantity = newCartItem.Quantity + request.Quantity
-			updateQuantity := map[string]interface{}{
+			updateQuantity := map[string]any{
 				"quantity": newCartItem.Quantity,
 			}
 
@@ -138,7 +145,7 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 		// lalu kurangi stoknya
 		newProductUpdate := new(entity.Product)
 		newProductUpdate.ID = newProduct.ID
-		updateProductQuantity := map[string]interface{}{
+		updateProductQuantity := map[string]any{
 			"stock": newProduct.Stock,
 		}
 
@@ -169,14 +176,84 @@ func (c *CartUseCase) GetAllByCurrentUser(ctx context.Context, request *model.Ge
 
 	newCart := new(entity.Cart)
 	if err := c.CartRepository.FindCartItemByUserId(tx, newCart, request.UserID); err != nil {
-		c.Log.Warnf("Failed to find all user cart item from database : %+v", err)
+		c.Log.Warnf("Failed to find all cart item by current user in the database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	fmt.Println("CART ITEMS : ", newCart.CartItems)
-	for _, item := range newCart.CartItems {
-		fmt.Println("CART ITEMS : ", item)
+	return converter.CartToResponse(newCart), nil
+}
+
+func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateCartRequest) (*model.CartItemResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
 	}
 
-	return converter.CartToResponse(newCart), nil
+	newCartItem := new(entity.CartItem)
+	newCartItem.ID = request.CartItemID
+	count, err := c.CartItemRepository.FindAndCountById(tx, newCartItem)
+	if err != nil {
+		c.Log.Warnf("Failed to find cart item by cart item id in the database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if count == 0 {
+		c.Log.Warnf("Cart item by id not found!")
+		return nil, fiber.ErrBadRequest
+	}
+
+	findProduct := new(entity.Product)
+	findProduct.ID = newCartItem.ProductID
+	if err := c.ProductRepository.FindFirst(tx, findProduct); err != nil {
+		c.Log.Warnf("Failed to find product by id in the database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	newCartItem.Quantity = newCartItem.Quantity + request.Quantity
+	if newCartItem.Quantity < 1 {
+		newCartItem.Quantity = 0
+		// hapus dari cart item
+		deleteCartItem := new(entity.CartItem)
+		deleteCartItem.ID = request.CartItemID
+		if err := c.CartItemRepository.Delete(tx, deleteCartItem); err != nil {
+			c.Log.Warnf("Failed to delete cart item by cart item id in the database : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+	} else {
+		// tambah/kurang
+		updateCartItem := new(entity.CartItem)
+		updateCartItem.ID = request.CartItemID
+		updateQuantity := map[string]any{
+			"quantity": newCartItem.Quantity,
+		}
+
+		if err := c.CartItemRepository.UpdateCustomColumns(tx, updateCartItem, updateQuantity); err != nil {
+			c.Log.Warnf("Failed to update quantity of cart item in the database : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+
+	// update stok produk
+	findProduct.Stock = findProduct.Stock - request.Quantity
+	updateProduct := new(entity.Product)
+	updateProduct.ID = findProduct.ID
+	updateStock := map[string]any{
+		"stock": findProduct.Stock,
+	}
+
+	if err := c.ProductRepository.UpdateCustomColumns(tx, updateProduct, updateStock); err != nil {
+		c.Log.Warnf("Failed to update stock of product in the database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.CartItemToResponse(newCartItem), nil
 }

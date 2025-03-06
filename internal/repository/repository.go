@@ -210,7 +210,7 @@ func (r *Repository[T]) FindWith2Preloads(db *gorm.DB, entity *T, preload1 strin
 }
 
 func (r *Repository[T]) FindCartItemByUserId(db *gorm.DB, entity *T, userId uint64) error {
-	return db.Where(" = ?", userId).Preload("CartItems").Find(&entity).Error
+	return db.Where("user_id = ?", userId).Preload("CartItems").Preload("CartItems.Product").Preload("CartItems.Product.Category").Find(&entity).Error
 }
 
 func (r *Repository[T]) FindCartItemByUserIdAndProductId(db *gorm.DB, entity *T, cartId uint64, productId uint64) (int64, error) {

@@ -43,6 +43,26 @@ func (c *CartController) Create(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *CartController) Update(ctx *fiber.Ctx) error {
+	request := new(model.UpdateCartRequest)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Cannot parse data : %+v", err)
+		return err
+	}
+
+	response, err := c.UseCase.UpdateQuantity(ctx.Context(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to update cart item quantity in the database : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.CartItemResponse]{
+		Code:   200,
+		Status: "Success to update item quantity in the cart item",
+		Data:   response,
+	})
+}
+
 func (c *CartController) GetAllCurrent(ctx *fiber.Ctx) error {
 	request := new(model.GetAllCartByCurrentUserRequest)
 	auth := middleware.GetCurrentUser(ctx)
