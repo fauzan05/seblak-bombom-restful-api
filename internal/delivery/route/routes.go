@@ -131,6 +131,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	api.Post("/carts", c.CartController.Create)
 	api.Get("/carts", c.CartController.GetAllCurrent)
 	api.Patch("/carts/cart-items/:cartItemId", c.CartController.Update)
+	api.Delete("/carts/cart-items/:cartItemId", c.CartController.Delete)
 
 	// order
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)

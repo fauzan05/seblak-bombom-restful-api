@@ -21,10 +21,10 @@ type GetAllCartByCurrentUserRequest struct {
 }
 
 type UpdateCartRequest struct {
-	CartItemID uint64 `json:"cart_item_id" validate:"required"`
+	CartItemID uint64 `json:"-" validate:"required"`
 	Quantity   int    `json:"quantity" validate:"required"`
 }
 
 type DeleteCartRequest struct {
-	ID uint64 `json:"-" validate:"required"`
+	CartItemID uint64 `json:"-" validate:"required"`
 }
