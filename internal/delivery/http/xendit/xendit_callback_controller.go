@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase/xendit"
 
@@ -25,7 +26,7 @@ func NewXenditCallbackController(useCase *usecase.XenditCallbackUseCase, logger 
 func (c *XenditCallbackController) GetPaymentRequestCallbacks(ctx *fiber.Ctx) error {
 	// Menangkap raw body
 	rawBody := ctx.Body()
-
+	fmt.Println("DATA BODY : ", string(rawBody))
 	var requestData model.XenditGetPaymentRequestCallbackStatus
 	err := json.Unmarshal(rawBody, &requestData)
 	if err != nil {

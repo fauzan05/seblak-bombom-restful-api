@@ -114,7 +114,7 @@ func (c *AddressUseCase) GetById(ctx context.Context, request *model.GetAddressR
 
 	newAddress := new(entity.Address)
 	newAddress.ID = request.ID
-	if err := c.AddressRepository.FindById(tx, newAddress); err != nil {
+	if err := c.AddressRepository.FindWithPreloads(tx, newAddress, "Delivery"); err != nil {
 		c.Log.Warnf("Failed find address by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
@@ -139,7 +139,9 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	newAddress := new(entity.Address)
 	newAddress.ID = request.ID
 	newAddress.UserId = request.UserId
+	newAddress.DeliveryId = request.DeliveryId
 	newAddress.CompleteAddress = request.CompleteAddress
+	newAddress.GoogleMapsLink = request.GoogleMapsLink
 	newAddress.IsMain = request.IsMain
 
 	if err := c.AddressRepository.Update(tx, newAddress); err != nil {
@@ -147,7 +149,7 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err := c.AddressRepository.FindById(tx, newAddress); err != nil {
+	if err := c.AddressRepository.FindWithPreloads(tx, newAddress, "Delivery"); err != nil {
 		c.Log.Warnf("Failed find updated address by id : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}

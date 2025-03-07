@@ -49,7 +49,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	// get order id
@@ -57,7 +57,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	selectedOrder.ID = request.OrderId
 	if err := c.OrderRepository.FindWithPreloads(tx, selectedOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("Failed to find order by id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find order by id : %+v", err))
 	}
 
 	paymentRequestBasketItems := new([]payment_request.PaymentRequestBasketItem)
@@ -114,6 +114,8 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	qrisCode := payment_request.QRCODECHANNELCODE_DANA
 	qrCodeParam.ChannelCode = *payment_request.NewNullableQRCodeChannelCode(&qrisCode)
 	qrCodeParam.ChannelProperties = payment_request.NewQRCodeChannelProperties()
+	setExpiresAt := time.Now().Add(5 * time.Minute)
+	qrCodeParam.ChannelProperties.ExpiresAt = &setExpiresAt
 
 	custId := strconv.FormatUint(selectedOrder.UserId, 10)
 	metadata := map[string]interface{}{
@@ -142,7 +144,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 
 	if resErr != nil {
 		c.Log.Warnf("failed to create new xendit transaction : %+v", resErr.FullError())
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new xendit transaction : %+v", resErr.FullError()))
 	}
 
 	// setelah itu tangkap semua response
@@ -163,25 +165,27 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		jsonMetadata, err := json.Marshal(metadata)
 		if err != nil {
 			c.Log.Warnf("failed to parse to json metadata : %+v", resErr.FullError())
-			return nil, fiber.ErrInternalServerError
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse to json metadata : %+v", resErr.FullError()))
 		}
 		newXenditTransaction.Metadata = jsonMetadata
 	}
+
 	newXenditTransaction.Description = resp.GetDescription()
 	expiresAt := resp.PaymentMethod.QrCode.Get().ChannelProperties.ExpiresAt
 	newXenditTransaction.ExpiresAt = expiresAt
 	parseCreatedAt, err := ParseToRFC3339(resp.Created)
 	if err != nil {
 		c.Log.Warnf("failed to parse created_at into UTC : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse created_at into UTC : %+v", err))
 	}
 	newXenditTransaction.Created_At = parseCreatedAt
 
 	parseUpdatedAt, err := ParseToRFC3339(resp.Updated)
 	if err != nil {
 		c.Log.Warnf("failed to parse updated_at into UTC : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse updated_at into UTC : %+v", err))
 	}
+
 	newXenditTransaction.Updated_At = parseUpdatedAt
 	if err := c.XenditTransactionRepository.Create(tx, newXenditTransaction); err != nil {
 		c.Log.Warnf("Failed to insert xendit transaction into database : %+v", err)
@@ -190,7 +194,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.XenditTransactionToResponse(*newXenditTransaction), nil

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/repository"
@@ -39,19 +40,19 @@ func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validat
 func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ctx, request *model.XenditGetPaymentRequestCallbackStatus) error {
 	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
+	fmt.Println("CALLBACK DI TEMBAK PADA : ", time.Now().Format(time.DateTime))
 
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return fiber.ErrBadRequest
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newXenditTransaction := new(entity.XenditTransactions)
-	newXenditTransaction.ID = request.Data.PaymentRequestId
-	count, err := c.XenditTransactionRepository.FindFirstAndCount(tx, newXenditTransaction)
+	count, err := c.XenditTransactionRepository.FindXenditTransaction(tx, newXenditTransaction, request.Data.PaymentMethod.ID)
 	if err != nil {
 		c.Log.Warnf("Failed to get xendit transaction from database : %+v", err)
-		return fiber.ErrInternalServerError
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit transaction from database : %+v", err))
 	}
 
 	if count > 0 {
@@ -61,16 +62,18 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 			updatedAt := request.Data.UpdatedAt.Format(time.DateTime)
 			status := request.Data.Status
 			orderId := newXenditTransaction.OrderId
-			updateXenditTransaction := map[string]interface{}{
+			updateXenditTransaction := map[string]any{
 				"status":     status,
 				"updated_at": updatedAt,
 			}
+
 			*newXenditTransaction = entity.XenditTransactions{
-				ID: request.Data.PaymentRequestId,
+				ID: newXenditTransaction.ID,
 			}
+
 			if err := c.XenditTransactionRepository.UpdateCustomColumns(tx, newXenditTransaction, updateXenditTransaction); err != nil {
 				c.Log.Warnf("Failed to update xendit transaction status into database : %+v", err)
-				return fiber.ErrInternalServerError
+				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit transaction status into database : %+v", err))
 			}
 
 			var payment_status int
@@ -94,7 +97,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				payment_status = 0
 			}
 
-			updateOrderStatus := map[string]interface{}{
+			updateOrderStatus := map[string]any{
 				"payment_status": payment_status,
 				"updated_at":     updatedAt,
 			}
@@ -103,14 +106,14 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 			newOrder.ID = orderId
 			if err := c.OrderRepository.UpdateCustomColumns(tx, newOrder, updateOrderStatus); err != nil {
 				c.Log.Warnf("Failed to update order status into database : %+v", err)
-				return fiber.ErrInternalServerError
+				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update order status into database : %+v", err))
 			}
 		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return fiber.ErrInternalServerError
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return nil

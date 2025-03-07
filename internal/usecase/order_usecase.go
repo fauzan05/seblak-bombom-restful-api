@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"slices"
 )
 
 type OrderUseCase struct {
@@ -57,7 +58,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newOrder := new(entity.Order)
@@ -138,7 +139,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		count, err := c.DiscountRepository.FindAndCountById(tx, newDiscount)
 		if err != nil {
 			c.Log.Warnf("Failed to find discount by code : %+v", err)
-			return nil, fiber.ErrInternalServerError
+			return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Failed to find discount by code : %+v", err))
 		}
 
 		// cek apakah diskonnya ada dan statusnya aktif (true)
@@ -159,44 +160,44 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 					newOrder.TotalDiscount = newDiscount.Value
 				}
 			} else if newDiscount.End.Before(time.Now()) {
-				c.Log.Warnf("Discount has expired : %+v", err)
-				return nil, fiber.ErrBadRequest
+				c.Log.Warnf("Discount has expired!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "Discount has expired!")
 			}
 		} else if count < 1 && !newDiscount.Status {
-			c.Log.Warnf("Discount has disabled or doesn't exists : %+v", err)
-			return nil, fiber.ErrBadRequest
+			c.Log.Warnf("Discount has disabled or doesn't exists!")
+			return nil, fiber.NewError(fiber.StatusNotFound, "Discount has disabled or doesn't exists!")
 		}
 	}
 
 	if !helper.IsValidPaymentMethod(request.PaymentMethod) {
 		c.Log.Warnf("Invalid payment method!")
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid payment method!")
 	}
 	newOrder.PaymentMethod = request.PaymentMethod
 
 	if !helper.IsValidChannelCode(request.ChannelCode) {
 		c.Log.Warnf("Invalid channel code!")
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid channel code!")
 	}
 	newOrder.ChannelCode = request.ChannelCode
 
 	if !helper.IsValidPaymentGateway(request.PaymentGateway) {
 		c.Log.Warnf("Invalid payment gateway!")
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid payment gateway!")
 	}
 	newOrder.PaymentGateway = request.PaymentGateway
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
 		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
 			c.Log.Warnf("Payment method %s is not available on payment gateway System!", request.PaymentMethod)
-			return nil, fiber.ErrBadRequest
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway System!", request.PaymentMethod))
 		}
 	}
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
 		if (request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE && request.PaymentMethod != helper.PAYMENT_METHOD_EWALLET) {
 			c.Log.Warnf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
-			return nil, fiber.ErrBadRequest
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway))
 		} else {
 
 			validChannelCodes := map[helper.PaymentMethod][]helper.ChannelCode{
@@ -215,18 +216,15 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			// Cek apakah ChannelCode valid untuk PaymentMethod yang dipilih
 			isValid := false
 			if validCodes, exists := validChannelCodes[request.PaymentMethod]; exists {
-				for _, code := range validCodes {
-					if request.ChannelCode == code {
+				if slices.Contains(validCodes, request.ChannelCode) {
 						isValid = true
-						break
 					}
-				}
 			}
 			
 			// Jika tidak valid, berikan error
 			if !isValid {
 				c.Log.Warnf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway)
-				return nil, fiber.ErrBadRequest
+				return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway))
 			}
 		}
 	}
@@ -244,7 +242,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newWallet := new(entity.Wallet)
 		if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
 			c.Log.Warnf("Failed to update new balance : %+v", err)
-			return nil, fiber.NewError(fiber.StatusBadRequest, "An error occurred on the server. Please try again later!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Failed to update new balance!")
 		}
 
 		newOrder.PaymentStatus = helper.PAID_PAYMENT
@@ -254,8 +252,8 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	newOrder.CompleteAddress = request.CompleteAddress
 
 	if err := c.OrderRepository.Create(tx, newOrder); err != nil {
-		c.Log.Warnf("failed to create new order : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to create new order : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new order : %+v", err))
 	}
 
 	timestamp := time.Now().Unix()
@@ -270,23 +268,23 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	// insert semua data order product ke tabel order_products
 	if err := c.OrderProductRepository.CreateInBatch(tx, &orderProducts); err != nil {
-		c.Log.Warnf("failed to add all order products into database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to add all order products into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add all order products into database : %+v", err))
 	}
 	// mengisi kolom invoice ke tabel order setelah mendapatkan ID order nya
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
-		c.Log.Warnf("failed to add invoice code : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to add invoice code : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add invoice code : %+v", err))
 	}
 
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
-		c.Log.Warnf("Failed to find order with preload : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to find newly created order : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find newly created order : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.OrderToResponse(newOrder), nil
@@ -298,13 +296,13 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newOrders := new([]entity.Order)
 	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
-		c.Log.Warnf("Failed to find all orders by user id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to find all orders by current user : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find all orders by user id : %+v", err))
 	}
 
 	return converter.OrdersToResponse(newOrders), nil
@@ -317,7 +315,7 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newOrder := new(entity.Order)
@@ -325,47 +323,41 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 	count, err := c.OrderRepository.FindAndCountById(tx, newOrder)
 	if err != nil {
 		c.Log.Warnf("Failed to find order by id into database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find order by id into database : %+v", err))
 	}
 	
 	if count == 0 {
 		c.Log.Warnf("Order not found by order id : %+v", err)
-		return nil, fiber.ErrNotFound
+		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Order not found by order id : %+v", err))
 	}
 
 	newOrder.OrderStatus = request.OrderStatus
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to update status order by id : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update status order by id : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.OrderToResponse(newOrder), nil
 }
 
 func (c *OrderUseCase) GetByUserId(ctx context.Context, request *model.GetOrdersByUserIdRequest) (*[]model.OrderResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
+	tx := c.DB.WithContext(ctx)
 
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newOrders := new([]entity.Order)
 	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
-		c.Log.Warnf("Failed to get all orders by user id from database : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to get all orders by user id in the database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get all orders by user id from database : %+v", err))
 	}
 
 	return converter.OrdersToResponse(newOrders), nil

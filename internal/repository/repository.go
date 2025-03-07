@@ -71,6 +71,21 @@ func (r *Repository[T]) FindFirstAndCount(db *gorm.DB, entity *T) (int64, error)
 	return count, result.Error // Kembalikan error jika ada kesalahan lain
 }
 
+func (r *Repository[T]) FindXenditTransaction(db *gorm.DB, entity *T, payment_method_id string) (int64, error) {
+	var count int64
+	err := db.Model(&entity).Where("payment_method_id = ?", payment_method_id).Count(&count)
+	if err.Error != nil {
+		return 0, err.Error
+	}
+
+	result := db.Where("payment_method_id = ?", payment_method_id).First(&entity)
+	if result.Error == gorm.ErrRecordNotFound {
+		// Jika data tidak ditemukan, kamu bisa mengembalikan nil atau menangani sesuai kebutuhan
+		return 0, nil // Tidak ada error jika data tidak ditemukan
+	}
+	return count, result.Error // Kembalikan error jika ada kesalahan lain
+}
+
 func (r *Repository[T]) FindXenditTransactionByPaymentMethodId(db *gorm.DB, entity *T, paymentMethodId string) (int64, error) {
 	var count int64
 	err := db.Model(&entity).Where("payment_method_id = ?", paymentMethodId).Count(&count)

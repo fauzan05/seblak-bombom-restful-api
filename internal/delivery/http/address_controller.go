@@ -78,6 +78,7 @@ func (c *AddressController) Get(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Failed to find address by id : %+v", err)
 		return err
 	}
+	
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.AddressResponse]{
 		Code:   200,
 		Status: "Success to get an address",

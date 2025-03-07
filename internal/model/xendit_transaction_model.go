@@ -37,7 +37,6 @@ type XenditTransactionResponse struct {
 
 type XenditGetPaymentRequestCallbackStatus struct {
 	Data struct {
-		PaymentRequestId string `json:"payment_request_id"`
 		PaymentMethod    struct {
 			ID string `json:"id"`
 		} `json:"payment_method" validate:"required"`
