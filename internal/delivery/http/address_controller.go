@@ -30,8 +30,9 @@ func (c *AddressController) Add(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(request)
 	if err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
+	
 	getToken := ctx.GetReqHeaders()
 	token.Token = getToken["Authorization"][0]
 
@@ -52,9 +53,10 @@ func (c *AddressController) GetAll(ctx *fiber.Ctx) error {
 	auth := middleware.GetCurrentUser(ctx)
 	response, err := c.UseCase.GetAll(auth)
 	if err != nil {
-		c.Log.Warnf("Failed to register user : %+v", err)
+		c.Log.Warnf("Failed to get all address by current user : %+v", err)
 		return err
 	}
+
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*[]model.AddressResponse]{
 		Code:   200,
 		Status: "Success to get all address by current user",
@@ -66,9 +68,10 @@ func (c *AddressController) Get(ctx *fiber.Ctx) error {
 	getId := ctx.Params("addressId")
 	addressId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert address id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert address_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert address_id to integer : %+v", err))
 	}
+
 	addressRequest := &model.GetAddressRequest{
 		ID: uint64(addressId),
 	}
@@ -81,7 +84,7 @@ func (c *AddressController) Get(ctx *fiber.Ctx) error {
 	
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.AddressResponse]{
 		Code:   200,
-		Status: "Success to get an address",
+		Status: "Success to get address by id for the current user",
 		Data:   response,
 	})
 }
@@ -90,15 +93,15 @@ func (c *AddressController) Update(ctx *fiber.Ctx) error {
 	getId := ctx.Params("addressId")
 	addressId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert address id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert address_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert address_id to integer : %+v", err))
 	}
 	// ambil data dari body
 	addressRequest := new(model.UpdateAddressRequest)
 	err = ctx.BodyParser(addressRequest)
 	if err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
@@ -111,9 +114,10 @@ func (c *AddressController) Update(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Failed to edit address : %+v", err)
 		return err
 	}
+
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.AddressResponse]{
 		Code:   200,
-		Status: "Success to update an address",
+		Status: "Success to update an address by id",
 		Data:   response,
 	})
 }
@@ -121,10 +125,8 @@ func (c *AddressController) Update(ctx *fiber.Ctx) error {
 func (c *AddressController) Remove(ctx *fiber.Ctx) error {
 	idsParam := ctx.Query("ids")
 	if idsParam == "" {
-		ctx.Status(fiber.StatusBadRequest)
-		return ctx.JSON(fiber.Map{
-			"error": "Parameter 'ids' is required",
-		})
+		c.Log.Warnf("Parameter 'ids' is required")
+		return fiber.NewError(fiber.StatusBadRequest, "Parameter 'ids' is required")
 	}
 	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
 	idStrings := strings.Split(idsParam, ",")
@@ -135,9 +137,8 @@ func (c *AddressController) Remove(ctx *fiber.Ctx) error {
 		if idStr != "" {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
-				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error": fmt.Sprintf("Invalid ID: %s", idStr),
-				})
+				c.Log.Warnf("Invalid id : %+v", err)
+				return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid id : %+v", err))
 			}
 			addressIds = append(addressIds, id)
 		}
@@ -154,7 +155,7 @@ func (c *AddressController) Remove(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,
-		Status: "Success to delete an address",
+		Status: "Success to delete selected address",
 		Data:   response,
 	})
 }

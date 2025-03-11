@@ -48,12 +48,12 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	if request.Stock < 0 {
-		c.Log.Warnf("Stock must be positive number : %+v", err)
-		return nil, fiber.ErrBadRequest
+		c.Log.Warnf("Stock must be positive number!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Stock must be positive number!")
 	}
 
 	newProduct := new(entity.Product)
@@ -64,19 +64,18 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 	newProduct.Stock = request.Stock
 
 	if err := c.ProductRepository.Create(tx, newProduct); err != nil {
-		c.Log.Warnf("Failed create product into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to store data!")
+		c.Log.Warnf("Failed to create product into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create product into database : %+v", err))
 	}
 
 	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
-		c.Log.Warnf("Failed find product by id with preload from database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Couldn't find category because category not created yet! ")
+		c.Log.Warnf("Failed to find product by id from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find product by id from database : %+v", err))
 	}
 
 	newImages := make([]entity.Image, len(files))
 
 	for i, file := range files {
-		fmt.Printf("File #%d: %s with position %s\n", i+1, file.Filename, positions[i])
 		// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
 		hashedFilename := hashFileName(file.Filename)
 		var position, _ = strconv.Atoi(positions[i])
@@ -89,25 +88,26 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		// Simpan file ke direktori uploads
 		err := fiberContext.SaveFile(file, fmt.Sprintf("../uploads/images/products/%s", hashedFilename))
 		if err != nil {
-			c.Log.Warnf("Failed to save file: %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
+			c.Log.Warnf("Failed to save uploaded file : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to save uploaded file : %+v", err))
 		}
 	}
 
 	// Simpan gambar ke database
 	if err := c.ImageRepository.CreateInBatch(tx, &newImages); err != nil {
-		c.Log.Warnf("Failed to save file data into database: %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
+		c.Log.Warnf("Failed to save images file_name into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to save images file_name into database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 	return converter.ProductToResponse(newProduct), nil
 }
 
 func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductRequest) (*model.ProductResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
 	// Validasi request
 	err := c.Validate.Struct(request)
 	if err != nil {
@@ -119,9 +119,9 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 	newProduct.ID = request.ID
 
 	// Mengambil data produk
-	if err := c.ProductRepository.FindWith2Preloads(c.DB.WithContext(ctx), newProduct, "Category", "Images"); err != nil {
-		c.Log.Warnf("Failed get product from database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
+		c.Log.Warnf("Failed to get product by id from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get product by id from database : %+v", err))
 	}
 
 	// Mengembalikan response produk
@@ -129,43 +129,37 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 }
 
 func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, search string, categoryId uint64, sortingColumn string, sortBy string) (*[]model.ProductResponse, int64, int, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
+	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
 		page = 1
 	}
 
-	var result []map[string]interface{} // entity kosong yang akan diisi
+	var result []map[string]any // entity kosong yang akan diisi
 	if err := c.ProductRepository.GetProductsWithPagination(tx, &result, page, perPage, search, sortingColumn, sortBy, categoryId); err != nil {
-		c.Log.Warnf("Failed get all products from database : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to get all products from database : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get all products from database : %+v", err))
 	}
-	
+
 	newProducts := new([]entity.Product)
 	err := MapProducts(result, newProducts)
 	if err != nil {
 		c.Log.Warnf("Failed map products : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed map products : %+v", err))
 	}
-	
+
 	var totalPages int = 0
 	getAllProducts := new(entity.Product)
 	totalProducts, err := c.ProductRepository.CountProductItems(tx, getAllProducts, search, categoryId)
 	if err != nil {
 		c.Log.Warnf("Failed to count products: %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count products: %+v", err))
 	}
 
 	// Hitung total halaman
 	totalPages = int(totalProducts / int64(perPage))
 	if totalProducts%int64(perPage) > 0 {
 		totalPages++
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
 	}
 
 	return converter.ProductsToResponse(newProducts), totalProducts, totalPages, nil
@@ -178,7 +172,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newProduct := new(entity.Product)
@@ -191,7 +185,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 
 	if err := c.ProductRepository.Update(tx, newProduct); err != nil {
 		c.Log.Warnf("Failed update product by id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed update product by id : %+v", err))
 	}
 
 	// Jika user menambahkan gambar baru
@@ -199,7 +193,6 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 		newImages := make([]entity.Image, len(newImageFiles))
 
 		for i, file := range newImageFiles {
-			fmt.Printf("File #%d: %s with position %s\n", i+1, file.Filename, newImagePositions[i])
 			// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
 			hashedFilename := hashFileName(file.Filename)
 			var position, _ = strconv.Atoi(newImagePositions[i])
@@ -213,15 +206,15 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 			// Simpan file ke direktori uploads
 			err := fiberContext.SaveFile(file, fmt.Sprintf("../uploads/images/products/%s", hashedFilename))
 			if err != nil {
-				c.Log.Warnf("Failed to save file: %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
+				c.Log.Warnf("Failed to save uploaded file : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to save uploaded file : %+v", err))
 			}
 		}
 
 		// Simpan gambar baru ke database
 		if err := c.ImageRepository.CreateInBatch(tx, &newImages); err != nil {
-			c.Log.Warnf("Failed to save file data into database: %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to save uploaded file!")
+			c.Log.Warnf("Failed to save images file_name into database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to save images file_name into database : %+v", err))
 		}
 	}
 
@@ -233,39 +226,47 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 
 			if err := c.ImageRepository.FindById(tx, &updateImage); err != nil {
 				c.Log.Warnf("Failed to find images by id : %+v", err)
-				return nil, fiber.ErrInternalServerError
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find images by id : %+v", err))
 			}
 
 			updateImage.Position = updateCurrentImage.Position
 			// Perbarui posisi gambar
 			if err := c.ImageRepository.Update(tx, &updateImage); err != nil {
-				c.Log.Warnf("Failed to save updated current image data into database: %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to update images!")
+				c.Log.Warnf("Failed to save updated current image data into database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to save updated current image data into database : %+v", err))
 			}
 		}
 	}
 
 	if len(deletedImages.Images) > 0 {
+		filePath := "../uploads/images/products/"
+
 		for _, deletedImage := range deletedImages.Images {
 			deleteImage := entity.Image{
 				ID: deletedImage.ID,
 			}
 
 			if err := c.ImageRepository.Delete(tx, &deleteImage); err != nil {
-				c.Log.Warnf("Failed to delete current image data into database: %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete images!")
+				c.Log.Warnf("Failed to delete current image data in the database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete current image data in the database : %+v", err))
+			}
+
+			err = os.Remove(filePath + deleteImage.FileName)
+			if err != nil {
+				fmt.Printf("Failed to delete image file : %v\n", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete image file : %v\n", err))
 			}
 		}
 	}
 
 	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
-		c.Log.Warnf("Failed get product from database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to get product from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get product from database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.ProductToResponse(newProduct), nil
@@ -278,21 +279,21 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.ErrBadRequest
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	currentImages := new([]entity.Image)
 	if err := c.ImageRepository.FindImagesByProductIds(tx, currentImages, request.IDs); err != nil {
-		c.Log.Warnf("Failed find product images by product id : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to find product images!")
+		c.Log.Warnf("Failed to find product images by product id : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find product images by product id : %+v", err))
 	}
 
 	// Mengecek apakah gambar kosong atau nil
 	if len(*currentImages) != 0 {
 		// hapus semua gambar di database
 		if err := c.ImageRepository.DeleteInBatch(tx, currentImages); err != nil {
-			c.Log.Warnf("Failed to delete product images in database : %+v", err)
-			return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete product images in database!")
+			c.Log.Warnf("Failed to delete product images in the database : %+v", err)
+			return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete product images in the database : %+v", err))
 		}
 
 		filePath := "../uploads/images/products/"
@@ -301,8 +302,8 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 		for _, currentImage := range *currentImages {
 			err = os.Remove(filePath + currentImage.FileName)
 			if err != nil {
-				fmt.Printf("Error deleting file: %v\n", err)
-				return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete product images in directory!")
+				fmt.Printf("Failed to delete image file : %v\n", err)
+				return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete image file : %v\n", err))
 			}
 		}
 	}
@@ -321,12 +322,12 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 	// hapus produk di database
 	if err := c.ProductRepository.DeleteInBatch(tx, &newProducts); err != nil {
 		c.Log.Warnf("Failed delete in batch product by id : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, "Failed to delete in batch products!")
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed delete in batch product by id : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return false, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return true, nil
@@ -335,17 +336,17 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 // Fungsi untuk membuat hash dari nama file
 func hashFileName(originalName string) string {
 	timestamp := time.Now().UnixNano()
-	hash := sha256.Sum256([]byte(fmt.Sprintf("%d-%s", timestamp, originalName)))
+	hash := sha256.Sum256(fmt.Appendf(nil, "%d-%s", timestamp, originalName))
 	return fmt.Sprintf("%x", hash[:8]) + filepath.Ext(originalName) // Menggunakan 8 karakter pertama hash
 }
 
-func MapProducts(rows []map[string]interface{}, results *[]entity.Product) (error) {
+func MapProducts(rows []map[string]any, results *[]entity.Product) error {
 
 	for _, row := range rows {
 		// fmt.Printf("Produk Id : %s | DATANYA : %d\n", row["product_id"], len(row["images"].([]map[string]interface{})))
-		imagesConvertToInterface, ok := row["images"].([]map[string]interface{})
+		imagesConvertToInterface, ok := row["images"].([]map[string]any)
 		if !ok {
-			return fmt.Errorf("failed to parse images field, expected []map[string]interface{} but got %T", row["images"])
+			return fmt.Errorf("failed to parse images field, expected []map[string]any but got %T", row["images"])
 		}
 
 		newImages := make([]entity.Image, 0)

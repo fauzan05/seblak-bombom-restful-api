@@ -234,7 +234,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		// langsung paid dan proses walletnya
 		if request.CurrentBalance < newOrder.Amount {
 			// tampilkan error bahwa saldo kurang
-			c.Log.Warnf("Insufficient balance!")
+			c.Log.Warnf("Your balance is insufficient to perform this transaction!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
 		}
 
@@ -253,7 +253,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 
 	if err := c.OrderRepository.Create(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to create new order : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new order : %+v", err))
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create new order : %+v", err))
 	}
 
 	timestamp := time.Now().Unix()
@@ -269,12 +269,12 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	// insert semua data order product ke tabel order_products
 	if err := c.OrderProductRepository.CreateInBatch(tx, &orderProducts); err != nil {
 		c.Log.Warnf("Failed to add all order products into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add all order products into database : %+v", err))
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add all order products into database : %+v", err))
 	}
 	// mengisi kolom invoice ke tabel order setelah mendapatkan ID order nya
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to add invoice code : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add invoice code : %+v", err))
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add invoice code : %+v", err))
 	}
 
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {

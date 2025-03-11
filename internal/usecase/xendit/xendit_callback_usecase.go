@@ -40,7 +40,6 @@ func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validat
 func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ctx, request *model.XenditGetPaymentRequestCallbackStatus) error {
 	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
-	fmt.Println("CALLBACK DI TEMBAK PADA : ", time.Now().Format(time.DateTime))
 
 	err := c.Validate.Struct(request)
 	if err != nil {

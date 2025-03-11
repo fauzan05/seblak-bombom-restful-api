@@ -41,19 +41,19 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid request format. Please check your input!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newDiscount := new(entity.DiscountCoupon)
 	count, err := c.DiscountCouponRepository.CountDiscountByCode(tx, newDiscount, request.Code)
 	if err != nil {
 		c.Log.Warnf("Failed to count discount by code : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Oops! Something went wrong. Error Code: 500.")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count discount by code : %+v", err))
 	}
 
 	if count > 0 {
-		c.Log.Warnf("Discount code has been used : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Discount code has already exist, please use another discount code!")
+		c.Log.Warnf("Discount code has already exist, please use another discount code!")
+		return nil, fiber.NewError(fiber.StatusConflict, "Discount code has already exist, please use another discount code!")
 	}
 
 	newDiscount.Name = request.Name
@@ -64,13 +64,13 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 	newDiscount.Start, err = time.Parse(time.RFC3339, request.Start)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid request format. Please check your input!")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
 	}
 
 	newDiscount.End, err = time.Parse(time.RFC3339, request.End)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid request format. Please check your input!")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
 	}
 
 	newDiscount.Status = request.Status
@@ -81,36 +81,35 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 
 	if err := c.DiscountCouponRepository.Create(tx, newDiscount); err != nil {
 		c.Log.Warnf("Failed to create a new discount : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Oops! Something went wrong. Error Code: 500.")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create a new discount : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Oops! Something went wrong. Error Code: 500.")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.DiscountCouponToResponse(newDiscount), nil
 }
 
 func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.DiscountCouponResponse, int64, int, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
+	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
 		page = 1
 	}
 
-	var result []map[string]interface{} // entity kosong yang akan diisi
+	var result []map[string]any // entity kosong yang akan diisi
 	if err := c.DiscountCouponRepository.FindDiscountCouponsPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
 		c.Log.Warnf("Failed to find all discounts : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find all discounts : %+v", err))
 	}
 
 	newDiscountCoupons := new([]entity.DiscountCoupon)
 	err := MapDiscountCoupon(result, newDiscountCoupons)
 	if err != nil {
 		c.Log.Warnf("Failed map discount coupons : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed map discount coupons : %+v", err))
 	}
 
 	var totalPages int = 0
@@ -118,7 +117,7 @@ func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage in
 	totalDiscountCoupons, err := c.DiscountCouponRepository.CountDiscountCouponItems(tx, newDiscountCoupon, search)
 	if err != nil {
 		c.Log.Warnf("Failed to count discount coupon : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count discount coupon : %+v", err))
 	}
 
 	// Hitung total halaman
@@ -127,28 +126,17 @@ func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage in
 		totalPages++
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
-	}
-
 	return converter.DiscountCouponsToResponse(newDiscountCoupons), totalDiscountCoupons, totalPages, nil
 }
 
 func (c *DiscountCouponUseCase) GetById(ctx context.Context, request *model.GetDiscountCouponRequest) (*model.DiscountCouponResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
+	tx := c.DB.WithContext(ctx)
 
 	newDiscount := new(entity.DiscountCoupon)
 	newDiscount.ID = request.ID
 	if err := c.DiscountCouponRepository.FindById(tx, newDiscount); err != nil {
 		c.Log.Warnf("Failed to find discount by id: %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find discount by id: %+v", err))
 	}
 
 	return converter.DiscountCouponToResponse(newDiscount), nil
@@ -161,25 +149,25 @@ func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateD
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newDiscount := new(entity.DiscountCoupon)
 	newDiscount.ID = request.ID
 	if err := c.DiscountCouponRepository.FindById(tx, newDiscount); err != nil {
 		c.Log.Warnf("Can't find discount by id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't find discount by id : %+v", err))
 	}
 
 	count, err := c.DiscountCouponRepository.CountDiscountByCodeIsExist(tx, newDiscount, newDiscount.Code, request.Code)
 	if err != nil {
 		c.Log.Warnf("Can't find discount by code : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't find discount by code : %+v", err))
 	}
 
 	if count > 0 {
 		c.Log.Warnf("Discount code has been used : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusConflict, fmt.Sprintf("Discount code has been used : %+v", err))
 	}
 
 	newDiscount.ID = request.ID
@@ -191,13 +179,13 @@ func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateD
 	newDiscount.Start, err = time.Parse(time.RFC3339, request.Start)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
 	}
 
 	newDiscount.End, err = time.Parse(time.RFC3339, request.End)
 	if err != nil {
 		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
 	}
 
 	newDiscount.Status = request.Status
@@ -208,12 +196,12 @@ func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateD
 
 	if err := c.DiscountCouponRepository.Update(tx, newDiscount); err != nil {
 		c.Log.Warnf("Can't update discount by id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't update discount by id : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.DiscountCouponToResponse(newDiscount), nil
@@ -226,7 +214,7 @@ func (c *DiscountCouponUseCase) Remove(ctx context.Context, request *model.Delet
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.ErrBadRequest
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newDiscountCoupons := []entity.DiscountCoupon{}
@@ -241,18 +229,18 @@ func (c *DiscountCouponUseCase) Remove(ctx context.Context, request *model.Delet
 
 	if err := c.DiscountCouponRepository.DeleteInBatch(tx, &newDiscountCoupons); err != nil {
 		c.Log.Warnf("Failed to delete discount by id: %+v", err)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete discount by id: %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return true, nil
 }
 
-func MapDiscountCoupon(rows []map[string]interface{}, results *[]entity.DiscountCoupon) error {
+func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) error {
 
 	for _, row := range rows {
 		discountCouponIdStr, ok := row["discount_coupon_id"].(string)

@@ -58,8 +58,8 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	user := &entity.User{}
 	total, err := c.UserRepository.UserCountByEmail(c.DB, user, request.Email)
 	if err != nil {
-		c.Log.Warnf("Failed count users from database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed count users from database : %+v", err))
+		c.Log.Warnf("Failed to count users from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count users from database : %+v", err))
 	}
 
 	if total > 0 {
@@ -80,8 +80,8 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	user.Password = string(password)
 	user.Role = request.Role
 	if err := c.UserRepository.Create(tx, user); err != nil {
-		c.Log.Warnf("Failed create user into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed create user into database : %+v", err))
+		c.Log.Warnf("Failed to create user into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create user into database : %+v", err))
 	}
 
 	// setelah itu buat wallet
@@ -142,8 +142,8 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequst)
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed commit transaction : %+v", err))
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.UserTokenToResponse(token), nil
@@ -154,19 +154,19 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 
 	if err := c.Validate.Struct(request); err != nil {
 		c.Log.Warnf("Token is not included in header : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Token is not included in header : %+v", err))
 	}
 
 	user := new(entity.User)
 	if err := c.UserRepository.FindUserByToken(tx, user, request.Token); err != nil {
 		c.Log.Warnf("Token isn't valid : %+v", err)
-		return nil, fiber.ErrUnauthorized
+		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Token isn't valid : %+v", err))
 	}
 	
 	expiredDate := user.Token.ExpiryDate
 	if expiredDate.Before(time.Now()) {
-		c.Log.Warn("Token is expired")
-		return nil, fiber.ErrUnauthorized
+		c.Log.Warn("Token is expired!")
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "Token is expired!")
 	}
 
 	return converter.UserToResponse(user), nil
@@ -178,18 +178,18 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 
 	if err := c.Validate.Struct(request); err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	totalCount, err := c.UserRepository.CheckEmailIsExists(tx, currentUser.Email, request.Email)
 	if err != nil {
-		c.Log.Warnf("Cannot count email is exists : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to count email is exist : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count email is exist : %+v", err))
 	}
 
 	if totalCount > 0 {
-		c.Log.Warnf("Email has already exists : %+v", err)
-		return nil, fiber.ErrBadRequest
+		c.Log.Warnf("Email has already exists!")
+		return nil, fiber.NewError(fiber.StatusConflict, "Email has already exists!")
 	}
 
 	user := new(entity.User)
@@ -202,13 +202,14 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 
 	if err := c.UserRepository.Update(tx, user); err != nil {
 		c.Log.Warnf("Failed to update data user : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update data user : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
+
 	return converter.UserToResponse(user), nil
 }
 
@@ -218,36 +219,37 @@ func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateU
 
 	if err := c.Validate.Struct(request); err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.ErrBadRequest
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newUser := new(entity.User)
 	if err := c.UserRepository.FindUserById(tx, newUser, user.ID); err != nil {
 		c.Log.Warnf("Token isn't valid : %+v", err)
-		return false, fiber.ErrUnauthorized
+		return false, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Token isn't valid : %+v", err))
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(newUser.Password), []byte(request.OldPassword)); err != nil {
 		c.Log.Warnf("Old Password is wrong : %+v", err)
-		return false, fiber.ErrUnauthorized
+		return false, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Old Password is wrong : %+v", err))
 	}
 
 	newPasswordRequest, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		c.Log.Warnf("Failed to generate bcrypt hash : %+v", err)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to generate bcrypt hash : %+v", err))
 	}
-	newUser.Password = string(newPasswordRequest)
 
+	newUser.Password = string(newPasswordRequest)
 	if err := c.UserRepository.Update(tx, newUser); err != nil {
 		c.Log.Warnf("Failed to update data user : %+v", err)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update data user : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return false, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
+
 	return true, nil
 }
 
@@ -259,12 +261,12 @@ func (c *UserUseCase) Logout(ctx context.Context, token *model.GetUserByTokenReq
 	result := c.TokenRepository.DeleteToken(tx, newToken, token.Token)
 	if result.RowsAffected == 0 {
 		c.Log.Warnf("Can't delete token : %+v", result.Error)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't delete token : %+v", result.Error))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return false, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return true, nil
@@ -277,18 +279,18 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.ErrBadRequest
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newUser := new(entity.User)
 	if err := c.UserRepository.FindUserById(tx, newUser, user.ID); err != nil {
 		c.Log.Warnf("Can't find user by token : %+v", err)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Can't find user by token : %+v", err))
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(newUser.Password), []byte(request.OldPassword)); err != nil {
 		c.Log.Warnf("Old Password is wrong : %+v", err)
-		return false, fiber.ErrUnauthorized
+		return false, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Old Password is wrong : %+v", err))
 	}
 
 	// hapus token terlebih dahulu
@@ -296,25 +298,25 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 	deleteToken := c.TokenRepository.DeleteToken(tx, newToken, newUser.Token.Token)
 	if deleteToken.RowsAffected == 0 {
 		c.Log.Warnf("Can't delete token : %+v", deleteToken.Error)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't delete token : %+v", deleteToken.Error))
 	}
 
 	// hapus address terlebih dahulu
 	newAddress := new(entity.Address)
 	if err := c.AddressRepository.DeleteAllAddressByUserId(tx, newAddress, newUser.ID); err.Error != nil {
 		c.Log.Warnf("Can't delete addresses by user id : %+v", err.Error)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't delete addresses by user id : %+v", err.Error))
 	}
 
 	// lalu hapus usernya
 	if err := c.UserRepository.Delete(tx, newUser); err != nil {
 		c.Log.Warnf("Can't delete current user : %+v", deleteToken.Error)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't delete current user : %+v", deleteToken.Error))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return false, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return true, nil

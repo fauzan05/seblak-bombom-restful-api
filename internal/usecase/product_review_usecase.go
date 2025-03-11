@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
@@ -37,7 +38,7 @@ func (c *ProductReviewUseCase) Add(ctx context.Context, request *model.CreatePro
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newProductReview := new(entity.ProductReview)
@@ -47,12 +48,12 @@ func (c *ProductReviewUseCase) Add(ctx context.Context, request *model.CreatePro
 	newProductReview.Comment = request.Comment
 	if err := c.ProductReview.Create(tx, newProductReview); err != nil {
 		c.Log.Warnf("Failed to create product review from database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create product review from database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.ProductReviewToResponse(newProductReview), nil

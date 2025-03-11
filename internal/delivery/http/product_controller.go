@@ -32,8 +32,8 @@ func (c *ProductController) Create(ctx *fiber.Ctx) error {
 
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		c.Log.Warnf("Cannot parse multipart form data: %+v", err)
-		return err
+		c.Log.Warnf("Cannot parse multipart form data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse multipart form data : %+v", err))
 	}
 
 	request := new(model.CreateProductRequest)
@@ -50,7 +50,7 @@ func (c *ProductController) Create(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Add(ctx.Context(), ctx, request, files, positions)
 	if err != nil {
-		c.Log.Warnf("Failed to create new product : %+v", err)
+		c.Log.Warnf("Failed to create a new product : %+v", err)
 		return err
 	}
 
@@ -65,21 +65,21 @@ func (c *ProductController) Get(ctx *fiber.Ctx) error {
 	getId := ctx.Params("productId")
 	productId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert product id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert product_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert product_id to integer : %+v", err))
 	}
+
 	productRequest := new(model.GetProductRequest)
 	productRequest.ID = uint64(productId)
-
 	response, err := c.UseCase.Get(ctx.Context(), productRequest)
 	if err != nil {
-		c.Log.Warnf("Failed to find product by id : %+v", err)
+		c.Log.Warnf("Failed to get selected product : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.ProductResponse]{
 		Code:   200,
-		Status: "Success to get an product",
+		Status: "Success to get selected product",
 		Data:   response,
 	})
 }
@@ -94,10 +94,8 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 	if getCategoryId != "" {
 		getValueConvert, err := strconv.ParseUint(ctx.Query("category_id", ""), 10, 64)
 		if err != nil {
-			// Handle kasus ketika category_id tidak valid atau kosong
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid or missing category_id",
-			})
+			c.Log.Warnf("Invalid or missing category_id : %+v", err)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid or missing category_id : %+v", err))
 		}
 		categoryId = getValueConvert
 	}
@@ -106,19 +104,18 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 	getColumn := ctx.Query("column", "");
 	getSortBy := ctx.Query("sort_by", "desc");
 
-
 	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
 	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
 	if err != nil {
-		c.Log.Warnf("Invalid 'per_page' parameter")
-		return err
+		c.Log.Warnf("Invalid 'per_page' parameter : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid 'per_page' parameter : %+v", err))
 	}
 
 	// Ambil query parameter 'page' dengan default value 1 jika tidak disediakan
 	page, err := strconv.Atoi(ctx.Query("page", "1"))
 	if err != nil {
-		c.Log.Warnf("Invalid 'page' parameter")
-		return err
+		c.Log.Warnf("Invalid 'page' parameter : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid 'page' parameter : %+v", err))
 	}
 
 	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, categoryId, getColumn, getSortBy)
@@ -147,19 +144,35 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		c.Log.Warnf("Cannot parse multipart form data: %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse multipart form data: %+v", err))
 	}
 
 	request := new(model.UpdateProductRequest)
-	getProductId, _ := strconv.ParseUint(ctx.Params("productId"), 10, 64)
+	getProductId, err := strconv.ParseUint(ctx.Params("productId"), 10, 64)
+	if err != nil {
+		c.Log.Warnf("Invalid product ID : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid product ID : %+v", err))
+	}
 	request.ID = getProductId
-	categoryID, _ := strconv.ParseUint(form.Value["category_id"][0], 10, 64)
+	categoryID, err := strconv.ParseUint(form.Value["category_id"][0], 10, 64)
+	if err != nil {
+		c.Log.Warnf("Invalid category ID : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid category ID : %+v", err))
+	}
 	request.CategoryId = categoryID
 	request.Name = form.Value["name"][0]
 	request.Description = form.Value["description"][0]
-	parsePrice64, _ := strconv.ParseFloat(form.Value["price"][0], 64)
+	parsePrice64, err := strconv.ParseFloat(form.Value["price"][0], 64)
+	if err != nil {
+		c.Log.Warnf("Invalid price : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid price : %+v", err))
+	}
 	request.Price = float32(parsePrice64)
-	request.Stock, _ = strconv.Atoi(form.Value["stock"][0])
+	request.Stock, err = strconv.Atoi(form.Value["stock"][0])
+	if err != nil {
+		c.Log.Warnf("Invalid stock : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid stock : %+v", err))
+	}
 
 	// Inisialisasi NEW IMAGES
 	newImageFiles := form.File["new_images"]
@@ -168,8 +181,16 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 	// Inisialisasi CURRENT IMAGES
 	updateImagesRequest := model.UpdateImagesRequest{}
 	for i, imageId := range form.Value["current_images"] {
-		imageId, _ := strconv.ParseUint(imageId, 10, 64)
-		currentPosition, _ := strconv.Atoi(form.Value["current_positions"][i])
+		imageId, err := strconv.ParseUint(imageId, 10, 64)
+		if err != nil {
+			c.Log.Warnf("Invalid image ID : %+v", err)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid image ID : %+v", err))
+		}
+		currentPosition, err := strconv.Atoi(form.Value["current_positions"][i])
+		if err != nil {
+			c.Log.Warnf("Invalid current position : %+v", err)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid current position : %+v", err))
+		}
 		currentImage := model.ImageUpdateRequest{
 			ID:       imageId,
 			Position: currentPosition,
@@ -182,7 +203,11 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 	if len(form.Value["images_deleted"]) > 0 {
 		imagesDeleted := strings.Split(form.Value["images_deleted"][0], ",")
 		for _, imageId := range imagesDeleted {
-			imageId, _ := strconv.ParseUint(imageId, 10, 64)
+			imageId, err := strconv.ParseUint(imageId, 10, 64)
+			if err != nil {
+				c.Log.Warnf("Invalid image ID : %+v", err)
+				return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid image ID : %+v", err))
+			}
 			deleteImage := model.DeleteImageRequest{
 				ID: imageId,
 			}
@@ -192,7 +217,7 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Update(ctx.Context(), ctx, request, newImageFiles, newImagePositions, updateImagesRequest, deleteImagesRequest)
 	if err != nil {
-		c.Log.Warnf("Failed to update product by id : %+v", err)
+		c.Log.Warnf("Failed to update an product by id : %+v", err)
 		return err
 	}
 
@@ -206,10 +231,8 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 func (c *ProductController) Remove(ctx *fiber.Ctx) error {
 	idsParam := ctx.Query("ids")
 	if idsParam == "" {
-		ctx.Status(fiber.StatusBadRequest)
-		return ctx.JSON(fiber.Map{
-			"error": "Parameter 'ids' is required",
-		})
+		c.Log.Warnf("Parameter 'ids' is required")
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Parameter 'ids' is required"))
 	}
 
 	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
@@ -221,9 +244,8 @@ func (c *ProductController) Remove(ctx *fiber.Ctx) error {
 		if (idStr != "") {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
-				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error": fmt.Sprintf("Invalid ID: %s", idStr),
-				})
+				c.Log.Warnf("Parameter 'ids' is required")
+				return fiber.NewError(fiber.StatusBadRequest, "Parameter 'ids' is required")
 			}
 			productIds = append(productIds, id)
 		}
@@ -234,13 +256,13 @@ func (c *ProductController) Remove(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Delete(ctx.Context(), productRequest)
 	if err != nil {
-		c.Log.Warnf("%+v", err)
+		c.Log.Warnf("Failed to delete selected products : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,
-		Status: "Success to delete products by ids",
+		Status: "Success to delete selected products",
 		Data:   response,
 	})
 }

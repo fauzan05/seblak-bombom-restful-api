@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -25,12 +26,12 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 	request := new(model.RegisterUserRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	response, err := c.UseCase.Create(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.Warnf("Failed to register user : %+v", err)
+		c.Log.Warnf("Failed to register an user : %+v", err)
 		return err
 	}
 
@@ -46,7 +47,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(request)
 	if err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	response, err := c.UseCase.Login(ctx.Context(), request)
@@ -78,14 +79,14 @@ func (c *UserController) Update(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(dataRequest)
 	if err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
 
 	response, err := c.UseCase.Update(ctx.Context(), dataRequest, auth)
 	if err != nil {
-		c.Log.Warnf("Failed to update user : %+v", err)
+		c.Log.Warnf("Failed to update user data : %+v", err)
 		return err
 	}
 
@@ -102,12 +103,11 @@ func (c *UserController) UpdatePassword(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(dataRequest)
 	if err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
-
 	response, err := c.UseCase.UpdatePassword(ctx.Context(), dataRequest, auth)
 	if err != nil {
 		c.Log.Warnf("Failed to update user password : %+v", err)
@@ -126,7 +126,6 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 	// tangkap token dari header
 	result := ctx.GetReqHeaders()
 	tokenRequest.Token = result["Authorization"][0]
-
 	response, err := c.UseCase.Logout(ctx.Context(), tokenRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to delete user token : %+v", err)
@@ -145,17 +144,17 @@ func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 	dataRequest := new(model.DeleteCurrentUserRequest)
 	if err := ctx.BodyParser(dataRequest); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
-
 	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), dataRequest, auth)
 	if err != nil {
 		c.Log.Warnf("Failed to delete current user : %+v", err)
 		return err
 	}
+	
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,
 		Status: "Success to delete current user",

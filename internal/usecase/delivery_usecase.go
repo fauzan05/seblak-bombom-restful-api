@@ -40,7 +40,7 @@ func (c *DeliveryUseCase) Add(ctx context.Context, request *model.CreateDelivery
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newDelivery := new(entity.Delivery)
@@ -51,36 +51,35 @@ func (c *DeliveryUseCase) Add(ctx context.Context, request *model.CreateDelivery
 	newDelivery.Cost = request.Cost
 	if err := c.DeliveryRepository.Create(tx, newDelivery); err != nil {
 		c.Log.Warnf("Can't create delivery settings : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't create delivery settings : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.DeliveryToResponse(newDelivery), nil
 }
 
 func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.DeliveryResponse, int64, int, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
+	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
 		page = 1
 	}
 
-	var result []map[string]interface{} // entity kosong yang akan diisi
+	var result []map[string]any // entity kosong yang akan diisi
 	if err := c.DeliveryRepository.FindDeliveriesPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
 		c.Log.Warnf("Failed to find all deliveries : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find all deliveries : %+v", err))
 	}
 
 	newDelivery := new([]entity.Delivery)
 	err := MapDeliveries(result, newDelivery)
 	if err != nil {
-		c.Log.Warnf("Failed map delivery : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to map delivery : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed map delivery : %+v", err))
 	}
 
 	var totalPages int = 0
@@ -88,18 +87,13 @@ func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 	totalDeliveries, err := c.DeliveryRepository.CountDeliveryItems(tx, getAllDelivery, search)
 	if err != nil {
 		c.Log.Warnf("Failed to count products: %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count products: %+v", err))
 	}
 
 	// Hitung total halaman
 	totalPages = int(totalDeliveries / int64(perPage))
 	if totalDeliveries%int64(perPage) > 0 {
 		totalPages++
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, 0, 0, fiber.ErrInternalServerError
 	}
 
 	return converter.DeliveriesToResponse(newDelivery), totalDeliveries, totalPages, nil
@@ -112,7 +106,7 @@ func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliver
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newDelivery := new(entity.Delivery)
@@ -120,12 +114,12 @@ func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliver
 	count, err := c.DeliveryRepository.FindAndCountById(tx, newDelivery)
 	if err != nil {
 		c.Log.Warnf("Can't find delivery settings by id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't find delivery settings by id : %+v", err))
 	}
 
 	if count < 1 {
-		c.Log.Warnf("Delivery settings by id not found : %+v", err)
-		return nil, fiber.ErrNotFound
+		c.Log.Warnf("Delivery settings not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Delivery settings not found!")
 	}
 
 	newDelivery.District = request.District
@@ -137,12 +131,12 @@ func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliver
 	fmt.Println(newDelivery);
 	if err := c.DeliveryRepository.Update(tx, newDelivery); err != nil {
 		c.Log.Warnf("Can't update delivery settings by : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't update delivery settings by : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.DeliveryToResponse(newDelivery), nil
@@ -155,7 +149,7 @@ func (c *DeliveryUseCase) Delete(ctx context.Context, request *model.DeleteDeliv
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.ErrBadRequest
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newDeliveries := []entity.Delivery{}
@@ -168,12 +162,12 @@ func (c *DeliveryUseCase) Delete(ctx context.Context, request *model.DeleteDeliv
 
 	if err := c.DeliveryRepository.DeleteInBatch(tx, &newDeliveries); err != nil {
 		c.Log.Warnf("Can't delete delivery from database : %+v", err)
-		return false, fiber.ErrBadRequest
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't delete delivery from database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return false, fiber.ErrInternalServerError
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return true, nil

@@ -27,7 +27,7 @@ func (c *CategoryController) Create(ctx *fiber.Ctx) error {
 	request := new(model.CreateCategoryRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	response, err := c.UseCase.Add(ctx.Context(), request)
@@ -47,8 +47,8 @@ func (c *CategoryController) Get(ctx *fiber.Ctx) error {
 	getId := ctx.Params("categoryId")
 	categoryId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert category id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert category_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 	categoryRequest := new(model.GetCategoryRequest)
 	categoryRequest.ID = uint64(categoryId)
@@ -77,15 +77,15 @@ func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
 	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
 	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
 	if err != nil {
-		c.Log.Warnf("Invalid 'per_page' parameter")
-		return err
+		c.Log.Warnf("Invalid 'per_page' parameter : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid 'per_page' parameter : %+v", err))
 	}
 
 	// Ambil query parameter 'page' dengan default value 1 jika tidak disediakan
 	page, err := strconv.Atoi(ctx.Query("page", "1"))
 	if err != nil {
-		c.Log.Warnf("Invalid 'page' parameter")
-		return err
+		c.Log.Warnf("Invalid 'page' parameter : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid 'page' parameter : %+v", err))
 	}
 
 	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
@@ -109,19 +109,20 @@ func (c *CategoryController) Edit(ctx *fiber.Ctx) error {
 	getId := ctx.Params("categoryId")
 	categoryId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert category id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert category_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert category_id to integer : %+v", err))
 	}
 
 	updateCategory := new(model.UpdateCategoryRequest)
 	if err := ctx.BodyParser(updateCategory); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
+
 	updateCategory.ID = uint64(categoryId)
 	response, err := c.UseCase.Update(ctx.Context(), updateCategory)
 	if err != nil {
-		c.Log.Warnf("Failed to edit category : %+v", err)
+		c.Log.Warnf("Failed to update category : %+v", err)
 		return err
 	}
 
@@ -135,10 +136,8 @@ func (c *CategoryController) Edit(ctx *fiber.Ctx) error {
 func (c *CategoryController) Remove(ctx *fiber.Ctx) error {
 	idsParam := ctx.Query("ids")
 	if idsParam == "" {
-		ctx.Status(fiber.StatusBadRequest)
-		return ctx.JSON(fiber.Map{
-			"error": "Parameter 'ids' is required",
-		})
+		c.Log.Warnf("Parameter 'ids' is required")
+		return fiber.NewError(fiber.StatusBadRequest, "Parameter 'ids' is required")
 	}
 	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
 	idStrings := strings.Split(idsParam, ",")
@@ -149,9 +148,8 @@ func (c *CategoryController) Remove(ctx *fiber.Ctx) error {
 		if (idStr != "") {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
-				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error": fmt.Sprintf("Invalid ID: %s", idStr),
-				})
+				c.Log.Warnf("Invalid ID : %s", err)
+				return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid ID : %s", err))
 			}
 			categoryIds = append(categoryIds, id)
 		}

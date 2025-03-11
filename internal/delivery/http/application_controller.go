@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"os"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -32,7 +33,7 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		c.Log.Warnf("Cannot parse multipart form data: %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse multipart form data: %+v", err))
 	}
 
 	request := new(model.CreateApplicationRequest)
@@ -69,7 +70,7 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.ApplicationResponse]{
 		Code:   201,
-		Status: "Success to create a new application",
+		Status: "Success to create/update application settings",
 		Data:   response,
 	})
 }
@@ -77,13 +78,13 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 func (c *ApplicationController) Get(ctx *fiber.Ctx) error {
 	response, err := c.UseCase.Get(ctx.Context())
 	if err != nil {
-		c.Log.Warnf("Failed to get an application : %+v", err)
+		c.Log.Warnf("Failed to get application settings : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.ApplicationResponse]{
 		Code:   200,
-		Status: "Success to get an application",
+		Status: "Success to get application settings",
 		Data:   response,
 	})
 }

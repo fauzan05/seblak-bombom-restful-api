@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
@@ -28,8 +29,6 @@ type MidtransCoreAPIOrderUseCase struct {
 	MidtransCoreAPIOrderRepository *repository.MidtransCoreAPIOrderRepository
 }
 
-var layoutWithoutZone = "2006-01-02 15:04:05"
-
 func NewMidtransCoreAPIOrderUseCase(log *logrus.Logger, validate *validator.Validate, orderRepository *repository.OrderRepository,
 	coreAPIClient *coreapi.Client, db *gorm.DB, midtransCoreAPiOrderRepository *repository.MidtransCoreAPIOrderRepository,
 	productRepository *repository.ProductRepository) *MidtransCoreAPIOrderUseCase {
@@ -51,7 +50,7 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	newCoreAPIClient := coreapi.Client{}
@@ -62,7 +61,7 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 	selectedOrder.ID = request.OrderId
 	if err := c.OrderRepository.FindWithPreloads(tx, selectedOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("Failed to find order by id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find order by id : %+v", err))
 	}
 
 	var midtransItemDetails []midtrans.ItemDetails
@@ -98,8 +97,8 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 
 	var paymentType coreapi.CoreapiPaymentType
 	if selectedOrder.PaymentMethod == "" {
-		c.Log.Warnf("Payment method is not set : %+v", err)
-		return nil, fiber.ErrBadRequest
+		c.Log.Warnf("Payment method is not set!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Payment method is not set!")
 	}
 
 	if selectedOrder.PaymentMethod == helper.PAYMENT_METHOD_QR_CODE {
@@ -122,8 +121,8 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 
 	coreApiResponse, coreApiErr := newCoreAPIClient.ChargeTransaction(&midtransRequest)
 	if coreApiErr != nil {
-		c.Log.Warnf("Failed to create new midtrans transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to create a new transaction! Please try again later!")
+		c.Log.Warnf("Failed to create new midtrans transaction : %+v", coreApiErr.Error())
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create new midtrans transaction : %+v", coreApiErr.Error()))
 	}
 
 	newMidtransCoreAPIOrder := new(entity.MidtransCoreAPIOrder)
@@ -135,22 +134,22 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 	grossAmount64, err := strconv.ParseFloat(coreApiResponse.GrossAmount, 64)
 	if err != nil {
 		c.Log.Warnf("Failed to parse gross amount into float32 : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse gross amount into float32 : %+v", err))
 	}
 	newMidtransCoreAPIOrder.GrossAmount = float32(grossAmount64)
 	newMidtransCoreAPIOrder.Currency = coreApiResponse.Currency
 	newMidtransCoreAPIOrder.PaymentType = coreApiResponse.PaymentType
-	parseExpiryTime, err := time.ParseInLocation(layoutWithoutZone, coreApiResponse.ExpiryTime, time.Local)
+	parseExpiryTime, err := time.ParseInLocation(time.DateTime, coreApiResponse.ExpiryTime, time.Local)
 	if err != nil {
 		c.Log.Warnf("Failed to parse expiry time into standart format : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse expiry time into standart format : %+v", err))
 	}
 	newMidtransCoreAPIOrder.ExpiryTime = parseExpiryTime
 
-	parseTransactionTime, err := time.ParseInLocation(layoutWithoutZone, coreApiResponse.TransactionTime, time.Local)
+	parseTransactionTime, err := time.ParseInLocation(time.DateTime, coreApiResponse.TransactionTime, time.Local)
 	if err != nil {
 		c.Log.Warnf("Failed to parse transaction time into standart format : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse transaction time into standart format : %+v", err))
 	}
 	newMidtransCoreAPIOrder.TransactionTime = parseTransactionTime
 	newMidtransCoreAPIOrder.TransactionStatus = helper.TransactionStatus(coreApiResponse.TransactionStatus)
@@ -170,7 +169,7 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.MidtransCoreAPIToResponse(newMidtransCoreAPIOrder), nil
@@ -182,13 +181,13 @@ func (c *MidtransCoreAPIOrderUseCase) Get(ctx context.Context, request *model.Ge
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
 	}
 
 	selectedMidtransOrder := new(entity.MidtransCoreAPIOrder)
 	if err := c.MidtransCoreAPIOrderRepository.FindMidtransCoreAPIOrderByOrderId(tx, selectedMidtransOrder, request.OrderId); err != nil {
 		c.Log.Warnf("Failed to find midtrans order by order id : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find midtrans order by order id : %+v", err))
 	}
 
 	newCoreAPIClient := coreapi.Client{}
@@ -201,7 +200,7 @@ func (c *MidtransCoreAPIOrderUseCase) Get(ctx context.Context, request *model.Ge
 		selectedMidtransOrder.TransactionStatus = helper.TransactionStatus(coreAPIResponse.TransactionStatus)
 		if err := c.MidtransCoreAPIOrderRepository.Update(tx, selectedMidtransOrder); err != nil {
 			c.Log.Warnf("Failed to update midtrans transaction status : %+v", err)
-			return nil, fiber.ErrInternalServerError
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update midtrans transaction status : %+v", err))
 		}
 	}
 	

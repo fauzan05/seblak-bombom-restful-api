@@ -1,9 +1,9 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
-
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -25,12 +25,12 @@ func (c *WalletController) TopUpBalance(ctx *fiber.Ctx) error {
 	request := new(model.TopUpWalletBalance)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	response, err := c.UseCase.AddBalance(ctx.Context(), request)
 	if err != nil {
-		c.Log.Warnf("Failed to create new category : %+v", err)
+		c.Log.Warnf("Failed to top up balance : %+v", err)
 		return err
 	}
 

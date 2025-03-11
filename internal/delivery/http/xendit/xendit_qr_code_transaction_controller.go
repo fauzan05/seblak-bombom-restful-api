@@ -46,7 +46,7 @@ func (c *XenditQRCodeTransctionController) GetTransaction(ctx *fiber.Ctx) error 
 	getId := ctx.Params("orderId")
 	orderId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert order id : %+v", err)
+		c.Log.Warnf("Failed to convert order_id into integer : %+v", err)
 		return err
 	}
 
@@ -61,7 +61,7 @@ func (c *XenditQRCodeTransctionController) GetTransaction(ctx *fiber.Ctx) error 
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.XenditTransactionResponse]{
 		Code:   200,
-		Status: "Success get xendit transaction by order id",
+		Status: "Success to get xendit transaction by order id",
 		Data:   response,
 	})
 }

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -26,8 +27,9 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	orderRequest := new(model.CreateOrderRequest)
 	if err := ctx.BodyParser(orderRequest); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
+	
 	auth := middleware.GetCurrentUser(ctx)
 	orderRequest.UserId = auth.ID
 	orderRequest.FirstName = auth.FirstName
@@ -36,9 +38,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	orderRequest.Phone = auth.Phone
 	if auth.Addresses == nil {
 		c.Log.Warnf("Address not found/selected!")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Address not set yet!",
-		})
+		return fiber.NewError(fiber.StatusBadRequest, "Address not found/selected!")
 	}
 
 	for _, address := range auth.Addresses {
@@ -51,7 +51,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	orderRequest.CurrentBalance = auth.Wallet.Balance
 	response, err := c.UseCase.Add(ctx.Context(), orderRequest)
 	if err != nil {
-		c.Log.Warnf("Failed to create new order : %+v", err)
+		c.Log.Warnf("Failed to create a new order : %+v", err)
 		return err
 	}
 
@@ -83,26 +83,26 @@ func (c *OrderController) UpdateOrderStatus(ctx *fiber.Ctx) error {
 	getId := ctx.Params("orderId")
 	orderId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert order id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert order_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert order_id to integer : %+v", err))
 	}
 
 	orderRequest := new(model.UpdateOrderRequest)
 	orderRequest.ID = uint64(orderId)
 	if err := ctx.BodyParser(orderRequest); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	response, err := c.UseCase.EditStatus(ctx.Context(), orderRequest)
 	if err != nil {
-		c.Log.Warnf("Failed to update order by id : %+v", err)
+		c.Log.Warnf("Failed to update order status by selected order : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.OrderResponse]{
 		Code:   200,
-		Status: "Success to update order status by order id",
+		Status: "Success to update order status by selected order",
 		Data:   response,
 	})
 }
@@ -112,8 +112,9 @@ func (c *OrderController) GetAllByUserId(ctx *fiber.Ctx) error {
 	userId, err := strconv.Atoi(getId)
 	if err != nil {
 		c.Log.Warnf("Failed to convert order id : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert order id : %+v", err))
 	}
+
 	orderRequest := new(model.GetOrdersByUserIdRequest)
 	orderRequest.ID = uint64(userId)
 	response, err := c.UseCase.GetByUserId(ctx.Context(), orderRequest)

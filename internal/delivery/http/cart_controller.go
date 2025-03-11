@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -26,7 +27,7 @@ func (c *CartController) Create(ctx *fiber.Ctx) error {
 	request := new(model.CreateCartRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 	auth := middleware.GetCurrentUser(ctx)
 	request.UserID = auth.ID
@@ -48,15 +49,15 @@ func (c *CartController) Update(ctx *fiber.Ctx) error {
 	getId := ctx.Params("cartItemId")
 	cartItemId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert order id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert order_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert order_id to integer : %+v", err))
 	}
 
 	request := new(model.UpdateCartRequest)
 	request.CartItemID = uint64(cartItemId)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
 	response, err := c.UseCase.UpdateQuantity(ctx.Context(), request)
@@ -94,8 +95,8 @@ func (c *CartController) Delete(ctx *fiber.Ctx) error {
 	getId := ctx.Params("cartItemId")
 	cartItemId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert order id : %+v", err)
-		return err
+		c.Log.Warnf("Failed to convert order_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert order_id to integer : %+v", err))
 	}
 
 	request := new(model.DeleteCartRequest)
