@@ -27,6 +27,10 @@ func (r *Repository[T]) UpdateCustomColumns(db *gorm.DB, entity *T, updateFields
 	return db.Model(entity).Updates(updateFields).Error
 }
 
+func (r *Repository[T]) FindEntityByUserId(db *gorm.DB, entity *T, userId uint64) error {
+	return db.Where("user_id = ?", userId).First(entity).Error
+}
+
 func (r *Repository[T]) FindAndUpdateAddressToNonPrimary(db *gorm.DB, entity *T) error {
 	var totalAddress int64
 	db.Model(entity).Where("is_main = ?", true).Count(&totalAddress)

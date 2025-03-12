@@ -54,7 +54,7 @@ type GetOrderByCurrentRequest struct {
 
 type UpdateOrderRequest struct {
 	ID          uint64             `json:"-" validate:"required"` //order id
-	OrderStatus helper.OrderStatus `json:"order_status" validate:"required"`
+	OrderStatus helper.OrderStatus `json:"order_status"`
 }
 
 type GetOrdersByUserIdRequest struct {
