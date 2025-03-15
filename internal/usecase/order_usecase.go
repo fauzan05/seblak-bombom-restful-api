@@ -195,7 +195,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	}
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
-		if (request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE && request.PaymentMethod != helper.PAYMENT_METHOD_EWALLET) {
+		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE && request.PaymentMethod != helper.PAYMENT_METHOD_EWALLET {
 			c.Log.Warnf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway))
 		} else {
@@ -212,15 +212,15 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 					helper.XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE,
 				},
 			}
-			
+
 			// Cek apakah ChannelCode valid untuk PaymentMethod yang dipilih
 			isValid := false
 			if validCodes, exists := validChannelCodes[request.PaymentMethod]; exists {
 				if slices.Contains(validCodes, request.ChannelCode) {
-						isValid = true
-					}
+					isValid = true
+				}
 			}
-			
+
 			// Jika tidak valid, berikan error
 			if !isValid {
 				c.Log.Warnf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway)
@@ -308,7 +308,7 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	return converter.OrdersToResponse(newOrders), nil
 }
 
-func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrderRequest) (*model.OrderResponse, error) {
+func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.UpdateOrderRequest) (*model.OrderResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -325,10 +325,38 @@ func (c *OrderUseCase) EditStatus(ctx context.Context, request *model.UpdateOrde
 		c.Log.Warnf("Failed to find order by id into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find order by id into database : %+v", err))
 	}
-	
+
 	if count == 0 {
 		c.Log.Warnf("Order not found by order id : %+v", err)
 		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Order not found by order id : %+v", err))
+	}
+
+	// validate first before update order status state into database
+	// if rejected
+	if request.OrderStatus == 0 {
+		if newOrder.OrderStatus == 0 {
+			c.Log.Warnf("Can't cancel an order that has been cancelled!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been cancelled!")
+		}
+		
+		// find user wallet
+		findWallet := new(entity.Wallet)
+		if err := c.WalletRepository.FindEntityByUserId(tx, findWallet, newOrder.UserId); err != nil {
+			c.Log.Warnf("Failed to find wallet by user id from database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id from database : %+v", err))
+		}
+
+		// return to wallet balance
+		newWallet := new(entity.Wallet)
+		newWallet.ID = findWallet.ID
+		updateBalance := map[string]any{
+			"balance": newOrder.Amount,
+		}
+
+		if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
+			c.Log.Warnf("Failed to update wallet balance : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance : %+v", err))
+		}
 	}
 
 	newOrder.OrderStatus = request.OrderStatus
