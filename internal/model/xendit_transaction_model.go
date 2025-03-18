@@ -49,6 +49,7 @@ type XenditGetPayoutRequestCallbackStatus struct {
 	Data struct {
 		PayoutId  string    `json:"id"`
 		Status    string    `json:"status" validate:"required"`
+		Amount    float32   `json:"amount" validate:"required"`
 		UpdatedAt time.Time `json:"updated" validate:"required"`
 	} `json:"data" validate:"required"`
 }

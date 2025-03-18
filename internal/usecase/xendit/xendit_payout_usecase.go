@@ -74,8 +74,8 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 	newWallet := new(entity.Wallet)
 	newWallet.ID = newUser.Wallet.ID
 	if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
-		c.Log.Warnf("Failed to update wallet balance in database : ")
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Your balance is insufficient to perform this transaction!")
+		c.Log.Warnf("Failed to update wallet balance in the database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance in the database : %+v", err))
 	}
 
 	milli := time.Now().UnixMilli()

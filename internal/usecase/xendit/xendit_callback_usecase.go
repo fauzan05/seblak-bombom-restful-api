@@ -22,12 +22,15 @@ type XenditCallbackUseCase struct {
 	XenditClient                *xendit.APIClient
 	OrderRepository             *repository.OrderRepository
 	XenditTransactionRepository *repository.XenditTransctionRepository
+	UserRepository              *repository.UserRepository
+	WalletRepository            *repository.WalletRepository
 	XenditPayoutRepository      *repository.XenditPayoutRepository
 }
 
 func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, xenditTransactionRepository *repository.XenditTransctionRepository,
-	xenditClient *xendit.APIClient, xenditPayoutRepository *repository.XenditPayoutRepository) *XenditCallbackUseCase {
+	xenditClient *xendit.APIClient, xenditPayoutRepository *repository.XenditPayoutRepository,
+	userRepository *repository.UserRepository, walletRepository *repository.WalletRepository) *XenditCallbackUseCase {
 	return &XenditCallbackUseCase{
 		DB:                          db,
 		Log:                         log,
@@ -36,6 +39,8 @@ func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validat
 		XenditTransactionRepository: xenditTransactionRepository,
 		XenditPayoutRepository:      xenditPayoutRepository,
 		XenditClient:                xenditClient,
+		UserRepository:              userRepository,
+		WalletRepository:            walletRepository,
 	}
 }
 
@@ -156,6 +161,29 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 			if err := c.XenditPayoutRepository.UpdateCustomColumns(tx, newXenditPayout, updateXenditPayout); err != nil {
 				c.Log.Warnf("Failed to update xendit payout status into database : %+v", err)
 				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit payout status into database : %+v", err))
+			}
+
+			if request.Data.Status == "CANCELLED" {
+				// kembalikan saldonya
+				newUser := new(entity.User)
+				newUser.ID = newXenditPayout.UserID
+				if err := c.UserRepository.FindWithPreloads(tx, newUser, "Wallet"); err != nil {
+					c.Log.Warnf("Failed to find user wallet from database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("ailed to find user wallet from database : %+v", err))
+				}
+
+				resultBalance := newUser.Wallet.Balance + request.Data.Amount
+				// update saldo
+				updateBalance := map[string]any{
+					"balance": resultBalance,
+				}
+
+				newWallet := new(entity.Wallet)
+				newWallet.ID = newUser.Wallet.ID
+				if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
+					c.Log.Warnf("Failed to update wallet balance in the database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance in the database : %+v", err))
+				}
 			}
 		}
 	}
