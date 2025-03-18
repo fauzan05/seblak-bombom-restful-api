@@ -64,6 +64,20 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 		return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
 	}
 
+	resultBalance := newUser.Wallet.Balance - request.Amount
+
+	// update saldo
+	updateBalance := map[string]any{
+		"balance": resultBalance,
+	}
+
+	newWallet := new(entity.Wallet)
+	newWallet.ID = newUser.Wallet.ID
+	if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
+		c.Log.Warnf("Failed to update wallet balance in database : ")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Your balance is insufficient to perform this transaction!")
+	}
+
 	milli := time.Now().UnixMilli()
 	idempotencyKey := fmt.Sprintf("disb-%d", milli)
 	referenceId := fmt.Sprintf("payout-%d-%d", request.UserId, milli)
