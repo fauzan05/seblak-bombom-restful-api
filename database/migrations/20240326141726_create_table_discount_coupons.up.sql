@@ -2,7 +2,7 @@ CREATE TABLE discount_coupons (
     id INTEGER AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     code VARCHAR(255) NOT NULL unique,
-    value FLOAT NOT NULL DEFAULT 0,
+    value DECIMAL(15, 2) NOT NULL,
     type TINYINT(1) NOT NULL COMMENT '1 : nominal | 2 : percent',
     start DATETIME NULL DEFAULT NULL,
     end DATETIME NULL DEFAULT NULL,

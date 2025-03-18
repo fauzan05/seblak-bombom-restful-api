@@ -178,8 +178,8 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		c.Log.Warnf("Failed to parse created_at into UTC : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse created_at into UTC : %+v", err))
 	}
+	
 	newXenditTransaction.Created_At = parseCreatedAt
-
 	parseUpdatedAt, err := ParseToRFC3339(resp.Updated)
 	if err != nil {
 		c.Log.Warnf("Failed to parse updated_at into UTC : %+v", err)

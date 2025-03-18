@@ -23,6 +23,7 @@ type RouteConfig struct {
 	MidtransCoreAPIOrderController    *http.MidtransCoreAPIOrderController
 	XenditQRCodeTransactionController *xenditController.XenditQRCodeTransctionController
 	XenditCallbackController          *xenditController.XenditCallbackController
+	XenditPayoutController            *xenditController.XenditPayoutController
 	ApplicationController             *http.ApplicationController
 	CartController                    *http.CartController
 	AuthMiddleware                    fiber.Handler
@@ -42,6 +43,7 @@ func (c *RouteConfig) SetupXenditCallbacksRoute() {
 	authToken := api.Use(c.AuthXenditMiddleware)
 	// Xendit QR Code Callback
 	authToken.Post("/xendits/payment-request/notifications/callback", c.XenditCallbackController.GetPaymentRequestCallbacks)
+	authToken.Post("/xendits/payout-request/notifications/callback", c.XenditCallbackController.GetPayoutRequestCallbacks)
 }
 
 // GUEST
@@ -135,6 +137,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// order
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
+
+	auth.Post("/xendit/payouts/:userId", c.XenditPayoutController.Create)
 }
 
 // ADMIN
@@ -164,4 +168,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 
 	// application
 	auth.Post("/applications", c.ApplicationController.Create) // add & update
+
+	// balance
+	auth.Get("/balance", c.XenditPayoutController.GetAdminBalance)
 }

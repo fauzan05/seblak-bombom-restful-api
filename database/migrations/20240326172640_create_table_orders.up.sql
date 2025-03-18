@@ -1,7 +1,7 @@
 CREATE TABLE orders (
     id INTEGER AUTO_INCREMENT,
     invoice VARCHAR(255) NOT NULL,
-    amount FLOAT NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
     discount_value FLOAT NULL,
     discount_type TINYINT(1) NOT NULL COMMENT '1 : nominal | 2 : percent',
     total_discount FLOAT NULL,

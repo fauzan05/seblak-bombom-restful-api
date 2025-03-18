@@ -116,6 +116,13 @@ func (r *Repository[T]) FindMidtransCoreAPIOrderByOrderId(db *gorm.DB, entity *T
 	return result.Error // Kembalikan error jika ada kesalahan lain
 }
 
+func (r *Repository[T]) FindAllActiveBalance(db *gorm.DB, entity *T) (*float32, error) {
+	var totalBalance float32
+	result := db.Model(entity).Select("COALESCE(SUM(balance), 0)").Where("status = ?", 1).Scan(&totalBalance)
+
+	return &totalBalance, result.Error
+}
+
 func (r *Repository[T]) FindCount(db *gorm.DB, entity *T) (int64, error) {
 	var count int64
 	err := db.Model(&entity).Count(&count).Error
