@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/repository"
 	"time"
@@ -82,25 +83,25 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit transaction status into database : %+v", err))
 			}
 
-			var payment_status int
+			var payment_status helper.PaymentStatus
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED) {
-				payment_status = 1
+				payment_status = helper.PAID_PAYMENT
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_CANCELED) {
-				payment_status = -1
+				payment_status = helper.CANCELLED_PAYMENT
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_FAILED) {
-				payment_status = -3
+				payment_status = helper.FAILED_PAYMENT
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_EXPIRED) {
-				payment_status = -2
+				payment_status = helper.EXPIRED_PAYMENT
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_PENDING) {
-				payment_status = 0
+				payment_status = helper.PENDING_PAYMENT
 			}
 
 			updateOrderStatus := map[string]any{

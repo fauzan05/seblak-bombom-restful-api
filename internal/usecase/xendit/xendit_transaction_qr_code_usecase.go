@@ -178,7 +178,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		c.Log.Warnf("Failed to parse created_at into UTC : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse created_at into UTC : %+v", err))
 	}
-	
+
 	newXenditTransaction.Created_At = parseCreatedAt
 	parseUpdatedAt, err := ParseToRFC3339(resp.Updated)
 	if err != nil {
@@ -248,7 +248,7 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 			"status":     string(resp.Status),
 			"updated_at": parseUpdatedAt.Format(time.DateTime),
 		}
-		
+
 		xenditTransactionObj := new(entity.XenditTransactions)
 		xenditTransactionObj.ID = newXenditTransaction.ID
 		if err := c.XenditTransactionRepository.UpdateCustomColumns(tx, xenditTransactionObj, updatePaymentStatus); err != nil {
@@ -259,19 +259,19 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 		// update juga di orders
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED {
 			// paid
-			newXenditTransaction.Order.PaymentStatus = 2
+			newXenditTransaction.Order.PaymentStatus = helper.PAID_PAYMENT
 			hasPaymentStatusUpdated = true
 		}
 
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_FAILED {
 			// not paid
-			newXenditTransaction.Order.PaymentStatus = 0
+			newXenditTransaction.Order.PaymentStatus = helper.FAILED_PAYMENT
 			hasPaymentStatusUpdated = true
 		}
 
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_CANCELED {
 			// cancelled
-			newXenditTransaction.Order.PaymentStatus = -1
+			newXenditTransaction.Order.PaymentStatus = helper.CANCELLED_PAYMENT
 			hasPaymentStatusUpdated = true
 		}
 

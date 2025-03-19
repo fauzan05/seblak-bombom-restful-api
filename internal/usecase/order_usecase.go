@@ -132,7 +132,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 	// set status order
 	newOrder.OrderStatus = helper.ORDER_PENDING
 
-	newOrder.DiscountType = 0
+	newOrder.DiscountType = helper.PERCENT
 	if request.DiscountId > 0 {
 		newDiscount := new(entity.DiscountCoupon)
 		newDiscount.ID = request.DiscountId
@@ -333,8 +333,8 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 
 	// validate first before update order status state into database
 	// if rejected
-	if request.OrderStatus == 0 {
-		if newOrder.OrderStatus == 0 {
+	if request.OrderStatus == helper.ORDER_PENDING {
+		if newOrder.OrderStatus == helper.ORDER_PENDING {
 			c.Log.Warnf("Can't cancel an order that has been cancelled!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been cancelled!")
 		}

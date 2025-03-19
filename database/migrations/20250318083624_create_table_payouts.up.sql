@@ -4,8 +4,14 @@ CREATE TABLE payouts (
     xendit_payout_id VARCHAR(50) NULL,
     amount DECIMAL(15, 2) NOT NULL,
     currency VARCHAR(10) NOT NULL DEFAULT 'IDR',
-    method TINYINT(1) NOT NULL COMMENT '0 : offline | 1 : online',
-    status TINYINT(1) NOT NULL COMMENT '1 : pending | 2 : accepted | 0 : cancelled | -1 : failed | 3 : succeeded',
+    method ENUM("offline", "online") NOT NULL COMMENT '0 : offline | 1 : online',
+    status ENUM(
+        "pending",
+        "accepted",
+        "cancelled",
+        "failed",
+        "succeeded"
+    ) NOT NULL,
     notes TEXT,
     cancellation_notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
