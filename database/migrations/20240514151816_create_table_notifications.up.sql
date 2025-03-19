@@ -4,7 +4,7 @@ CREATE TABLE notifications (
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     is_read BOOLEAN NOT NULL,
-    type TINYINT(1) NOT NULL COMMENT '1 : transaction | 2 : promotion',
+    type ENUM("transaction", "promotion") NOT NULL,
     link VARCHAR(255) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

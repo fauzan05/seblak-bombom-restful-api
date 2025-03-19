@@ -102,7 +102,7 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 	newCategory := new(entity.Category)
 	totalCategories, err := c.CategoryRepository.CountCategoryItems(tx, newCategory, search)
 	if err != nil {
-		c.Log.Warnf("Failed to count categories: %+v", err)
+		c.Log.Warnf("Failed to count categories : %+v", err)
 		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count categories: %+v", err))
 	}
 
@@ -174,7 +174,7 @@ func (c *CategoryUseCase) Delete(ctx context.Context, request *model.DeleteCateg
 	return true, nil
 }
 
-func MapCategories(rows []map[string]interface{}, results *[]entity.Category) error {
+func MapCategories(rows []map[string]any, results *[]entity.Category) error {
 
 	for _, row := range rows {
 		// Ambil dan validasi category_id

@@ -1,46 +1,50 @@
 package helper
 
-type Role int
+type Role string
 type PaymentMethod string
-type PaymentStatus int
-type OrderStatus int
-type DiscountType int
-type NotificationType int
-type WalletStatus int
+type PaymentStatus string
+type OrderStatus string
+type DiscountType string
+type NotificationType string
+type WalletStatus string
 type TransactionStatus string
 type RequestMethod string
 type XenditTransactionStatus string
 type ChannelCode string
 type PaymentGateway string
 type ItemType string
+type PayoutStatus string
+type PayoutMethod string
 
 const (
 	// role
-	ADMIN    Role = 1
-	CUSTOMER Role = 2
-	// payment status
-	PAID_PAYMENT    PaymentStatus = 1
-	PENDING_PAYMENT PaymentStatus = 0
-	CANCEL_PAYMENT  PaymentStatus = -1
-	EXPIRED_PAYMENT PaymentStatus = -2
-	FAILED_PAYMENT  PaymentStatus = -3
+	ADMIN    Role = "admin"
+	CUSTOMER Role = "customer"
+	// Payment Status
+	PAID_PAYMENT      PaymentStatus = "paid"      // Pembayaran sukses
+	PENDING_PAYMENT   PaymentStatus = "pending"   // Menunggu konfirmasi
+	CANCELLED_PAYMENT PaymentStatus = "cancelled" // Dibatalkan oleh pengguna
+	EXPIRED_PAYMENT   PaymentStatus = "expired"   // Waktu pembayaran habis
+	FAILED_PAYMENT    PaymentStatus = "failed"    // Pembayaran gagal
+
 	// order status
-	ORDER_PENDING         OrderStatus = 1
-	ORDER_RECEIVED        OrderStatus = 2
-	ORDER_BEING_DELIVERED OrderStatus = 3
-	ORDER_DELIVERED       OrderStatus = 4
-	READY_FOR_PICKUP      OrderStatus = 5
-	ORDER_REJECTED        OrderStatus = 0
+	ORDER_PENDING         OrderStatus = "pending_order"
+	ORDER_RECEIVED        OrderStatus = "order_received"
+	ORDER_BEING_DELIVERED OrderStatus = "order_being_delivered"
+	ORDER_DELIVERED       OrderStatus = "order_delivered"
+	READY_FOR_PICKUP      OrderStatus = "ready_for_pickup"
+	ORDER_REJECTED        OrderStatus = "order_rejected"
+
 	// discount type
-	NOMINAL DiscountType = 1
-	PERCENT DiscountType = 2
+	NOMINAL DiscountType = "nominal"
+	PERCENT DiscountType = "percent"
 	// notification type
-	TRANSACTION NotificationType = 1
-	PROMOTION   NotificationType = 2
+	TRANSACTION NotificationType = "transaction"
+	PROMOTION   NotificationType = "promotion"
 	// wallet status
-	ACTIVE  WalletStatus = 1
-	INACIVE WalletStatus = 2
-	SUSPEND WalletStatus = 3
+	ACTIVE  WalletStatus = "active"
+	INACIVE WalletStatus = "inactive"
+
 	// payment method
 	PAYMENT_METHOD_QR_CODE PaymentMethod = "QR_CODE"
 	PAYMENT_METHOD_EWALLET PaymentMethod = "EWALLET"
@@ -87,6 +91,15 @@ const (
 	ITEM_TYPE_FEE              ItemType = "FEE"
 	ITEM_TYPE_DELIVERY_FEE     ItemType = "DELIVERY_FEE"
 	ITEM_TYPE_DISCOUNT         ItemType = "DISCOUNT"
+
+	PAYOUT_PENDING   PayoutStatus = "pending"
+	PAYOUT_ACCEPTED  PayoutStatus = "accepted"
+	PAYOUT_CANCELLED PayoutStatus = "cancelled"
+	PAYOUT_FAILED    PayoutStatus = "failed"
+	PAYOUT_SUCCEEDED PayoutStatus = "succeeded"
+
+	PAYOUT_METHOD_ONLINE  PayoutMethod = "online"
+	PAYOUT_METHOD_OFFLINE PayoutMethod = "offline"
 )
 
 func IsValidChannelCode(pm ChannelCode) bool {

@@ -23,6 +23,8 @@ type RouteConfig struct {
 	MidtransCoreAPIOrderController    *http.MidtransCoreAPIOrderController
 	XenditQRCodeTransactionController *xenditController.XenditQRCodeTransctionController
 	XenditCallbackController          *xenditController.XenditCallbackController
+	XenditPayoutController            *xenditController.XenditPayoutController
+	PayoutController                  *http.PayoutController
 	ApplicationController             *http.ApplicationController
 	CartController                    *http.CartController
 	AuthMiddleware                    fiber.Handler
@@ -42,6 +44,7 @@ func (c *RouteConfig) SetupXenditCallbacksRoute() {
 	authToken := api.Use(c.AuthXenditMiddleware)
 	// Xendit QR Code Callback
 	authToken.Post("/xendits/payment-request/notifications/callback", c.XenditCallbackController.GetPaymentRequestCallbacks)
+	authToken.Post("/xendits/payout-request/notifications/callback", c.XenditCallbackController.GetPayoutRequestCallbacks)
 }
 
 // GUEST
@@ -126,6 +129,8 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Xendit
 	api.Post("/xendit/orders/qr-code/transaction", c.XenditQRCodeTransactionController.Create)
 	api.Get("/xendit/orders/:orderId/qr-code/transaction", c.XenditQRCodeTransactionController.GetTransaction)
+	api.Post("/xendit/payout-request/:payoutId/cancel", c.XenditPayoutController.Cancel)
+	api.Get("/xendit/payout-request/:payoutId", c.XenditPayoutController.GetPayoutById)
 
 	// Cart
 	api.Post("/carts", c.CartController.Create)
@@ -135,6 +140,12 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// order
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
+
+	// xendit payout
+	auth.Post("/xendit/payouts/:userId", c.XenditPayoutController.Create)
+
+	// payout
+	auth.Post("/payouts/:userId", c.PayoutController.Create)
 }
 
 // ADMIN
@@ -164,4 +175,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 
 	// application
 	auth.Post("/applications", c.ApplicationController.Create) // add & update
+
+	// balance
+	auth.Get("/balance", c.XenditPayoutController.GetAdminBalance)
 }

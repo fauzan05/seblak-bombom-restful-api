@@ -1,6 +1,6 @@
 CREATE TABLE deliveries (
     id INTEGER AUTO_INCREMENT,
-    cost FLOAT NOT NULL,
+    cost DECIMAL(15, 2) NOT NULL,
     city VARCHAR(255) NOT NULL,
     district VARCHAR(255) NOT NULL,
     village VARCHAR(255) NOT NULL,

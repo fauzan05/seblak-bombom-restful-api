@@ -116,6 +116,13 @@ func (r *Repository[T]) FindMidtransCoreAPIOrderByOrderId(db *gorm.DB, entity *T
 	return result.Error // Kembalikan error jika ada kesalahan lain
 }
 
+func (r *Repository[T]) FindAllActiveBalance(db *gorm.DB, entity *T) (*float32, error) {
+	var totalBalance float32
+	result := db.Model(entity).Select("COALESCE(SUM(balance), 0)").Where("status = ?", 1).Scan(&totalBalance)
+
+	return &totalBalance, result.Error
+}
+
 func (r *Repository[T]) FindCount(db *gorm.DB, entity *T) (int64, error) {
 	var count int64
 	err := db.Model(&entity).Count(&count).Error
@@ -807,6 +814,77 @@ func (r *Repository[T]) CountDeliveryItems(db *gorm.DB, entity *T, search string
 		Or("deliveries.village LIKE ?", "%"+search+"%").
 		Or("deliveries.hamlet LIKE ?", "%"+search+"%").
 		Or("deliveries.cost LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
+func (r *Repository[T]) FindXenditPayoutsPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+	offset := (page - 1) * pageSize
+	if sortingColumn == "" {
+		sortingColumn = "xendit_payouts.id"
+	}
+
+	query := db.Table("xendit_payouts").
+		Select(` 
+        xendit_payouts.id as xendit_payout_id, 
+        categories.name as category_name, 
+        categories.description as category_desc, 
+        categories.created_at as category_created_at, 
+        categories.updated_at as category_updated_at
+    `).
+		Where("categories.name LIKE ?", "%"+search+"%").
+		Order(fmt.Sprintf("%s %s", sortingColumn, sortBy)).
+		Offset(offset).
+		Limit(pageSize)
+
+	rows, err := query.Rows()
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	var results []map[string]interface{}
+	for rows.Next() {
+		var (
+			categoryID        string
+			categoryName      string
+			categoryDesc      string
+			categoryCreatedAt string
+			categoryUpdatedAt string
+		)
+
+		// Scan data
+		if err := rows.Scan(
+			&categoryID,
+			&categoryName,
+			&categoryDesc,
+			&categoryCreatedAt,
+			&categoryUpdatedAt,
+		); err != nil {
+			return err
+		}
+
+		// Masukkan kategori ke hasil
+		category := map[string]interface{}{
+			"category_id":         categoryID,
+			"category_name":       categoryName,
+			"category_desc":       categoryDesc,
+			"category_created_at": categoryCreatedAt,
+			"category_updated_at": categoryUpdatedAt,
+		}
+		results = append(results, category)
+	}
+
+	*entity = results
+	return nil
+}
+
+func (r *Repository[T]) CountXenditPayouts(db *gorm.DB, entity *T, search string) (int64, error) {
+	var count int64
+	err := db.Where("xendit_payouts.amount LIKE ?", "%"+search+"%").Or("xendit_payouts.description LIKE ?", "%"+search+"%").Find(&entity).Count(&count).Error
 	if err != nil {
 		return int64(0), err
 	}

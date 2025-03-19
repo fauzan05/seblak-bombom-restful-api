@@ -2,7 +2,7 @@ CREATE TABLE xendit_transactions (
     id VARCHAR(50) PRIMARY KEY,
     order_id INTEGER NOT NULL,
     reference_id VARCHAR(50) NOT NULL,
-    amount BIGINT NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
     currency VARCHAR(10) NOT NULL,
     payment_method VARCHAR(50) NOT NULL,
     payment_method_id VARCHAR(50),

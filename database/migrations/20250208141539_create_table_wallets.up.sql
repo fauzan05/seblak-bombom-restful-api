@@ -1,8 +1,8 @@
 CREATE TABLE wallets (
     id INTEGER AUTO_INCREMENT,
     user_id INTEGER NOT NULL,
-    balance INTEGER NOT NULL,
-    status TINYINT(1) NOT NULL COMMENT '1 : active | 2 : inactive | 3 : suspend',
+    balance DECIMAL(15, 2) NOT NULL,
+    status ENUM("active", "inactive") NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

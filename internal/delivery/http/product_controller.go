@@ -232,7 +232,7 @@ func (c *ProductController) Remove(ctx *fiber.Ctx) error {
 	idsParam := ctx.Query("ids")
 	if idsParam == "" {
 		c.Log.Warnf("Parameter 'ids' is required")
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Parameter 'ids' is required"))
+		return fiber.NewError(fiber.StatusBadRequest, "Parameter 'ids' is required")
 	}
 
 	// Pisahkan string menjadi array menggunakan koma sebagai delimiter

@@ -4,7 +4,7 @@ CREATE TABLE order_products (
     product_id INTEGER NOT NULL,
     product_name VARCHAR(255) NOT NULL,
     category VARCHAR(100) NOT NULL,
-    price FLOAT NOT NULL,
+    price DECIMAL(15, 2) NOT NULL,
     quantity INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
