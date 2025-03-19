@@ -29,7 +29,7 @@ func (c *XenditPayoutController) Create(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Failed to convert user_id to integer : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert user_id to integer : %+v", err))
 	}
-	
+
 	xenditPayoutRequest := new(model.CreateXenditPayout)
 	xenditPayoutRequest.UserId = uint64(userId)
 	if err := ctx.BodyParser(xenditPayoutRequest); err != nil {
@@ -61,5 +61,41 @@ func (c *XenditPayoutController) GetAdminBalance(ctx *fiber.Ctx) error {
 		Code:   200,
 		Status: "Success to get withdrawable balance",
 		Data:   balance,
+	})
+}
+
+func (c *XenditPayoutController) GetPayoutById(ctx *fiber.Ctx) error {
+	payoutId := ctx.Params("payoutId")
+	xenditPayoutRequest := new(model.GetPayoutById)
+	xenditPayoutRequest.PayoutId = payoutId
+	balance, err := c.UseCase.GetPayoutById(ctx, xenditPayoutRequest)
+	if err != nil {
+		c.Log.Warnf("Failed to get payout by id : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.XenditPayoutResponse]{
+		Code:   200,
+		Status: "Success to get payout by id",
+		Data:   balance,
+	})
+}
+
+func (c *XenditPayoutController) Cancel(ctx *fiber.Ctx) error {
+	payoutId := ctx.Params("payoutId")
+	
+	xenditPayoutRequest := new(model.CancelXenditPayout)
+	xenditPayoutRequest.PayoutId = payoutId
+
+	response, err := c.UseCase.CancelPayout(ctx, xenditPayoutRequest)
+	if err != nil {
+		c.Log.Warnf("Failed to cancel xendit payout by id : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.XenditPayoutResponse]{
+		Code:   200,
+		Status: "Success to cancel xendit payout by id",
+		Data:   response,
 	})
 }

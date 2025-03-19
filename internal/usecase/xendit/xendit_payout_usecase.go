@@ -149,3 +149,72 @@ func (c *XenditPayoutUseCase) GetBalance(ctx *fiber.Ctx) (*model.GetWithdrawable
 
 	return converter.WithdrawableBalanceResponse(balance, getActiveBalance), nil
 }
+
+func (c *XenditPayoutUseCase) GetPayoutById(ctx *fiber.Ctx, request *model.GetPayoutById) (*model.XenditPayoutResponse, error) {
+	tx := c.DB.WithContext(ctx.Context())
+
+	resp, _, resErr := c.XenditClient.PayoutApi.GetPayoutById(ctx.Context(), request.PayoutId).
+		Execute()
+	if resErr != nil {
+		c.Log.Warnf("Failed to get xendit payout by id : %+v", resErr.FullError())
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit payout by id : %+v", resErr.FullError()))
+	}
+
+	newXenditPayout := new(entity.XenditPayout)
+	newXenditPayout.ID = resp.Payout.Id
+	if err := c.XenditPayoutRepository.FindWith2Preloads(tx, newXenditPayout, "User", "User.Wallet"); err != nil {
+		c.Log.Warnf("Failed to get xendit payout from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit payout from database : %+v", err))
+	}
+	newXenditPayout.BusinessID = resp.Payout.GetBusinessId()
+	newXenditPayout.ReferenceID = resp.Payout.GetReferenceId()
+	newXenditPayout.Amount = float64(resp.Payout.GetAmount())
+	newXenditPayout.Currency = resp.Payout.GetCurrency()
+	newXenditPayout.Description = resp.Payout.GetDescription()
+	newXenditPayout.ChannelCode = resp.Payout.GetChannelCode()
+	newXenditPayout.AccountNumber = resp.Payout.ChannelProperties.GetAccountNumber()
+	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
+	newXenditPayout.Status = resp.Payout.GetStatus()
+	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
+	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+
+	return converter.XenditPayoutToResponse(newXenditPayout), nil
+}
+
+func (c *XenditPayoutUseCase) CancelPayout(ctx *fiber.Ctx, request *model.CancelXenditPayout) (*model.XenditPayoutResponse, error) {
+	tx := c.DB.WithContext(ctx.Context())
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+	}
+
+	resp, _, resErr := c.XenditClient.PayoutApi.CancelPayout(ctx.Context(), request.PayoutId).
+		Execute()
+
+	if resErr != nil {
+		c.Log.Warnf("Failed to cancel xendit payout : %+v", resErr.FullError())
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to cancel xendit payout : %+v", resErr.FullError()))
+	}
+
+	newXenditPayout := new(entity.XenditPayout)
+	newXenditPayout.ID = resp.Payout.Id
+	if err := c.XenditPayoutRepository.FindFirst(tx, newXenditPayout); err != nil {
+		c.Log.Warnf("Failed to get xendit payout from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit payout from database : %+v", err))
+	}
+	newXenditPayout.BusinessID = resp.Payout.GetBusinessId()
+	newXenditPayout.ReferenceID = resp.Payout.GetReferenceId()
+	newXenditPayout.Amount = float64(resp.Payout.GetAmount())
+	newXenditPayout.Currency = resp.Payout.GetCurrency()
+	newXenditPayout.Description = resp.Payout.GetDescription()
+	newXenditPayout.ChannelCode = resp.Payout.GetChannelCode()
+	newXenditPayout.AccountNumber = resp.Payout.ChannelProperties.GetAccountNumber()
+	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
+	newXenditPayout.Status = resp.Payout.GetStatus()
+	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
+	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+
+	return converter.XenditPayoutToResponse(newXenditPayout), nil
+}

@@ -6,7 +6,7 @@ import (
 )
 
 func XenditPayoutToResponse(xenditPayout *entity.XenditPayout) *model.XenditPayoutResponse {
-	return &model.XenditPayoutResponse{
+	response := &model.XenditPayoutResponse{
 		ID:                xenditPayout.ID,
 		UserId:            xenditPayout.UserID,
 		BusinessId:        xenditPayout.BusinessID,
@@ -22,6 +22,12 @@ func XenditPayoutToResponse(xenditPayout *entity.XenditPayout) *model.XenditPayo
 		UpdatedAt:         xenditPayout.UpdatedAt,
 		EstimatedArrival:  xenditPayout.EstimatedArrival,
 	}
+
+	if xenditPayout.User != nil {
+		response.User = UserToResponse(xenditPayout.User)
+	}
+
+	return response
 }
 
 func XenditPayoutsToResponse(xenditPayouts *[]entity.XenditPayout) *[]model.XenditPayoutResponse {

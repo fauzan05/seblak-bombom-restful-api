@@ -13,6 +13,8 @@ type XenditTransactionStatus string
 type ChannelCode string
 type PaymentGateway string
 type ItemType string
+type PayoutStatus int
+type PayoutMethod int
 
 const (
 	// role
@@ -87,6 +89,15 @@ const (
 	ITEM_TYPE_FEE              ItemType = "FEE"
 	ITEM_TYPE_DELIVERY_FEE     ItemType = "DELIVERY_FEE"
 	ITEM_TYPE_DISCOUNT         ItemType = "DISCOUNT"
+
+	PAYOUT_PENDING   PayoutStatus = 1
+	PAYOUT_ACCEPTED  PayoutStatus = 2
+	PAYOUT_CANCELLED PayoutStatus = 0
+	PAYOUT_FAILED    PayoutStatus = -1
+	PAYOUT_SUCCEEDED PayoutStatus = 3
+
+	PAYOUT_METHOD_ONLINE  PayoutMethod = 1
+	PAYOUT_METHOD_OFFLINE PayoutMethod = 0
 )
 
 func IsValidChannelCode(pm ChannelCode) bool {
