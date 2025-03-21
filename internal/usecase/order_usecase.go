@@ -18,36 +18,39 @@ import (
 )
 
 type OrderUseCase struct {
-	DB                     *gorm.DB
-	Log                    *logrus.Logger
-	Validate               *validator.Validate
-	OrderRepository        *repository.OrderRepository
-	ProductRepository      *repository.ProductRepository
-	CategoryRepository     *repository.CategoryRepository
-	AddressRepository      *repository.AddressRepository
-	DiscountRepository     *repository.DiscountCouponRepository
-	DeliveryRepository     *repository.DeliveryRepository
-	OrderProductRepository *repository.OrderProductRepository
-	WalletRepository       *repository.WalletRepository
+	DB                          *gorm.DB
+	Log                         *logrus.Logger
+	Validate                    *validator.Validate
+	OrderRepository             *repository.OrderRepository
+	ProductRepository           *repository.ProductRepository
+	CategoryRepository          *repository.CategoryRepository
+	AddressRepository           *repository.AddressRepository
+	DiscountRepository          *repository.DiscountCouponRepository
+	DeliveryRepository          *repository.DeliveryRepository
+	OrderProductRepository      *repository.OrderProductRepository
+	WalletRepository            *repository.WalletRepository
+	XenditTransactionRepository *repository.XenditTransctionRepository
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
 	discountRepository *repository.DiscountCouponRepository, deliveryRepository *repository.DeliveryRepository,
-	orderProductRepository *repository.OrderProductRepository, walletRepository *repository.WalletRepository) *OrderUseCase {
+	orderProductRepository *repository.OrderProductRepository, walletRepository *repository.WalletRepository,
+	xenditTransactionRepository *repository.XenditTransctionRepository) *OrderUseCase {
 	return &OrderUseCase{
-		DB:                     db,
-		Log:                    log,
-		Validate:               validate,
-		OrderRepository:        orderRepository,
-		ProductRepository:      productRepository,
-		CategoryRepository:     categoryRepository,
-		AddressRepository:      addressRepository,
-		DiscountRepository:     discountRepository,
-		DeliveryRepository:     deliveryRepository,
-		OrderProductRepository: orderProductRepository,
-		WalletRepository:       walletRepository,
+		DB:                          db,
+		Log:                         log,
+		Validate:                    validate,
+		OrderRepository:             orderRepository,
+		ProductRepository:           productRepository,
+		CategoryRepository:          categoryRepository,
+		AddressRepository:           addressRepository,
+		DiscountRepository:          discountRepository,
+		DeliveryRepository:          deliveryRepository,
+		OrderProductRepository:      orderProductRepository,
+		WalletRepository:            walletRepository,
+		XenditTransactionRepository: xenditTransactionRepository,
 	}
 }
 
@@ -327,23 +330,41 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Order not found by order id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Order not found by order id : %+v", err))
+		c.Log.Warnf("Order not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Order not found!")
 	}
 
 	// validate first before update order status state into database
 	// if rejected
-	if request.OrderStatus == helper.ORDER_PENDING {
-		if newOrder.OrderStatus == helper.ORDER_PENDING {
+	if request.OrderStatus == helper.ORDER_REJECTED {
+		if newOrder.OrderStatus == helper.ORDER_REJECTED {
 			c.Log.Warnf("Can't cancel an order that has been cancelled!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been cancelled!")
 		}
-		
+
+		if newOrder.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
+			// expired-kan payment-nya
+			newXenditTransaction := new(entity.XenditTransactions)
+			newXenditTransaction.OrderId = newOrder.ID
+			if err := c.XenditTransactionRepository.FindEntityByOrderId(tx, newXenditTransaction, newOrder.ID); err != nil {
+				c.Log.Warnf("Failed to find xendit transaction by order id from database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find xendit transaction by order id from database : %+v", err))
+			}
+			// panggil cancel payment
+			
+		}
+
 		// find user wallet
 		findWallet := new(entity.Wallet)
-		if err := c.WalletRepository.FindEntityByUserId(tx, findWallet, newOrder.UserId); err != nil {
+		count, err := c.WalletRepository.FindAndCountFirstWalletByUserId(tx, findWallet, newOrder.UserId, "active")
+		if err != nil {
 			c.Log.Warnf("Failed to find wallet by user id from database : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id from database : %+v", err))
+		}
+
+		if count < 1 {
+			c.Log.Warnf("The selected wallet is not found!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "The selected wallet is not found!")
 		}
 
 		// return to wallet balance
@@ -365,10 +386,10 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update status order by id : %+v", err))
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
-	}
+	// if err := tx.Commit().Error; err != nil {
+	// 	c.Log.Warnf("Failed to commit transaction : %+v", err)
+	// 	return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+	// }
 
 	return converter.OrderToResponse(newOrder), nil
 }

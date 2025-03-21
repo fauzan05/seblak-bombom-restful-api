@@ -24,7 +24,7 @@ type XenditPayoutResponse struct {
 	UserId            uint64        `json:"user_id"`
 	BusinessId        string        `json:"business_id"`
 	ReferenceId       string        `json:"reference_id"`
-	Amount            float64       `json:"amount"`
+	Amount            float32       `json:"amount"`
 	Currency          string        `json:"currency"`
 	Description       string        `json:"description"`
 	ChannelCode       string        `json:"channel_code"`

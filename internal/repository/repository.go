@@ -23,12 +23,45 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(&entity).Error
 }
 
-func (r *Repository[T]) UpdateCustomColumns(db *gorm.DB, entity *T, updateFields map[string]interface{}) error {
+func (r *Repository[T]) UpdateCustomColumns(db *gorm.DB, entity *T, updateFields map[string]any) error {
 	return db.Model(entity).Updates(updateFields).Error
 }
 
-func (r *Repository[T]) FindEntityByUserId(db *gorm.DB, entity *T, userId uint64) error {
-	return db.Where("user_id = ?", userId).First(entity).Error
+func (r *Repository[T]) FindAndCountEntityByUserId(db *gorm.DB, entity *T, userId uint64) (int64, error) {
+	var count int64
+	err := db.Where("user_id = ?", userId).Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
+func (r *Repository[T]) FindAndCountFirstWalletByUserId(db *gorm.DB, entity *T, userId uint64, status string) (int64, error) {
+    var count int64
+
+    // Menggunakan entity langsung tanpa & karena entity sudah merupakan pointer
+    err := db.Model(entity).Where("user_id = ? AND status = ?", userId, status).Count(&count).Error
+    if err != nil {
+        return 0, err
+    }
+
+    // Mencari record pertama yang sesuai dengan kriteria
+    result := db.Where("user_id = ? AND status = ?", userId, status).First(entity)
+    if result.Error != nil {
+        if result.Error == gorm.ErrRecordNotFound {
+            // Jika data tidak ditemukan, kembalikan count dan nil error
+            return count, nil
+        }
+        // Jika ada error lain, kembalikan error tersebut
+        return 0, result.Error
+    }
+
+    // Kembalikan count dan nil error jika tidak ada masalah
+    return count, nil
+}
+
+func (r *Repository[T]) FindFirstPayoutByXenditPayoutId(db *gorm.DB, entity *T, xenditPayoutId string) error {
+	return db.Where("xendit_payout_id = ?", xenditPayoutId).First(entity).Error
 }
 
 func (r *Repository[T]) FindAndUpdateAddressToNonPrimary(db *gorm.DB, entity *T) error {
@@ -258,8 +291,8 @@ func (r *Repository[T]) FirstXenditTransactionByOrderId(db *gorm.DB, entity *T, 
 	return db.Where("order_id = ?", orderId).Preload(preload1).Preload(preload2).First(&entity).Error
 }
 
-func (r *Repository[T]) FindXenditTransactionByOrderId(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
-	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+func (r *Repository[T]) FindEntityByOrderId(db *gorm.DB, entity *T, orderId uint64) error {
+	return db.Where("order_id = ?", orderId).Find(&entity).Error
 }
 
 func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) error {

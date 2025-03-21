@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -37,7 +38,11 @@ func (c *PayoutController) Create(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
-	response, err := c.UseCase.Add(ctx.Context(), request)
+	if request.Method == helper.PAYOUT_METHOD_ONLINE {
+		request.XenditPayoutRequest.UserId = uint64(userId)
+	}
+
+	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {
 		c.Log.Warnf("Failed to create a new payout request : %+v", err)
 		return err

@@ -26,12 +26,14 @@ type XenditCallbackUseCase struct {
 	UserRepository              *repository.UserRepository
 	WalletRepository            *repository.WalletRepository
 	XenditPayoutRepository      *repository.XenditPayoutRepository
+	PayoutRepository            *repository.PayoutRepository
 }
 
 func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, xenditTransactionRepository *repository.XenditTransctionRepository,
 	xenditClient *xendit.APIClient, xenditPayoutRepository *repository.XenditPayoutRepository,
-	userRepository *repository.UserRepository, walletRepository *repository.WalletRepository) *XenditCallbackUseCase {
+	userRepository *repository.UserRepository, walletRepository *repository.WalletRepository,
+	payoutRepository *repository.PayoutRepository) *XenditCallbackUseCase {
 	return &XenditCallbackUseCase{
 		DB:                          db,
 		Log:                         log,
@@ -42,6 +44,7 @@ func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validat
 		XenditClient:                xenditClient,
 		UserRepository:              userRepository,
 		WalletRepository:            walletRepository,
+		PayoutRepository:            payoutRepository,
 	}
 }
 
@@ -164,7 +167,31 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit payout status into database : %+v", err))
 			}
 
-			if request.Data.Status == "CANCELLED" {
+			if request.Data.Status == "SUCCEEDED" {
+				// update tb_payout
+				newPayout := new(entity.Payout)
+				if err := c.PayoutRepository.FindFirstPayoutByXenditPayoutId(tx, newPayout, newXenditPayout.ID); err != nil {
+					c.Log.Warnf("Failed to get payout by xendit payout id from database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get payout by xendit payout id from database : %+v", err))
+				}
+
+				if newPayout.ID < 1 {
+					c.Log.Warnf("Payout not found!")
+					return fiber.NewError(fiber.StatusNotFound, "Payout not found!")
+				} else {
+					// update payout
+					updateStatus := map[string]any{
+						"status": helper.PAYOUT_SUCCEEDED,
+					}
+
+					if err := c.PayoutRepository.UpdateCustomColumns(tx, newPayout, updateStatus); err != nil {
+						c.Log.Warnf("Failed to update payout status in the database : %+v", err)
+						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update payout status in the database : %+v", err))
+					}
+				}
+			}
+
+			if request.Data.Status == "CANCELLED" || request.Data.Status == "FAILED" || request.Data.Status == "EXPIRED" || request.Data.Status == "REFUNDED" {
 				// kembalikan saldonya
 				newUser := new(entity.User)
 				newUser.ID = newXenditPayout.UserID
@@ -184,6 +211,37 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 				if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
 					c.Log.Warnf("Failed to update wallet balance in the database : %+v", err)
 					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance in the database : %+v", err))
+				}
+
+				// update tb_payout
+				newPayout := new(entity.Payout)
+				if err := c.PayoutRepository.FindFirstPayoutByXenditPayoutId(tx, newPayout, newXenditPayout.ID); err != nil {
+					c.Log.Warnf("Failed to get payout by xendit payout id from database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get payout by xendit payout id from database : %+v", err))
+				}
+
+				if newPayout.ID < 1 {
+					c.Log.Warnf("Payout not found!")
+					return fiber.NewError(fiber.StatusNotFound, "Payout not found!")
+				} else {
+					status := helper.PAYOUT_CANCELLED
+					if request.Data.Status == "FAILED" {
+						status = helper.PAYOUT_FAILED
+					} else if request.Data.Status == "EXPIRED" {
+						status = helper.PAYOUT_EXPIRED
+					} else if request.Data.Status == "REFUNDED" {
+						status = helper.PAYOUT_REFUNDED
+					}
+
+					// update payout
+					updateStatus := map[string]any{
+						"status": status,
+					}
+
+					if err := c.PayoutRepository.UpdateCustomColumns(tx, newPayout, updateStatus); err != nil {
+						c.Log.Warnf("Failed to update payout status in the database : %+v", err)
+						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update payout status in the database : %+v", err))
+					}
 				}
 			}
 		}

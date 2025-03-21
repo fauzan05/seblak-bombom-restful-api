@@ -88,7 +88,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	newWallet := &entity.Wallet{}
 	newWallet.UserId = user.ID
 	newWallet.Balance = 0
-	newWallet.Status = helper.ACTIVE
+	newWallet.Status = helper.ACTIVE_WALLET
 	if err := c.WalletRepository.Create(tx, newWallet); err != nil {
 		c.Log.Warnf("Failed to create a new wallet into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create a new wallet into database : %+v", err))

@@ -258,7 +258,7 @@ func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) 
 		discountCouponCode, _ := row["discount_coupon_code"].(string)
 		discountCouponValue, _ := strconv.ParseFloat(row["discount_coupon_value"].(string), 32)
 
-		discountCouponType, _ := strconv.Atoi(row["discount_coupon_type"].(string))
+		discountCouponType := row["discount_coupon_type"].(string)
 		discountCouponStartStr, _ := row["discount_coupon_start"].(string)
 		discountCouponStart, err := time.Parse(time.RFC3339, discountCouponStartStr)
 		if err != nil {

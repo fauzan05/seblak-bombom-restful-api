@@ -10,7 +10,7 @@ func WalletToResponse(wallet *entity.Wallet) *model.WalletResponse {
 		ID:        wallet.ID,
 		Balance:   wallet.Balance,
 		Status:    wallet.Status,
-		CreatedAt: wallet.Created_At,
-		UpdatedAt: wallet.Updated_At,
+		CreatedAt: wallet.CreatedAt,
+		UpdatedAt: wallet.UpdatedAt,
 	}
 }

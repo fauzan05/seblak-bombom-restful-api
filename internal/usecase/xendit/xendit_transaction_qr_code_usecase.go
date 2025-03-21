@@ -118,7 +118,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	qrCodeParam.ChannelProperties.ExpiresAt = &setExpiresAt
 
 	custId := strconv.FormatUint(selectedOrder.UserId, 10)
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"user_id":  selectedOrder.UserId,
 		"order_id": selectedOrder.ID,
 		"notes":    selectedOrder.Note,
@@ -138,13 +138,14 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		Metadata:   metadata,
 	}
 
+	orderIdString := strconv.Itoa(int(selectedOrder.ID))
 	resp, _, resErr := c.XenditClient.PaymentRequestApi.CreatePaymentRequest(ctx.Context()).
-		PaymentRequestParameters(*paymentRequestParameters).IdempotencyKey(selectedOrder.Invoice).
+		PaymentRequestParameters(*paymentRequestParameters).IdempotencyKey(orderIdString).
 		Execute()
 
 	if resErr != nil {
 		c.Log.Warnf("Failed to create new xendit transaction : %+v", resErr.FullError())
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create new xendit transaction : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to create new xendit transaction : %+v", resErr.FullError()))
 	}
 
 	// setelah itu tangkap semua response
@@ -230,7 +231,7 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 
 	if resErr != nil {
 		c.Log.Warnf("Failed to find xendit transaction : %+v", resErr.FullError())
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find xendit transaction : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to find xendit transaction : %+v", resErr.FullError()))
 	}
 
 	if newXenditTransaction.Status != string(resp.Status) {

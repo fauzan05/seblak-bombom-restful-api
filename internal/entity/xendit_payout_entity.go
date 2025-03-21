@@ -7,7 +7,7 @@ type XenditPayout struct {
 	UserID            uint64     `gorm:"column:user_id"`
 	BusinessID        string     `gorm:"column:business_id"`
 	ReferenceID       string     `gorm:"column:reference_id"`
-	Amount            float64    `gorm:"column:amount"`
+	Amount            float32    `gorm:"column:amount"`
 	Currency          string     `gorm:"column:currency"`
 	Description       string     `gorm:"column:description"`
 	ChannelCode       string     `gorm:"column:channel_code"`

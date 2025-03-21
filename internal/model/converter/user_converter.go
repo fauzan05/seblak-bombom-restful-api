@@ -38,7 +38,7 @@ func UserTokenToResponse(token *entity.Token) *model.UserTokenResponse {
 	return &model.UserTokenResponse{
 		Token:      token.Token,
 		ExpiryDate: token.ExpiryDate,
-		CreatedAt:  token.Created_At,
-		UpdatedAt:  token.Updated_At,
+		CreatedAt:  token.CreatedAt,
+		UpdatedAt:  token.UpdatedAt,
 	}
 }

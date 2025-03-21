@@ -42,8 +42,8 @@ const (
 	TRANSACTION NotificationType = "transaction"
 	PROMOTION   NotificationType = "promotion"
 	// wallet status
-	ACTIVE  WalletStatus = "active"
-	INACIVE WalletStatus = "inactive"
+	ACTIVE_WALLET  WalletStatus = "active"
+	INACIVE_WALLET WalletStatus = "inactive"
 
 	// payment method
 	PAYMENT_METHOD_QR_CODE PaymentMethod = "QR_CODE"
@@ -97,6 +97,8 @@ const (
 	PAYOUT_CANCELLED PayoutStatus = "cancelled"
 	PAYOUT_FAILED    PayoutStatus = "failed"
 	PAYOUT_SUCCEEDED PayoutStatus = "succeeded"
+	PAYOUT_EXPIRED   PayoutStatus = "expired"
+	PAYOUT_REFUNDED  PayoutStatus = "refunded"
 
 	PAYOUT_METHOD_ONLINE  PayoutMethod = "online"
 	PAYOUT_METHOD_OFFLINE PayoutMethod = "offline"
