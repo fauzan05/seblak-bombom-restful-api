@@ -18,9 +18,11 @@ func XenditTransactionToResponse(xenditTransaction entity.XenditTransactions) *m
 		QrString:        xenditTransaction.QrString,
 		Status:          xenditTransaction.Status,
 		Description:     xenditTransaction.Description,
+		FailureCode:     xenditTransaction.FailureCode,
+		Metadata:        xenditTransaction.Metadata,
 		ExpiresAt:       xenditTransaction.ExpiresAt,
-		CreatedAt:       xenditTransaction.Created_At,
-		UpdatedAt:       xenditTransaction.Updated_At,
+		CreatedAt:       xenditTransaction.CreatedAt,
+		UpdatedAt:       xenditTransaction.UpdatedAt,
 	}
 
 	return response

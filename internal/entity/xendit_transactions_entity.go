@@ -17,8 +17,8 @@ type XenditTransactions struct {
 	FailureCode     string     `gorm:"column:failure_code"`
 	Metadata        []byte     `gorm:"column:metadata"`
 	ExpiresAt       *time.Time `gorm:"column:expires_at"`
-	Created_At      *time.Time `gorm:"column:created_at"`
-	Updated_At      *time.Time `gorm:"column:updated_at"`
+	CreatedAt       *time.Time `gorm:"column:created_at"`
+	UpdatedAt       *time.Time `gorm:"column:updated_at"`
 	Order           *Order     `gorm:"foreignKey:order_id;references:id"`
 }
 

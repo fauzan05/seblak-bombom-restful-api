@@ -8,6 +8,7 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
+	xenditUseCase "seblak-bombom-restful-api/internal/usecase/xendit"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -18,18 +19,19 @@ import (
 )
 
 type OrderUseCase struct {
-	DB                          *gorm.DB
-	Log                         *logrus.Logger
-	Validate                    *validator.Validate
-	OrderRepository             *repository.OrderRepository
-	ProductRepository           *repository.ProductRepository
-	CategoryRepository          *repository.CategoryRepository
-	AddressRepository           *repository.AddressRepository
-	DiscountRepository          *repository.DiscountCouponRepository
-	DeliveryRepository          *repository.DeliveryRepository
-	OrderProductRepository      *repository.OrderProductRepository
-	WalletRepository            *repository.WalletRepository
-	XenditTransactionRepository *repository.XenditTransctionRepository
+	DB                             *gorm.DB
+	Log                            *logrus.Logger
+	Validate                       *validator.Validate
+	OrderRepository                *repository.OrderRepository
+	ProductRepository              *repository.ProductRepository
+	CategoryRepository             *repository.CategoryRepository
+	AddressRepository              *repository.AddressRepository
+	DiscountRepository             *repository.DiscountCouponRepository
+	DeliveryRepository             *repository.DeliveryRepository
+	OrderProductRepository         *repository.OrderProductRepository
+	WalletRepository               *repository.WalletRepository
+	XenditTransactionRepository    *repository.XenditTransctionRepository
+	XenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
@@ -37,25 +39,26 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
 	discountRepository *repository.DiscountCouponRepository, deliveryRepository *repository.DeliveryRepository,
 	orderProductRepository *repository.OrderProductRepository, walletRepository *repository.WalletRepository,
-	xenditTransactionRepository *repository.XenditTransctionRepository) *OrderUseCase {
+	xenditTransactionRepository *repository.XenditTransctionRepository, xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase) *OrderUseCase {
 	return &OrderUseCase{
-		DB:                          db,
-		Log:                         log,
-		Validate:                    validate,
-		OrderRepository:             orderRepository,
-		ProductRepository:           productRepository,
-		CategoryRepository:          categoryRepository,
-		AddressRepository:           addressRepository,
-		DiscountRepository:          discountRepository,
-		DeliveryRepository:          deliveryRepository,
-		OrderProductRepository:      orderProductRepository,
-		WalletRepository:            walletRepository,
-		XenditTransactionRepository: xenditTransactionRepository,
+		DB:                             db,
+		Log:                            log,
+		Validate:                       validate,
+		OrderRepository:                orderRepository,
+		ProductRepository:              productRepository,
+		CategoryRepository:             categoryRepository,
+		AddressRepository:              addressRepository,
+		DiscountRepository:             discountRepository,
+		DeliveryRepository:             deliveryRepository,
+		OrderProductRepository:         orderProductRepository,
+		WalletRepository:               walletRepository,
+		XenditTransactionRepository:    xenditTransactionRepository,
+		XenditTransactionQRCodeUseCase: xenditTransactionQRCodeUseCase,
 	}
 }
 
-func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderRequest) (*model.OrderResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
 
 	err := c.Validate.Struct(request)
@@ -106,9 +109,10 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			Quantity:    orderProductRequest.Quantity,
 		}
 		orderProducts = append(orderProducts, orderProduct)
-		newOrder.Amount += orderProduct.Price * float32(orderProduct.Quantity)
+		newOrder.TotalFinalPrice += orderProduct.Price * float32(orderProduct.Quantity)
 	}
-
+	
+	newOrder.TotalProductPrice = newOrder.TotalFinalPrice
 	newOrder.DeliveryCost = 0
 	newOrder.IsDelivery = request.IsDelivery
 	if newOrder.IsDelivery {
@@ -121,7 +125,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		}
 
 		// jumlahkan semua total termasuk ongkir
-		newOrder.Amount += newDelivery.Cost
+		newOrder.TotalFinalPrice += newDelivery.Cost
 		newOrder.DeliveryCost = newDelivery.Cost
 	}
 
@@ -140,6 +144,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newDiscount := new(entity.DiscountCoupon)
 		newDiscount.ID = request.DiscountId
 		count, err := c.DiscountRepository.FindAndCountById(tx, newDiscount)
+		newOrder.DiscountValue = newDiscount.Value
 		if err != nil {
 			c.Log.Warnf("Failed to find discount by code : %+v", err)
 			return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Failed to find discount by code : %+v", err))
@@ -152,13 +157,13 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				if newDiscount.Type == helper.PERCENT {
 					newOrder.DiscountType = helper.PERCENT
 					discount := float32(newDiscount.Value) / float32(100)
-					afterDiscount := newOrder.Amount * discount
-					newOrder.Amount -= afterDiscount
+					afterDiscount := newOrder.TotalFinalPrice * discount
+					newOrder.TotalFinalPrice -= afterDiscount
 					// simpan total diskon/potongan harganya
 					newOrder.TotalDiscount = afterDiscount
 				} else if newDiscount.Type == helper.NOMINAL {
 					newOrder.DiscountType = helper.NOMINAL
-					newOrder.Amount -= newDiscount.Value
+					newOrder.TotalFinalPrice -= newDiscount.Value
 					// simpan total diskon/potongan harganya
 					newOrder.TotalDiscount = newDiscount.Value
 				}
@@ -196,9 +201,11 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway System!", request.PaymentMethod))
 		}
 	}
+	
+	newOrder.PaymentStatus = helper.PENDING_PAYMENT
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
-		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE && request.PaymentMethod != helper.PAYMENT_METHOD_EWALLET {
+		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE {
 			c.Log.Warnf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway))
 		} else {
@@ -207,12 +214,6 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				helper.PAYMENT_METHOD_QR_CODE: {
 					helper.XENDIT_QR_DANA_CHANNEL_CODE,
 					helper.XENDIT_QR_LINKAJA_CHANNEL_CODE,
-				},
-				helper.PAYMENT_METHOD_EWALLET: {
-					helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
-					helper.XENDIT_EWALLET_LINKAJA_CHANNEL_CODE,
-					helper.XENDIT_EWALLET_OVO_CHANNEL_CODE,
-					helper.XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE,
 				},
 			}
 
@@ -230,25 +231,30 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway))
 			}
 		}
-	}
+	} else if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
+		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
+			c.Log.Warnf("Payment method %s is not available on payment gateway System!", request.PaymentMethod)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway System!", request.PaymentMethod))
+		} else {
+			// langsung paid dan proses walletnya
+			if request.CurrentBalance < newOrder.TotalFinalPrice {
+				// tampilkan error bahwa saldo kurang
+				c.Log.Warnf("Your balance is insufficient to perform this transaction!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
+			}
 
-	newOrder.PaymentStatus = helper.PENDING_PAYMENT
-	if newOrder.PaymentMethod == helper.PAYMENT_METHOD_WALLET {
-		// langsung paid dan proses walletnya
-		if request.CurrentBalance < newOrder.Amount {
-			// tampilkan error bahwa saldo kurang
-			c.Log.Warnf("Your balance is insufficient to perform this transaction!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
+			newBalance := request.CurrentBalance - newOrder.TotalFinalPrice
+			newWallet := new(entity.Wallet)
+			if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
+				c.Log.Warnf("Failed to update new balance : %+v", err)
+				return nil, fiber.NewError(fiber.StatusBadRequest, "Failed to update new balance!")
+			}
+
+			newOrder.PaymentStatus = helper.PAID_PAYMENT
 		}
-
-		newBalance := request.CurrentBalance - newOrder.Amount
-		newWallet := new(entity.Wallet)
-		if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
-			c.Log.Warnf("Failed to update new balance : %+v", err)
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Failed to update new balance!")
-		}
-
-		newOrder.PaymentStatus = helper.PAID_PAYMENT
+	} else {
+		// berikan error bahwa payment method tidak tersedia/tidak valid
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Payment method is not valid or available!")
 	}
 
 	// mengambil alamat utama yang diambil oleh user
@@ -274,10 +280,42 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		c.Log.Warnf("Failed to add all order products into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add all order products into database : %+v", err))
 	}
+
 	// mengisi kolom invoice ke tabel order setelah mendapatkan ID order nya
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to add invoice code : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add invoice code : %+v", err))
+	}
+
+	// jika pembayaran menggunakan xendit,maka panggil xendit usecase
+	if newOrder.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT && newOrder.PaymentMethod == helper.PAYMENT_METHOD_QR_CODE {
+		newXenditQRCodeRequest := new(model.CreateXenditTransaction)
+		newXenditQRCodeRequest.OrderId = newOrder.ID
+		result, err := c.XenditTransactionQRCodeUseCase.Add(ctx, newXenditQRCodeRequest, tx);
+		if err != nil {
+			c.Log.Warn(err)
+			return nil, err
+		}
+
+		newXenditTransaction := new(entity.XenditTransactions)
+		newXenditTransaction.ID = result.ID
+		newXenditTransaction.OrderId = result.OrderId
+		newXenditTransaction.ReferenceId = result.ReferenceId
+		newXenditTransaction.Amount = result.Amount
+		newXenditTransaction.Currency = result.Currency
+		newXenditTransaction.PaymentMethod = result.PaymentMethod
+		newXenditTransaction.PaymentMethodId = result.PaymentMethodId
+		newXenditTransaction.ChannelCode = result.ChannelCode
+		newXenditTransaction.QrString = result.QrString
+		newXenditTransaction.Status = result.Status
+		newXenditTransaction.Description = result.Description
+		newXenditTransaction.FailureCode = result.FailureCode
+		newXenditTransaction.Metadata = result.Metadata
+		newXenditTransaction.ExpiresAt = result.ExpiresAt
+		newXenditTransaction.CreatedAt = result.CreatedAt
+		newXenditTransaction.UpdatedAt = result.UpdatedAt
+
+		newOrder.XenditTransaction = newXenditTransaction
 	}
 
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
@@ -351,7 +389,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find xendit transaction by order id from database : %+v", err))
 			}
 			// panggil cancel payment
-			
+
 		}
 
 		// find user wallet
@@ -371,7 +409,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		newWallet := new(entity.Wallet)
 		newWallet.ID = findWallet.ID
 		updateBalance := map[string]any{
-			"balance": newOrder.Amount,
+			"balance": newOrder.TotalFinalPrice,
 		}
 
 		if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {

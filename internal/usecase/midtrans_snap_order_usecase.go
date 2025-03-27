@@ -102,7 +102,7 @@ func (c *MidtransSnapOrderUseCase) Add(ctx context.Context, request *model.Creat
 	midtransRequest := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
 			OrderID:  strconv.Itoa(orderId),
-			GrossAmt: int64(selectedOrder.Amount),
+			GrossAmt: int64(selectedOrder.TotalFinalPrice),
 		},
 		CreditCard: &snap.CreditCardDetails{
 			Secure: true,

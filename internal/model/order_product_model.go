@@ -7,7 +7,7 @@ type OrderProductResponse struct {
 	OrderId     uint64    `json:"order_id,omitempty"`
 	ProductId   uint64    `json:"product_id,omitempty"`
 	ProductName string    `json:"product_name,omitempty"`
-	Price       string    `json:"price,omitempty"`
+	Price       float32   `json:"price,omitempty"`
 	Quantity    int       `json:"quantity,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`

@@ -1,7 +1,6 @@
 package converter
 
 import (
-	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/model"
 )
@@ -12,7 +11,7 @@ func OrderProductToResponse(orderProduct *entity.OrderProduct) *model.OrderProdu
 		OrderId: orderProduct.OrderId,
 		ProductId: orderProduct.ProductId,
 		ProductName: orderProduct.ProductName,
-		Price: fmt.Sprintf("%.2f", orderProduct.Price),
+		Price: orderProduct.Price,
 		Quantity: orderProduct.Quantity,
 		CreatedAt: orderProduct.Created_At,
 		UpdatedAt: orderProduct.Updated_At,

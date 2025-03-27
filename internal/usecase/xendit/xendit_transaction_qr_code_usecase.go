@@ -42,10 +42,7 @@ func NewXenditTransactionQRCodeUseCase(db *gorm.DB, log *logrus.Logger, validate
 	}
 }
 
-func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.CreateXenditTransaction) (*model.XenditTransactionResponse, error) {
-	tx := c.DB.WithContext(ctx.Context()).Begin()
-	defer tx.Rollback()
-
+func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.CreateXenditTransaction, tx *gorm.DB) (*model.XenditTransactionResponse, error) {
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
@@ -107,7 +104,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		*paymentRequestBasketItems = append(*paymentRequestBasketItems, *paymentRequestBasketItem)
 	}
 
-	amountFloat64 := float64(selectedOrder.Amount)
+	amountFloat64 := float64(selectedOrder.TotalFinalPrice)
 	desc := fmt.Sprintf("This is a product ordered by %s %s", selectedOrder.FirstName, selectedOrder.LastName)
 	qrCodeParam := new(payment_request.QRCodeParameters)
 
@@ -180,22 +177,17 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse created_at into UTC : %+v", err))
 	}
 
-	newXenditTransaction.Created_At = parseCreatedAt
+	newXenditTransaction.CreatedAt = parseCreatedAt
 	parseUpdatedAt, err := ParseToRFC3339(resp.Updated)
 	if err != nil {
 		c.Log.Warnf("Failed to parse updated_at into UTC : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse updated_at into UTC : %+v", err))
 	}
 
-	newXenditTransaction.Updated_At = parseUpdatedAt
+	newXenditTransaction.UpdatedAt = parseUpdatedAt
 	if err := c.XenditTransactionRepository.Create(tx, newXenditTransaction); err != nil {
 		c.Log.Warnf("Failed to insert xendit transaction into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "An error occurred on the server. Please try again later!")
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.XenditTransactionToResponse(*newXenditTransaction), nil
@@ -244,7 +236,7 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse updated_at into UTC : %+v", err))
 		}
 
-		newXenditTransaction.Updated_At = &parseUpdatedAt
+		newXenditTransaction.UpdatedAt = &parseUpdatedAt
 		updatePaymentStatus := map[string]any{
 			"status":     string(resp.Status),
 			"updated_at": parseUpdatedAt.Format(time.DateTime),

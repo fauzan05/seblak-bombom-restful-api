@@ -1,10 +1,11 @@
 CREATE TABLE orders (
     id INTEGER AUTO_INCREMENT,
     invoice VARCHAR(255) NOT NULL,
-    amount DECIMAL(15, 2) NOT NULL,
+    total_final_price DECIMAL(15, 2) NOT NULL,
+    total_product_price DECIMAL(15, 2) NOT NULL,
     discount_value FLOAT NULL,
     discount_type ENUM("nominal", "percent") NOT NULL,
-    total_discount FLOAT NULL,
+    total_discount DECIMAL(15, 2) NULL,
     user_id INTEGER NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -23,7 +24,7 @@ CREATE TABLE orders (
         "order_rejected"
     ) NOT NULL,
     is_delivery BOOLEAN NOT NULL,
-    delivery_cost FLOAT NOT NULL DEFAULT 0,
+    delivery_cost DECIMAL(15, 2) NOT NULL DEFAULT 0,
     complete_address TEXT NOT NULL,
     note TEXT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

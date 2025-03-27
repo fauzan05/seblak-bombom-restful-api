@@ -30,6 +30,8 @@ type XenditTransactionResponse struct {
 	QrString        string     `json:"qr_string,omitempty"`
 	Status          string     `json:"status"`
 	Description     string     `json:"description"`
+	FailureCode     string     `json:"failure_code"`
+	Metadata        []byte     `json:"metadata"`
 	ExpiresAt       *time.Time `json:"expires_at"`
 	CreatedAt       *time.Time `json:"created_at"`
 	UpdatedAt       *time.Time `json:"updated_at"`
