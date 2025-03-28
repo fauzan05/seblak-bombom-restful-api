@@ -12,8 +12,8 @@ type OrderProduct struct {
 	Category    string    `gorm:"column:category"`
 	Price       float32   `gorm:"column:price"`
 	Quantity    int       `gorm:"column:quantity"`
-	Created_At  time.Time `gorm:"column:created_at;autoCreateTime;<-:create"`
-	Updated_At  time.Time `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	CreatedAt   time.Time `gorm:"column:created_at;autoCreateTime;<-:create"`
+	UpdatedAt   time.Time `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	Order       *Order    `gorm:"foreignKey:order_id;references:id"`
 }
 

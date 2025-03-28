@@ -27,8 +27,8 @@ type Order struct {
 	Note              string                `gorm:"column:note"`
 	TotalProductPrice float32               `gorm:"column:total_product_price"`
 	TotalFinalPrice   float32               `gorm:"column:total_final_price"`
-	Created_At        time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
-	Updated_At        time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	CreatedAt        time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
+	UpdatedAt        time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	OrderProducts     []OrderProduct        `gorm:"foreignKey:order_id;references:id"`
 	XenditTransaction *XenditTransactions   `gorm:"foreignKey:order_id;references:id"`
 }

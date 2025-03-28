@@ -28,8 +28,8 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		Note:              order.Note,
 		TotalProductPrice: order.TotalProductPrice,
 		TotalFinalPrice:   order.TotalFinalPrice,
-		CreatedAt:         order.Created_At,
-		UpdatedAt:         order.Updated_At,
+		CreatedAt:         order.CreatedAt,
+		UpdatedAt:         order.UpdatedAt,
 		OrderProducts:     *OrderProductsToResponse(&order.OrderProducts),
 	}
 

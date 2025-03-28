@@ -201,7 +201,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 			newImages[i].FileName = hashedFilename
 			newImages[i].Type = file.Header.Get("Content-Type")
 			newImages[i].Position = position
-			newImages[i].Created_At = time.Now()
+			newImages[i].CreatedAt = time.Now()
 
 			// Simpan file ke direktori uploads
 			err := fiberContext.SaveFile(file, fmt.Sprintf("../uploads/images/products/%s", hashedFilename))
@@ -378,12 +378,12 @@ func MapProducts(rows []map[string]any, results *[]entity.Product) error {
 			}
 
 			newImage := entity.Image{
-				ID:         imageId,
-				FileName:   imageFilename,
-				Position:   imagePosition,
-				Type:       imageType,
-				Created_At: imageCreatedAt,
-				Updated_At: imageUpdatedAt,
+				ID:        imageId,
+				FileName:  imageFilename,
+				Position:  imagePosition,
+				Type:      imageType,
+				CreatedAt: imageCreatedAt,
+				UpdatedAt: imageUpdatedAt,
 			}
 
 			newImages = append(newImages, newImage)
@@ -422,8 +422,8 @@ func MapProducts(rows []map[string]any, results *[]entity.Product) error {
 			ID:          categoryId,
 			Name:        categoryName,
 			Description: categoryDesc,
-			Created_At:  categoryCreatedAt,
-			Updated_At:  categoryUpdatedAt,
+			CreatedAt:   categoryCreatedAt,
+			UpdatedAt:   categoryUpdatedAt,
 		}
 
 		// Ambil dan validasi product_id
@@ -471,8 +471,8 @@ func MapProducts(rows []map[string]any, results *[]entity.Product) error {
 			Description: productDesc,
 			Price:       float32(productPrice),
 			Stock:       productStock,
-			Created_At:  productCreatedAt,
-			Updated_At:  productUpdatedAt,
+			CreatedAt:   productCreatedAt,
+			UpdatedAt:   productUpdatedAt,
 			Category:    &newCategory,
 			Images:      newImages,
 		}

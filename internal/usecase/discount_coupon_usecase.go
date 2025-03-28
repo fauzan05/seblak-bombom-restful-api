@@ -301,8 +301,8 @@ func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) 
 			UsedCount:       discountCouponUsedCount,
 			MinOrderValue:   discountCouponMinOrderValue,
 			Status:          discountCouponStatus,
-			Created_At:      discountCouponCreatedAt,
-			Updated_At:      discountCouponUpdatedAt,
+			CreatedAt:      discountCouponCreatedAt,
+			UpdatedAt:      discountCouponUpdatedAt,
 		}
 
 		// Tambahkan ke hasil

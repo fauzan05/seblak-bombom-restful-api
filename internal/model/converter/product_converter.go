@@ -16,8 +16,8 @@ func ProductToResponse(product *entity.Product) *model.ProductResponse {
 		Description: product.Description,
 		Price:       product.Price,
 		Stock:       product.Stock,
-		CreatedAt:   product.Created_At,
-		UpdatedAt:   product.Updated_At,
+		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
 	}
 
 	if product.Category != nil {

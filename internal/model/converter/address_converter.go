@@ -11,8 +11,8 @@ func AddressToResponse(address *entity.Address) *model.AddressResponse {
 		CompleteAddress: address.CompleteAddress,
 		GoogleMapsLink: address.GoogleMapsLink,
 		IsMain: address.IsMain,
-		CreatedAt: address.Created_At,
-		UpdatedAt: address.Updated_At,
+		CreatedAt: address.CreatedAt,
+		UpdatedAt: address.UpdatedAt,
 	}
 
 	if address.Delivery != nil {

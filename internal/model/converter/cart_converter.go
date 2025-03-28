@@ -9,8 +9,8 @@ func CartToResponse(cart *entity.Cart) *model.CartResponse {
 	response := &model.CartResponse{
 		ID:        cart.ID,
 		UserID:    cart.UserID,
-		CreatedAt: cart.Created_At,
-		UpdatedAt: cart.Updated_At,
+		CreatedAt: cart.CreatedAt,
+		UpdatedAt: cart.UpdatedAt,
 	}
 
 	if cart.CartItems != nil {

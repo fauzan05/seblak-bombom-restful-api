@@ -14,9 +14,9 @@ type Product struct {
 	Description string          `gorm:"column:description"`
 	Price       float32         `gorm:"column:price"`
 	Stock       int             `gorm:"column:stock"`
-	Created_At  time.Time       `gorm:"column:created_at;autoCreateTime;<-:create"`
-	Updated_At  time.Time       `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
-	Deleted_At  gorm.DeletedAt  `gorm:"column:deleted_at"`
+	CreatedAt  time.Time       `gorm:"column:created_at;autoCreateTime;<-:create"`
+	UpdatedAt  time.Time       `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	DeletedAt  gorm.DeletedAt  `gorm:"column:deleted_at"`
 	Category    *Category       `gorm:"foreignKey:category_id;references:id"`
 	Images      []Image         `gorm:"foreignKey:product_id;references:id"`
 	Reviews     []ProductReview `gorm:"foreignKey:product_id;references:id"`

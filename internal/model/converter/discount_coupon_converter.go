@@ -20,8 +20,8 @@ func DiscountCouponToResponse(discount *entity.DiscountCoupon) *model.DiscountCo
 		TotalMaxUsage:   discount.TotalMaxUsage,
 		UsedCount:       discount.UsedCount,
 		MinOrderValue:   discount.MinOrderValue,
-		CreatedAt:       discount.Created_At,
-		UpdatedAt:       discount.Updated_At,
+		CreatedAt:       discount.CreatedAt,
+		UpdatedAt:       discount.UpdatedAt,
 	}
 }
 

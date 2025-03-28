@@ -129,7 +129,7 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 	newCategory.ID = request.ID
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
-	newCategory.Updated_At = time.Now().UTC()
+	newCategory.UpdatedAt = time.Now().UTC()
 	if err := c.CategoryRepository.Update(tx, newCategory); err != nil {
 		c.Log.Warnf("Failed to update category : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update category : %+v", err))
@@ -210,8 +210,8 @@ func MapCategories(rows []map[string]any, results *[]entity.Category) error {
 			ID:          categoryId,
 			Name:        categoryName,
 			Description: categoryDesc,
-			Created_At:  categoryCreatedAt,
-			Updated_At:  categoryUpdatedAt,
+			CreatedAt:  categoryCreatedAt,
+			UpdatedAt:  categoryUpdatedAt,
 		}
 
 		// Tambahkan ke hasil

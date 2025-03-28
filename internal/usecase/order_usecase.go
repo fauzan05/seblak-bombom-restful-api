@@ -111,7 +111,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		orderProducts = append(orderProducts, orderProduct)
 		newOrder.TotalFinalPrice += orderProduct.Price * float32(orderProduct.Quantity)
 	}
-	
+
 	newOrder.TotalProductPrice = newOrder.TotalFinalPrice
 	newOrder.DeliveryCost = 0
 	newOrder.IsDelivery = request.IsDelivery
@@ -201,7 +201,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway System!", request.PaymentMethod))
 		}
 	}
-	
+
 	newOrder.PaymentStatus = helper.PENDING_PAYMENT
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
@@ -291,7 +291,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	if newOrder.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT && newOrder.PaymentMethod == helper.PAYMENT_METHOD_QR_CODE {
 		newXenditQRCodeRequest := new(model.CreateXenditTransaction)
 		newXenditQRCodeRequest.OrderId = newOrder.ID
-		result, err := c.XenditTransactionQRCodeUseCase.Add(ctx, newXenditQRCodeRequest, tx);
+		result, err := c.XenditTransactionQRCodeUseCase.Add(ctx, newXenditQRCodeRequest, tx)
 		if err != nil {
 			c.Log.Warn(err)
 			return nil, err
