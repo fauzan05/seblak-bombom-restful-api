@@ -28,12 +28,14 @@ const (
 	FAILED_PAYMENT    PaymentStatus = "failed"    // Pembayaran gagal
 
 	// order status
-	ORDER_PENDING         OrderStatus = "pending_order"
-	ORDER_RECEIVED        OrderStatus = "order_received"
-	ORDER_BEING_DELIVERED OrderStatus = "order_being_delivered"
-	ORDER_DELIVERED       OrderStatus = "order_delivered"
-	READY_FOR_PICKUP      OrderStatus = "ready_for_pickup"
-	ORDER_REJECTED        OrderStatus = "order_rejected"
+	ORDER_PENDING                OrderStatus = "pending_order"
+	ORDER_RECEIVED               OrderStatus = "order_received"
+	ORDER_BEING_DELIVERED        OrderStatus = "order_being_delivered"
+	ORDER_DELIVERED              OrderStatus = "order_delivered"
+	READY_FOR_PICKUP             OrderStatus = "ready_for_pickup"
+	ORDER_REJECTED               OrderStatus = "order_rejected"
+	ORDER_CANCELLED              OrderStatus = "order_cancelled"
+	ORDER_CANCELLATION_REQUESTED OrderStatus = "order_cancellation_requested"
 
 	// discount type
 	NOMINAL DiscountType = "nominal"

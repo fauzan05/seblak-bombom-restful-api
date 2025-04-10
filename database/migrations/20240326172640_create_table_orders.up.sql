@@ -14,14 +14,16 @@ CREATE TABLE orders (
     payment_gateway VARCHAR(20) NOT NULL,
     payment_method VARCHAR(20) NOT NULL,
     channel_code VARCHAR(20) NOT NULL,
-    payment_status ENUM("cancelled", "unpaid", "pending", "paid") NOT NULL,
+    payment_status ENUM("cancelled", "unpaid", "pending", "paid", "expired", "failed") NOT NULL,
     order_status ENUM(
         "pending_order",
         "order_received",
         "order_being_delivered",
         "order_delivered",
         "ready_for_pickup",
-        "order_rejected"
+        "order_rejected",
+        "order_cancelled",
+        "order_cancellation_requested"
     ) NOT NULL,
     is_delivery BOOLEAN NOT NULL,
     delivery_cost DECIMAL(15, 2) NOT NULL DEFAULT 0,

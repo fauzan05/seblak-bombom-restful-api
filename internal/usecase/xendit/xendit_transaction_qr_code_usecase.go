@@ -226,7 +226,7 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to find xendit transaction : %+v", resErr.FullError()))
 	}
 
-	if newXenditTransaction.Status != string(resp.Status) {
+	if newXenditTransaction.Status != string(resp.Status) && newXenditTransaction.Status != string(payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED) {
 		// update status payment
 		hasPaymentStatusUpdated := false
 		newXenditTransaction.Status = string(resp.Status)
@@ -236,15 +236,15 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse updated_at into UTC : %+v", err))
 		}
 
+		order_status := ""
+
 		newXenditTransaction.UpdatedAt = &parseUpdatedAt
 		updatePaymentStatus := map[string]any{
 			"status":     string(resp.Status),
 			"updated_at": parseUpdatedAt.Format(time.DateTime),
 		}
 
-		xenditTransactionObj := new(entity.XenditTransactions)
-		xenditTransactionObj.ID = newXenditTransaction.ID
-		if err := c.XenditTransactionRepository.UpdateCustomColumns(tx, xenditTransactionObj, updatePaymentStatus); err != nil {
+		if err := c.XenditTransactionRepository.UpdateCustomColumns(tx, newXenditTransaction, updatePaymentStatus); err != nil {
 			c.Log.Warnf("Failed to update xendit transaction : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit transaction : %+v", err))
 		}
@@ -260,12 +260,21 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 			// not paid
 			newXenditTransaction.Order.PaymentStatus = helper.FAILED_PAYMENT
 			hasPaymentStatusUpdated = true
+			order_status = string(helper.ORDER_CANCELLED)
 		}
 
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_CANCELED {
 			// cancelled
 			newXenditTransaction.Order.PaymentStatus = helper.CANCELLED_PAYMENT
 			hasPaymentStatusUpdated = true
+			order_status = string(helper.ORDER_CANCELLED)
+		}
+
+		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_EXPIRED {
+			// expired
+			newXenditTransaction.Order.PaymentStatus = helper.EXPIRED_PAYMENT
+			hasPaymentStatusUpdated = true
+			order_status = string(helper.ORDER_CANCELLED)
 		}
 
 		if hasPaymentStatusUpdated {
@@ -273,6 +282,11 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 				"payment_status": newXenditTransaction.Order.PaymentStatus,
 				"updated_at":     time.Now().Format(time.DateTime),
 			}
+
+			if order_status != "" {
+				updatePaymentStatus["order_status"] = order_status
+			}
+
 			orderObj := new(entity.Order)
 			orderObj.ID = newXenditTransaction.Order.ID
 			if err := c.OrderRepository.UpdateCustomColumns(tx, orderObj, updatePaymentStatus); err != nil {
