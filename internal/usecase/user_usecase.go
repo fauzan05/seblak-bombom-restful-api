@@ -110,7 +110,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	return converter.UserToResponse(user), nil
 }
 
-func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequst) (*model.UserTokenResponse, error) {
+func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserTokenResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

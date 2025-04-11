@@ -43,7 +43,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 }
 
 func (c *UserController) Login(ctx *fiber.Ctx) error {
-	request := new(model.LoginUserRequst)
+	request := new(model.LoginUserRequest)
 	err := ctx.BodyParser(request)
 	if err != nil {
 		c.Log.Warnf("Cannot parse data : %+v", err)

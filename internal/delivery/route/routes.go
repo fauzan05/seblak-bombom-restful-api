@@ -113,12 +113,12 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Put("/addresses/:addressId", c.AddressController.Update)
 	auth.Delete("/addresses/:addressId", c.AddressController.Remove)
 
-	// order
+	// Order
 	auth.Post("/orders", c.OrderController.Create)
 	auth.Get("/orders/users/current", c.OrderController.GetAllCurrent)
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
 
-	// product review
+	// Product review
 	auth.Post("/reviews", c.ProductReviewController.Create)
 
 	// Midtrans
@@ -138,13 +138,13 @@ func (c *RouteConfig) SetupAuthRoute() {
 	api.Patch("/carts/cart-items/:cartItemId", c.CartController.Update)
 	api.Delete("/carts/cart-items/:cartItemId", c.CartController.Delete)
 
-	// order
+	// Order
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
 
-	// xendit payout
+	// Xendit payout
 	auth.Post("/xendit/payouts/:userId", c.XenditPayoutController.Create)
 
-	// payout
+	// Payout
 	auth.Post("/payouts/:userId", c.PayoutController.Create)
 }
 
@@ -153,7 +153,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	api := c.App.Group("/api")
 	auth := api.Use(c.AuthMiddleware, c.RoleMiddleware)
 
-	// category
+	// Category
 	auth.Post("/categories", c.CategoryController.Create)
 	auth.Put("/categories/:categoryId", c.CategoryController.Edit)
 	auth.Delete("/categories", c.CategoryController.Remove)
@@ -163,19 +163,19 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 	auth.Put("/products/:productId", c.ProductController.Edit)
 	auth.Delete("/products", c.ProductController.Remove)
 
-	// discount
+	// Discount
 	auth.Post("/discount-coupons", c.DiscountCouponController.Create)
 	auth.Put("/discount-coupons/:discountId", c.DiscountCouponController.Update)
 	auth.Delete("/discount-coupons", c.DiscountCouponController.Delete)
 
-	// delivery
+	// Delivery
 	auth.Post("/deliveries", c.DeliveryController.Create)
 	auth.Put("/deliveries/:deliveryId", c.DeliveryController.Update)
 	auth.Delete("/deliveries", c.DeliveryController.Remove)
 
-	// application
+	// Application
 	auth.Post("/applications", c.ApplicationController.Create) // add & update
 
-	// balance
+	// Balance
 	auth.Get("/balance", c.XenditPayoutController.GetAdminBalance)
 }

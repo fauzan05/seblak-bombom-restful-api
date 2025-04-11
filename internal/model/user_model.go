@@ -45,7 +45,7 @@ type UpdateUserPasswordRequest struct {
 	NewPasswordConfirm string `json:"new_password_confirm" validate:"required,max=100,eqfield=NewPassword"`
 }
 
-type LoginUserRequst struct {
+type LoginUserRequest struct {
 	Email    string `json:"email" validate:"required,max=100"`
 	Password string `json:"password" validate:"required,max=100"`
 }
