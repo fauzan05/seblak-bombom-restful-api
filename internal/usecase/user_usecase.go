@@ -63,7 +63,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	}
 
 	if total > 0 {
-		c.Log.Warnf("Email user has already exists!",)
+		c.Log.Warnf("Email user has already exists!")
 		return nil, fiber.NewError(fiber.StatusConflict, "Email user has already exists!")
 	}
 

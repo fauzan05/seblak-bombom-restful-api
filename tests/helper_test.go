@@ -63,10 +63,38 @@ func ClearUsers() {
 	}
 }
 
-func DoLogin(t *testing.T) string {
+func DoLoginAdmin(t *testing.T) string {
 	requestBody := model.LoginUserRequest{
 		Email:    "johndoe@email.com",
 		Password: "johndoe123",
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest(http.MethodPost, "/api/users/login", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.UserTokenResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.Token)
+
+	return responseBody.Data.Token
+}
+
+func DoLoginCustomer(t *testing.T) string {
+	requestBody := model.LoginUserRequest{
+		Email:    "customer1@email.com",
+		Password: "customer1",
 	}
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)

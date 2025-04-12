@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRegister(t *testing.T) {
+func TestRegisterAdmin(t *testing.T) {
 	ClearAll()
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
@@ -23,6 +23,43 @@ func TestRegister(t *testing.T) {
 		Phone:     "08123456789",
 		Password:  "johndoe123",
 		Role:      helper.ADMIN,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.UserResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, requestBody.FirstName, responseBody.Data.FirstName)
+	assert.Equal(t, requestBody.LastName, responseBody.Data.LastName)
+	assert.Equal(t, requestBody.Email, responseBody.Data.Email)
+	assert.Equal(t, requestBody.Phone, responseBody.Data.Phone)
+	assert.Equal(t, requestBody.Role, responseBody.Data.Role)
+	assert.NotNil(t, responseBody.Data.CreatedAt)
+	assert.NotNil(t, responseBody.Data.UpdatedAt)
+}
+
+func TestRegisterCustomer(t *testing.T) {
+	// ClearAll()
+	requestBody := model.RegisterUserRequest{
+		FirstName: "Customer",
+		LastName:  "1",
+		Email:     "customer1@email.com",
+		Phone:     "0982131244",
+		Password:  "customer1",
+		Role:      helper.CUSTOMER,
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -83,7 +120,7 @@ func TestRegisterError(t *testing.T) {
 
 func TestRegisterEmailDuplicate(t *testing.T) {
 	ClearAll()
-	TestRegister(t)
+	TestRegisterAdmin(t)
 
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
@@ -115,7 +152,7 @@ func TestRegisterEmailDuplicate(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	ClearAll()
-	TestRegister(t)
+	TestRegisterAdmin(t)
 
 	requestBody := model.LoginUserRequest{
 		Email:    "johndoe@email.com",
@@ -145,7 +182,7 @@ func TestLogin(t *testing.T) {
 
 func TestLoginFailed(t *testing.T) {
 	ClearAll()
-	TestRegister(t)
+	TestRegisterAdmin(t)
 
 	requestBody := model.LoginUserRequest{
 		Email:    "johndoe123@email.com",
@@ -223,8 +260,8 @@ func TestLogoutWrongAuthorization(t *testing.T) {
 
 func TestGetCurrentUser(t *testing.T) {
 	ClearAll()
-	TestRegister(t)
-	token := DoLogin(t)
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/users/current", nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -253,8 +290,8 @@ func TestGetCurrentUser(t *testing.T) {
 
 func TestGetCurrentUserFailed(t *testing.T) {
 	ClearAll()
-	TestRegister(t)
-	token := DoLogin(t)
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/users/current", nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -274,10 +311,10 @@ func TestGetCurrentUserFailed(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 }
 
-func TestChangePassword(t *testing.T) {
+func TestChangePasswordFailedConfirmation(t *testing.T) {
 	ClearAll()
-	TestRegister(t)
-	token := DoLogin(t)
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserPasswordRequest{
 		OldPassword: "johndoe123",
@@ -303,6 +340,139 @@ func TestChangePassword(t *testing.T) {
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.False(t, responseBody.Data)
+}
+
+func TestChangePassword(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	requestBody := model.UpdateUserPasswordRequest{
+		OldPassword: "johndoe123",
+		NewPassword: "testing123",
+		NewPasswordConfirm: "testing123",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest(http.MethodPatch, "/api/users/current/password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.True(t, responseBody.Data)
+}
+
+func TestChangePasswordOldPasswordIsWrong(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	requestBody := model.UpdateUserPasswordRequest{
+		OldPassword: "lala123",
+		NewPassword: "testing123",
+		NewPasswordConfirm: "testing123",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest(http.MethodPatch, "/api/users/current/password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.False(t, responseBody.Data)
+}
+
+func TestChangeProfile(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	requestBody := model.UpdateUserRequest{
+		FirstName: "john-test",
+		LastName: "doe-test",
+		Email: "johndoe-test@mail.com",
+		Phone: "99999999999",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest(http.MethodPatch, "/api/users/current", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.UserResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+}
+
+func TestChangeProfileEmailDuplicate(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	TestRegisterCustomer(t)
+	token := DoLoginCustomer(t)
+
+	requestBody := model.UpdateUserRequest{
+		FirstName: "john-test",
+		LastName: "doe-test",
+		Email: "johndoe@email.com",
+		Phone: "99999999999",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest(http.MethodPatch, "/api/users/current", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.UserResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusConflict, response.StatusCode)
 }

@@ -221,7 +221,7 @@ func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error 
 
 func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string, requestEmail string) (int64, error) {
 	var total int64
-	err := db.Model(&entity.User{}).Where("email = ? AND email != ?", requestEmail, currentEmail).Count(&total).Error
+	err := db.Model(&entity.User{}).Where("email = ?", requestEmail).Where("email != ?", currentEmail).Count(&total).Error
 	return total, err
 }
 
