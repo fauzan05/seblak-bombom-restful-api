@@ -118,3 +118,41 @@ func DoLoginCustomer(t *testing.T) string {
 
 	return responseBody.Data.Token
 }
+
+func DoCreateDelivery(t *testing.T) model.DeliveryResponse {
+	token := DoLoginAdmin(t)
+	requestBody := model.CreateDeliveryRequest{
+		City:     "Kebumen",
+		District: "Pejagoan",
+		Village:  "Peniron",
+		Hamlet:   "Jetis",
+		Cost:     5000,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest(http.MethodPost, "/api/deliveries", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.DeliveryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, responseBody.Data.City, requestBody.City)
+	assert.Equal(t, responseBody.Data.District, requestBody.District)
+	assert.Equal(t, responseBody.Data.Village, requestBody.Village)
+	assert.Equal(t, responseBody.Data.Hamlet, requestBody.Hamlet)
+	assert.Equal(t, responseBody.Data.Cost, requestBody.Cost)
+
+	return responseBody.Data
+}
