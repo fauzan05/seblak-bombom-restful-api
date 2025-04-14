@@ -109,9 +109,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// Address
 	auth.Post("/users/current/addresses", c.AddressController.Add)
 	auth.Get("/users/current/addresses", c.AddressController.GetAll)
-	auth.Get("/addresses/:addressId", c.AddressController.Get)
-	auth.Put("/addresses/:addressId", c.AddressController.Update)
-	auth.Delete("/addresses/:addressId", c.AddressController.Remove)
+	auth.Get("/users/current/addresses/:addressId", c.AddressController.Get)
+	auth.Put("/users/current/addresses/:addressId", c.AddressController.Update)
+	auth.Delete("/users/current/addresses/:addressId", c.AddressController.Remove)
 
 	// Order
 	auth.Post("/orders", c.OrderController.Create)
