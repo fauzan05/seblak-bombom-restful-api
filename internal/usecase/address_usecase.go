@@ -132,6 +132,13 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	}
 
 	newAddress := new(entity.Address)
+	if request.IsMain {
+		if err := c.AddressRepository.FindAndUpdateAddressToNonPrimary(tx, newAddress); err != nil {
+			c.Log.Warnf("Failed to update address is main to non-primary : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update address is main to non-primary : %+v", err))
+		}
+	}
+
 	newAddress.ID = request.ID
 	newAddress.UserId = request.UserId
 	newAddress.DeliveryId = request.DeliveryId
