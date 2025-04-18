@@ -467,3 +467,112 @@ func TestUpdateDiscountCouponByIdNotFound(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, response.StatusCode)
 }
+
+func TestDeleteDiscountCoupon(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := "2025-01-01T00:00:01Z"
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := "2025-12-30T23:59:59Z"
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+
+	var getAllIds string
+	for i := 1; i <= 5; i++ {
+		requestBody := model.CreateDiscountCouponRequest{
+			Name:            fmt.Sprintf("Diskon %+v", i),
+			Description:     fmt.Sprintf("Discount Description %+v", i),
+			Code:            fmt.Sprintf("ABC%+v", i),
+			Value:           15,
+			Type:            helper.PERCENT,
+			Start:           helper.TimeRFC3339(parseStart),
+			End:             helper.TimeRFC3339(parseEnd),
+			TotalMaxUsage:   100,
+			MaxUsagePerUser: 5,
+			UsedCount:       0,
+			MinOrderValue:   20000,
+			Status:          true,
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/discount-coupons", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBody := new(model.ApiResponse[model.DiscountCouponResponse])
+		err = json.Unmarshal(bytes, responseBody)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Equal(t, requestBody.Name, responseBody.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBody.Data.Description)
+		assert.Equal(t, requestBody.Code, responseBody.Data.Code)
+		assert.Equal(t, requestBody.Value, responseBody.Data.Value)
+		assert.Equal(t, requestBody.Type, responseBody.Data.Type)
+		assert.Equal(t, requestBody.Start, responseBody.Data.Start)
+		assert.Equal(t, requestBody.End, responseBody.Data.End)
+		assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
+		assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
+		assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
+		assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)
+		assert.Equal(t, requestBody.Status, responseBody.Data.Status)
+		assert.NotNil(t, responseBody.Data.CreatedAt)
+		assert.NotNil(t, responseBody.Data.UpdatedAt)
+
+		getAllIds += fmt.Sprintf("%+v,", responseBody.Data.ID)
+	}
+
+	request := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/discount-coupons?ids=%+v", getAllIds), nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyUpdate := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBodyUpdate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+}
+
+func TestDeleteDiscountCouponIdsNotValid(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	var getAllIds string = "b,s[];.,asd"
+
+	request := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/discount-coupons?ids=%+v", getAllIds), nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyUpdate := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBodyUpdate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+}
