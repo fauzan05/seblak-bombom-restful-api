@@ -16,6 +16,7 @@ import (
 )
 
 func ClearAll() {
+	ClearCategories()
 	ClearTokens()
 	ClearWallets()
 	ClearAddresses()
@@ -30,10 +31,18 @@ func ClearTokens() {
 		log.Fatalf("Failed clear token data : %+v", err)
 	}
 }
+
 func ClearCarts() {
 	err := db.Unscoped().Where("1 = 1").Delete(&entity.Cart{}).Error
 	if err != nil {
 		log.Fatalf("Failed clear cart data : %+v", err)
+	}
+}
+
+func ClearCategories() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.Category{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear categories data : %+v", err)
 	}
 }
 

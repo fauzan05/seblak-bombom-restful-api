@@ -19,8 +19,8 @@ type DiscountCouponResponse struct {
 	MaxUsagePerUser int                 `json:"max_usage_per_user"`
 	UsedCount       int                 `json:"used_count"`
 	MinOrderValue   int                 `json:"min_order_value"`
-	CreatedAt       time.Time           `json:"created_at"`
-	UpdatedAt       time.Time           `json:"updated_at"`
+	CreatedAt       helper.TimeRFC3339  `json:"created_at"`
+	UpdatedAt       helper.TimeRFC3339  `json:"updated_at"`
 }
 
 type CreateDiscountCouponRequest struct {

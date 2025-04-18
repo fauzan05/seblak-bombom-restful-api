@@ -2,18 +2,20 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 )
+
 // ubah entitiy image menjadi response image
 func ImageToResponse(image *entity.Image) *model.ImageResponse {
 	return &model.ImageResponse{
-		ID: image.ID,
+		ID:        image.ID,
 		ProductId: image.ProductId,
-		FileName: image.FileName,
-		Type: image.Type,
-		Position: image.Position,
-		CreatedAt:   image.CreatedAt,
-		UpdatedAt:   image.UpdatedAt,
+		FileName:  image.FileName,
+		Type:      image.Type,
+		Position:  image.Position,
+		CreatedAt: helper.TimeRFC3339(image.CreatedAt),
+		UpdatedAt: helper.TimeRFC3339(image.UpdatedAt),
 	}
 }
 

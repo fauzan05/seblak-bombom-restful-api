@@ -2,6 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -9,8 +10,8 @@ func CartToResponse(cart *entity.Cart) *model.CartResponse {
 	response := &model.CartResponse{
 		ID:        cart.ID,
 		UserID:    cart.UserID,
-		CreatedAt: cart.CreatedAt,
-		UpdatedAt: cart.UpdatedAt,
+		CreatedAt: helper.TimeRFC3339(cart.CreatedAt),
+		UpdatedAt: helper.TimeRFC3339(cart.UpdatedAt),
 	}
 
 	if cart.CartItems != nil {

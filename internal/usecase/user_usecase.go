@@ -55,7 +55,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %v", err))
 	}
 
-	user := &entity.User{}
+	user := new(entity.User)
 	total, err := c.UserRepository.UserCountByEmail(c.DB, user, request.Email)
 	if err != nil {
 		c.Log.Warnf("Failed to count users from database : %+v", err)
@@ -162,7 +162,7 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Token isn't valid : %+v", err))
 	}
-	
+
 	expiredDate := user.Token.ExpiryDate
 	if expiredDate.Before(time.Now()) {
 		c.Log.Warn("Token is expired!")

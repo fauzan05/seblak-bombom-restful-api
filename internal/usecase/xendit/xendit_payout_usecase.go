@@ -109,7 +109,7 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
 	newXenditPayout.Status = resp.Payout.GetStatus()
 	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
-	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+	newXenditPayout.EstimatedArrival = estimatedArrivalTime
 
 	if err := c.XenditPayoutRepository.Create(tx, newXenditPayout); err != nil {
 		c.Log.Warnf("Failed to insert xendit payout into database : %+v", err)
@@ -170,7 +170,7 @@ func (c *XenditPayoutUseCase) GetPayoutById(ctx *fiber.Ctx, request *model.GetPa
 	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
 	newXenditPayout.Status = resp.Payout.GetStatus()
 	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
-	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+	newXenditPayout.EstimatedArrival = estimatedArrivalTime
 
 	return converter.XenditPayoutToResponse(newXenditPayout), nil
 }
@@ -208,7 +208,7 @@ func (c *XenditPayoutUseCase) CancelPayout(ctx *fiber.Ctx, request *model.Cancel
 	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
 	newXenditPayout.Status = resp.Payout.GetStatus()
 	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
-	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+	newXenditPayout.EstimatedArrival = estimatedArrivalTime
 
 	return converter.XenditPayoutToResponse(newXenditPayout), nil
 }

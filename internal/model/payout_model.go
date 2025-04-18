@@ -1,9 +1,7 @@
 package model
 
 import (
-	// "database/sql"
 	"seblak-bombom-restful-api/internal/helper"
-	"time"
 )
 
 type CreatePayoutRequest struct {
@@ -24,6 +22,6 @@ type PayoutResponse struct {
 	Status         helper.PayoutStatus   `json:"status"`
 	Notes          string                `json:"notes"`
 	XenditPayout   *XenditPayoutResponse `json:"xendit_payout"`
-	CreatedAt      time.Time             `json:"created_at,omitempty"`
-	UpdatedAt      time.Time             `json:"updated_at,omitempty"`
+	CreatedAt      helper.TimeRFC3339    `json:"created_at,omitempty"`
+	UpdatedAt      helper.TimeRFC3339    `json:"updated_at,omitempty"`
 }

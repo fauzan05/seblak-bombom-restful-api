@@ -121,9 +121,9 @@ func (c *PayoutUseCase) Add(ctx *fiber.Ctx, request *model.CreatePayoutRequest) 
 		newPayout.XenditPayout.AccountNumber = xenditPayoutResponse.AccountNumber
 		newPayout.XenditPayout.AccountHolderName = xenditPayoutResponse.AccountHolderName
 		newPayout.XenditPayout.Status = xenditPayoutResponse.Status
-		newPayout.XenditPayout.CreatedAt = xenditPayoutResponse.CreatedAt
-		newPayout.XenditPayout.UpdatedAt = xenditPayoutResponse.UpdatedAt
-		newPayout.XenditPayout.EstimatedArrival = xenditPayoutResponse.EstimatedArrival
+		newPayout.XenditPayout.CreatedAt = helper.TimeRFC3339.ToTime(xenditPayoutResponse.CreatedAt)
+		newPayout.XenditPayout.UpdatedAt = helper.TimeRFC3339.ToTime(xenditPayoutResponse.UpdatedAt)
+		newPayout.XenditPayout.EstimatedArrival = helper.TimeRFC3339.ToTime(xenditPayoutResponse.EstimatedArrival)
 	}
 
 	if err := tx.Commit().Error; err != nil {

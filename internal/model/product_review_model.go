@@ -1,15 +1,17 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+)
 
 type ProductReviewResponse struct {
-	ID        uint64    `json:"id,omitempty"`
-	ProductId uint64    `json:"product_id,omitempty"`
-	UserId    uint64    `json:"user_id,omitempty"`
-	Rate      int       `json:"rate,omitempty"`
-	Comment   string    `json:"comment,omitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	ID        uint64             `json:"id"`
+	ProductId uint64             `json:"product_id"`
+	UserId    uint64             `json:"user_id"`
+	Rate      int                `json:"rate"`
+	Comment   string             `json:"comment"`
+	CreatedAt helper.TimeRFC3339 `json:"created_at"`
+	UpdatedAt helper.TimeRFC3339 `json:"updated_at"`
 }
 
 type CreateProductReviewRequest struct {

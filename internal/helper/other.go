@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -60,4 +61,24 @@ func SetFiberStatusCode(statusCode string) int {
 	}
 
 	return fiberErr.Code
+}
+
+type TimeRFC3339 time.Time
+
+func (t TimeRFC3339) MarshalJSON() ([]byte, error) {
+	stamp := time.Time(t).Format(time.RFC3339)
+	return []byte(`"` + stamp + `"`), nil
+}
+
+func (t *TimeRFC3339) UnmarshalJSON(b []byte) error {
+	parsed, err := time.Parse(`"`+time.RFC3339+`"`, string(b))
+	if err != nil {
+		return err
+	}
+	*t = TimeRFC3339(parsed)
+	return nil
+}
+
+func (t TimeRFC3339) ToTime() time.Time {
+	return time.Time(t)
 }

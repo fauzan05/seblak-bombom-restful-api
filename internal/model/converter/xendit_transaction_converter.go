@@ -2,6 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -20,9 +21,9 @@ func XenditTransactionToResponse(xenditTransaction entity.XenditTransactions) *m
 		Description:     xenditTransaction.Description,
 		FailureCode:     xenditTransaction.FailureCode,
 		Metadata:        xenditTransaction.Metadata,
-		ExpiresAt:       xenditTransaction.ExpiresAt,
-		CreatedAt:       xenditTransaction.CreatedAt,
-		UpdatedAt:       xenditTransaction.UpdatedAt,
+		ExpiresAt:       helper.TimeRFC3339(xenditTransaction.ExpiresAt),
+		CreatedAt:       helper.TimeRFC3339(xenditTransaction.CreatedAt),
+		UpdatedAt:       helper.TimeRFC3339(xenditTransaction.UpdatedAt),
 	}
 
 	return response

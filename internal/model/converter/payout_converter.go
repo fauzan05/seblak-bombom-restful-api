@@ -15,8 +15,8 @@ func PayoutToResponse(payout *entity.Payout) *model.PayoutResponse {
 		Method:         payout.Method,
 		Status:         payout.Status,
 		Notes:          payout.Notes,
-		CreatedAt:      payout.CreatedAt,
-		UpdatedAt:      payout.UpdatedAt,
+		CreatedAt:      helper.TimeRFC3339(payout.CreatedAt),
+		UpdatedAt:      helper.TimeRFC3339(payout.UpdatedAt),
 	}
 
 	if payout.XenditPayout != nil {

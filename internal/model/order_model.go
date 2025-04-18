@@ -2,7 +2,6 @@ package model
 
 import (
 	"seblak-bombom-restful-api/internal/helper"
-	"time"
 )
 
 type OrderResponse struct {
@@ -27,8 +26,8 @@ type OrderResponse struct {
 	Note              string                     `json:"note"`
 	TotalProductPrice float32                    `json:"total_product_price"`
 	TotalFinalPrice   float32                    `json:"total_final_price"`
-	CreatedAt         time.Time                  `json:"created_at"`
-	UpdatedAt         time.Time                  `json:"updated_at"`
+	CreatedAt         helper.TimeRFC3339         `json:"created_at"`
+	UpdatedAt         helper.TimeRFC3339         `json:"updated_at"`
 	OrderProducts     []OrderProductResponse     `json:"order_products"`
 	XenditTransaction *XenditTransactionResponse `json:"xendit_transaction_response,omitempty"`
 }
