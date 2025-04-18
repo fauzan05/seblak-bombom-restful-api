@@ -56,14 +56,47 @@ func TestCreateAddress(t *testing.T) {
 	}
 }
 
-func TestCreateAddressFailed(t *testing.T) {
+func TestCreateAddressDeliveryIdNotFound(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.AddressCreateRequest{
+		DeliveryId:      1,
 		CompleteAddress: "Complete Address",
 		GoogleMapsLink:  "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6",
+		IsMain:          true,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/current/addresses", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.AddressResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
+}
+
+func TestCreateAddressBadRequest(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	requestBody := model.AddressCreateRequest{
+		CompleteAddress: "",
+		DeliveryId:      0,
+		GoogleMapsLink:  "",
 		IsMain:          true,
 	}
 
@@ -166,7 +199,79 @@ func TestUpdateAddress(t *testing.T) {
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
 }
 
-func TestUpdateAddressFailed(t *testing.T) {
+func TestUpdateAddressDeliveryIdNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	var firstAddress model.AddressResponse
+	createDeliveryResponse := DoCreateDelivery(t, token)
+	for i := 1; i <= 3; i++ {
+		requestBody := model.AddressCreateRequest{
+			DeliveryId:      createDeliveryResponse.ID,
+			CompleteAddress: fmt.Sprintf("Complete Address %+v", i),
+			GoogleMapsLink:  "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6",
+			IsMain:          true,
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/users/current/addresses", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBody := new(model.ApiResponse[model.AddressResponse])
+		err = json.Unmarshal(bytes, responseBody)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Equal(t, requestBody.DeliveryId, responseBody.Data.Delivery.ID)
+		assert.Equal(t, requestBody.CompleteAddress, responseBody.Data.CompleteAddress)
+		assert.Equal(t, requestBody.GoogleMapsLink, responseBody.Data.GoogleMapsLink)
+		assert.Equal(t, requestBody.IsMain, responseBody.Data.IsMain)
+		assert.NotNil(t, responseBody.Data.CreatedAt)
+		assert.NotNil(t, responseBody.Data.UpdatedAt)
+
+		// ambil data pertama karena nantinya tidak akan menjadi is_main = true
+		if i == 1 {
+			firstAddress = responseBody.Data
+		}
+	}
+
+	updateAddress := new(model.UpdateAddressRequest)
+	updateAddress.CompleteAddress = "Complete Address Update"
+	updateAddress.DeliveryId = 1
+	updateAddress.GoogleMapsLink = "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6 Update"
+	updateAddress.IsMain = true
+
+	bodyJson, err := json.Marshal(updateAddress)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/users/current/addresses/%+v", firstAddress.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.AddressResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
+}
+
+func TestUpdateAddressBadRequest(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
@@ -236,6 +341,39 @@ func TestUpdateAddressFailed(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+}
+
+func TestUpdateAddressIdNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	createDeliveryResponse := DoCreateDelivery(t, token)
+
+	updateAddress := new(model.UpdateAddressRequest)
+	updateAddress.CompleteAddress = "Complete Address Update"
+	updateAddress.DeliveryId = createDeliveryResponse.ID
+	updateAddress.GoogleMapsLink = "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6 Update"
+	updateAddress.IsMain = true
+
+	bodyJson, err := json.Marshal(updateAddress)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/users/current/addresses/%+v", -99), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.AddressResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
 }
 
 func TestGetAllAddressByCurrentUser(t *testing.T) {
@@ -335,20 +473,20 @@ func TestGetAddressById(t *testing.T) {
 		bytes, err := io.ReadAll(response.Body)
 		assert.Nil(t, err)
 
-		responseBody := new(model.ApiResponse[model.AddressResponse])
-		err = json.Unmarshal(bytes, responseBody)
+		responseBodyCreated := new(model.ApiResponse[model.AddressResponse])
+		err = json.Unmarshal(bytes, responseBodyCreated)
 		assert.Nil(t, err)
 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
-		assert.Equal(t, requestBody.DeliveryId, responseBody.Data.Delivery.ID)
-		assert.Equal(t, requestBody.CompleteAddress, responseBody.Data.CompleteAddress)
-		assert.Equal(t, requestBody.GoogleMapsLink, responseBody.Data.GoogleMapsLink)
-		assert.Equal(t, requestBody.IsMain, responseBody.Data.IsMain)
-		assert.NotNil(t, responseBody.Data.CreatedAt)
-		assert.NotNil(t, responseBody.Data.UpdatedAt)
+		assert.Equal(t, requestBody.DeliveryId, responseBodyCreated.Data.Delivery.ID)
+		assert.Equal(t, requestBody.CompleteAddress, responseBodyCreated.Data.CompleteAddress)
+		assert.Equal(t, requestBody.GoogleMapsLink, responseBodyCreated.Data.GoogleMapsLink)
+		assert.Equal(t, requestBody.IsMain, responseBodyCreated.Data.IsMain)
+		assert.NotNil(t, responseBodyCreated.Data.CreatedAt)
+		assert.NotNil(t, responseBodyCreated.Data.UpdatedAt)
 
 		if i == 1 {
-			getAddress = responseBody.Data
+			getAddress = responseBodyCreated.Data
 		}
 	}
 
@@ -372,8 +510,8 @@ func TestGetAddressById(t *testing.T) {
 	assert.Equal(t, getAddress.CompleteAddress, responseBody.Data.CompleteAddress)
 	assert.Equal(t, getAddress.GoogleMapsLink, responseBody.Data.GoogleMapsLink)
 	assert.Equal(t, false, responseBody.Data.IsMain)
-	assert.NotNil(t, responseBody.Data.CreatedAt)
-	assert.NotNil(t, responseBody.Data.UpdatedAt)
+	assert.Equal(t, getAddress.CreatedAt, responseBody.Data.CreatedAt)
+	assert.Equal(t, getAddress.UpdatedAt, responseBody.Data.UpdatedAt)
 }
 
 func TestDeleteAddressByIds(t *testing.T) {

@@ -127,6 +127,18 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 
 	newCategory := new(entity.Category)
 	newCategory.ID = request.ID
+	// temukan category apakah ada 
+	count, err := c.CategoryRepository.FindAndCountById(tx, newCategory)
+	if err != nil {
+		c.Log.Warnf("Failed to find category by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find category by id : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("Category not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Category not found!")
+	}
+
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
 	newCategory.UpdatedAt = time.Now().UTC()
@@ -134,6 +146,7 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 		c.Log.Warnf("Failed to update category : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update category : %+v", err))
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))

@@ -2,7 +2,6 @@ package model
 
 import (
 	"seblak-bombom-restful-api/internal/helper"
-	"time"
 )
 
 type DiscountCouponResponse struct {
@@ -12,8 +11,8 @@ type DiscountCouponResponse struct {
 	Code            string              `json:"code"`
 	Value           float32             `json:"value"`
 	Type            helper.DiscountType `json:"type"`
-	Start           time.Time           `json:"start"`
-	End             time.Time           `json:"end"`
+	Start           helper.TimeRFC3339  `json:"start"`
+	End             helper.TimeRFC3339  `json:"end"`
 	Status          bool                `json:"status"`
 	TotalMaxUsage   int                 `json:"total_max_usage"`
 	MaxUsagePerUser int                 `json:"max_usage_per_user"`
@@ -29,8 +28,8 @@ type CreateDiscountCouponRequest struct {
 	Code            string              `json:"code" validate:"required,max=100"`
 	Value           float32             `json:"value" validate:"required"`
 	Type            helper.DiscountType `json:"type" validate:"required"`
-	Start           string              `json:"start" validate:"required"`
-	End             string              `json:"end" validate:"required"`
+	Start           helper.TimeRFC3339  `json:"start" validate:"required"`
+	End             helper.TimeRFC3339  `json:"end" validate:"required"`
 	TotalMaxUsage   int                 `json:"total_max_usage" validate:"required"`
 	MaxUsagePerUser int                 `json:"max_usage_per_user" validate:"required"`
 	UsedCount       int                 `json:"used_count"`
@@ -49,8 +48,8 @@ type UpdateDiscountCouponRequest struct {
 	Code            string              `json:"code" validate:"required,max=100"`
 	Value           float32             `json:"value" validate:"required"`
 	Type            helper.DiscountType `json:"type" validate:"required"`
-	Start           string              `json:"start" validate:"required"`
-	End             string              `json:"end" validate:"required"`
+	Start           helper.TimeRFC3339  `json:"start" validate:"required"`
+	End             helper.TimeRFC3339  `json:"end" validate:"required"`
 	TotalMaxUsage   int                 `json:"total_max_usage" validate:"required"`
 	MaxUsagePerUser int                 `json:"max_usage_per_user" validate:"required"`
 	UsedCount       int                 `json:"used_count"`

@@ -56,11 +56,16 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 
 	newDelivery := new(entity.Delivery)
 	newDelivery.ID = request.DeliveryId
-
 	// cek apakah delivery id ada
-	if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
+	count, err := c.DeliveryRepository.FindAndCountById(tx, newDelivery)
+	if err != nil {
 		c.Log.Warnf("Failed to find delivery by id : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find delivery by id : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("Delivery not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Delivery not found!")
 	}
 
 	if newDelivery.City == "" {
@@ -132,6 +137,32 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	}
 
 	newAddress := new(entity.Address)
+	newAddress.ID = request.ID
+	count, err := c.AddressRepository.FindAndCountById(tx, newAddress)
+	if err != nil {
+		c.Log.Warnf("Failed to find address by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find address by id : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("Address Not Found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Address Not Found!")
+	}
+
+	newDelivery := new(entity.Delivery)
+	newDelivery.ID = request.DeliveryId
+	// cek apakah delivery id ada
+	count, err = c.DeliveryRepository.FindAndCountById(tx, newDelivery)
+	if err != nil {
+		c.Log.Warnf("Failed to find delivery by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find delivery by id : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("Delivery not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Delivery not found!")
+	}
+
 	if request.IsMain {
 		if err := c.AddressRepository.FindAndUpdateAddressToNonPrimary(tx, newAddress); err != nil {
 			c.Log.Warnf("Failed to update address is main to non-primary : %+v", err)
@@ -139,7 +170,6 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 		}
 	}
 
-	newAddress.ID = request.ID
 	newAddress.UserId = request.UserId
 	newAddress.DeliveryId = request.DeliveryId
 	newAddress.CompleteAddress = request.CompleteAddress

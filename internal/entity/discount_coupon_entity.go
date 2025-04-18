@@ -19,8 +19,8 @@ type DiscountCoupon struct {
 	UsedCount       int                 `gorm:"column:used_count"`
 	MinOrderValue   int                 `gorm:"column:min_order_value"`
 	Status          bool                `gorm:"column:status"` // enable/disable = true/false
-	CreatedAt      time.Time           `gorm:"column:created_at;autoCreateTime;<-:create"`
-	UpdatedAt      time.Time           `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	CreatedAt       time.Time           `gorm:"column:created_at;autoCreateTime;<-:create"`
+	UpdatedAt       time.Time           `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }
 
 func (c *DiscountCoupon) TableName() string {

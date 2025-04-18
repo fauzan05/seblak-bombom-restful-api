@@ -48,7 +48,7 @@ func TestCreateCategory(t *testing.T) {
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
 }
 
-func TestCreateCategoryFailed(t *testing.T) {
+func TestCreateCategoryBadRequest(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
@@ -172,7 +172,7 @@ func TestUpdateCategory(t *testing.T) {
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
 }
 
-func TestUpdateCategoryFailed(t *testing.T) {
+func TestUpdateCategoryBadRequest(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
@@ -230,30 +230,36 @@ func TestUpdateCategoryFailed(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+}
 
-	requestBodyUpdate = model.UpdateCategoryRequest{
-		Name:        "Makanan",
-		Description: "Ini adalah makanan",
+func TestUpdateCategoryNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	requestBodyUpdate := model.UpdateCategoryRequest{
+		Name:        "Category New",
+		Description: "Desc NEw",
 	}
 
-	bodyJson, err = json.Marshal(requestBodyUpdate)
+	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
-	request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/categories/%+v", 0), strings.NewReader(string(bodyJson)))
+	request := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/categories/%+v", -9), strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err = app.Test(request)
+	response, err := app.Test(request)
 	assert.Nil(t, err)
 
-	bytes, err = io.ReadAll(response.Body)
+	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody = new(model.ApiResponse[model.CategoryResponse])
+	responseBody := new(model.ApiResponse[model.CategoryResponse])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
-	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
 }
 
 func TestGetCategoryById(t *testing.T) {

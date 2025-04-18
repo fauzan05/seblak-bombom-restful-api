@@ -7,15 +7,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func ClearAll() {
+	ClearDiscountUsages()
+	ClearDiscountCoupons()
 	ClearCategories()
 	ClearTokens()
 	ClearWallets()
@@ -23,6 +27,20 @@ func ClearAll() {
 	ClearDeliveries()
 	ClearCarts()
 	ClearUsers()
+}
+
+func ClearDiscountCoupons() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.DiscountCoupon{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear discount coupons data : %+v", err)
+	}
+}
+
+func ClearDiscountUsages() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.DiscountUsage{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear discount usages data : %+v", err)
+	}
 }
 
 func ClearTokens() {
@@ -167,38 +185,38 @@ func DoCreateDelivery(t *testing.T, token string) model.DeliveryResponse {
 	return responseBody.Data
 }
 
-func DoCreateManyDelivery(t *testing.T) string {
+func DoCreateManyDelivery(t *testing.T, totalData int) string {
 	token := DoLoginAdmin(t)
 	totalIds := ""
 
-	for i := 1; i<=5; i++ {
+	for i := 1; i <= totalData; i++ {
 		cost := 5000 * float32(i)
 		requestBody := model.CreateDeliveryRequest{
 			City:     fmt.Sprintf("Kebumen %+v", i),
-			District: fmt.Sprintf("Pejagoan %+v", i) ,
+			District: fmt.Sprintf("Pejagoan %+v", i),
 			Village:  fmt.Sprintf("Peniron %+v", i),
 			Hamlet:   fmt.Sprintf("Jetis %+v", i),
 			Cost:     cost,
 		}
-	
+
 		bodyJson, err := json.Marshal(requestBody)
 		assert.Nil(t, err)
-	
+
 		request := httptest.NewRequest(http.MethodPost, "/api/deliveries", strings.NewReader(string(bodyJson)))
 		request.Header.Set("Content-Type", "application/json")
 		request.Header.Set("Accept", "application/json")
 		request.Header.Set("Authorization", token)
-	
+
 		response, err := app.Test(request)
 		assert.Nil(t, err)
-	
+
 		bytes, err := io.ReadAll(response.Body)
 		assert.Nil(t, err)
-	
+
 		responseBody := new(model.ApiResponse[model.DeliveryResponse])
 		err = json.Unmarshal(bytes, responseBody)
 		assert.Nil(t, err)
-	
+
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.Equal(t, responseBody.Data.City, requestBody.City)
 		assert.Equal(t, responseBody.Data.District, requestBody.District)
@@ -211,4 +229,75 @@ func DoCreateManyDelivery(t *testing.T) string {
 	}
 
 	return totalIds
+}
+
+func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, returnDataByI int) *model.DiscountCouponResponse {
+	start := "2025-01-01T00:00:01Z"
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := "2025-12-30T23:59:59Z"
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+
+	// Ubah waktu ke WIB
+	startWIB := parseStart.Local()
+	endWIB := parseEnd.Local()
+
+	var getDiscountCoupon *model.DiscountCouponResponse
+	for i := 1; i <= totalData; i++ {
+		requestBody := model.CreateDiscountCouponRequest{
+			Name:            fmt.Sprintf("Diskon %+v", i),
+			Description:     fmt.Sprintf("Discount Description %+v", i),
+			Code:            fmt.Sprintf("ABC%+v", i),
+			Value:           15,
+			Type:            helper.PERCENT,
+			Start:           helper.TimeRFC3339(startWIB),
+			End:             helper.TimeRFC3339(endWIB),
+			TotalMaxUsage:   100,
+			MaxUsagePerUser: 5,
+			UsedCount:       0,
+			MinOrderValue:   20000,
+			Status:          true,
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/discount-coupons", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBody := new(model.ApiResponse[model.DiscountCouponResponse])
+		err = json.Unmarshal(bytes, responseBody)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Equal(t, requestBody.Name, responseBody.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBody.Data.Description)
+		assert.Equal(t, requestBody.Code, responseBody.Data.Code)
+		assert.Equal(t, requestBody.Value, responseBody.Data.Value)
+		assert.Equal(t, requestBody.Type, responseBody.Data.Type)
+		assert.Equal(t, requestBody.Start.ToTime(), responseBody.Data.Start.ToTime())
+		assert.Equal(t, requestBody.End.ToTime(), responseBody.Data.End.ToTime())
+		assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
+		assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
+		assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
+		assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)
+		assert.Equal(t, requestBody.Status, responseBody.Data.Status)
+		assert.NotNil(t, responseBody.Data.CreatedAt)
+		assert.NotNil(t, responseBody.Data.UpdatedAt)
+
+		if i == returnDataByI {
+			getDiscountCoupon = &responseBody.Data
+		}
+	}
+
+	return getDiscountCoupon
 }
