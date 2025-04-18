@@ -6,7 +6,6 @@ import (
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/repository"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -69,7 +68,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 		// update datanya
 		if newXenditTransaction.Status != request.Data.Status {
 			// update statusnya
-			updatedAt := request.Data.UpdatedAt.Format(time.DateTime)
+			updatedAt := request.Data.UpdatedAt
 			status := request.Data.Status
 			orderId := newXenditTransaction.OrderId
 			updateXenditTransaction := map[string]any{
@@ -151,7 +150,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 		// update datanya
 		if newXenditPayout.Status != request.Data.Status {
 			// update statusnya
-			updatedAt := request.Data.UpdatedAt.Format(time.DateTime)
+			updatedAt := request.Data.UpdatedAt
 			status := request.Data.Status
 			updateXenditPayout := map[string]any{
 				"status":     status,

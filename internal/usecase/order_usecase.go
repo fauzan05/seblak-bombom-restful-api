@@ -316,9 +316,9 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newXenditTransaction.Description = result.Description
 		newXenditTransaction.FailureCode = result.FailureCode
 		newXenditTransaction.Metadata = result.Metadata
-		newXenditTransaction.ExpiresAt = result.ExpiresAt
-		newXenditTransaction.CreatedAt = result.CreatedAt
-		newXenditTransaction.UpdatedAt = result.UpdatedAt
+		newXenditTransaction.ExpiresAt = helper.TimeRFC3339.ToTime(result.ExpiresAt)
+		newXenditTransaction.CreatedAt = helper.TimeRFC3339.ToTime(result.CreatedAt)
+		newXenditTransaction.UpdatedAt = helper.TimeRFC3339.ToTime(result.UpdatedAt)
 
 		newOrder.XenditTransaction = newXenditTransaction
 	}

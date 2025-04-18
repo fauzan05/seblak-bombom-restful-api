@@ -406,10 +406,10 @@ func TestDeleteCategoryById(t *testing.T) {
 		assert.Equal(t, requestBody.Description, responseBodyCreate.Data.Description)
 		assert.NotNil(t, responseBodyCreate.Data.CreatedAt)
 		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
-		getAllIds += fmt.Sprintf("%+v,", responseBodyCreate.Data.ID) 
+		getAllIds += fmt.Sprintf("%+v,", responseBodyCreate.Data.ID)
 	}
 
-	request := httptest.NewRequest(http.MethodDelete, "/api/categories?ids=" + getAllIds, nil)
+	request := httptest.NewRequest(http.MethodDelete, "/api/categories?ids="+getAllIds, nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
@@ -425,4 +425,28 @@ func TestDeleteCategoryById(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
+}
+
+func TestDeleteCategories(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	getAllIds := "3,s,r,t,"
+	request := httptest.NewRequest(http.MethodDelete, "/api/categories?ids="+getAllIds, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 }
