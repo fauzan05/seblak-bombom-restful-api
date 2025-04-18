@@ -1,9 +1,14 @@
 package tests
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"seblak-bombom-restful-api/internal/entity"
@@ -300,4 +305,66 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 	}
 
 	return getDiscountCoupon
+}
+
+func DoCreateCategory(t *testing.T, token string, categoryName string, categoryDesc string) *model.CategoryResponse {
+	requestBody := model.CreateProductRequest{
+		Name:        categoryName,
+		Description: categoryDesc,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/categories", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.CategoryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, requestBody.Name, responseBody.Data.Name)
+	assert.Equal(t, requestBody.Description, responseBody.Data.Description)
+	assert.NotNil(t, responseBody.Data.CreatedAt)
+	assert.NotNil(t, responseBody.Data.UpdatedAt)
+
+	return &responseBody.Data
+}
+
+func GenerateDummyJPEG(sizeInBytes int) (filename string, content []byte, err error) {
+	// Estimasi kasar dimensi berdasarkan ukuran (JPEG compress, jadi ini bukan ukuran pasti)
+	// Makin besar dimensi, makin besar file
+	scale := int(math.Sqrt(float64(sizeInBytes) / 3)) // 3 byte per pixel (RGB)
+	width := scale
+	height := scale
+
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	// Warna putih polos
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			img.Set(x, y, color.White)
+		}
+	}
+
+	var buf bytes.Buffer
+	err = jpeg.Encode(&buf, img, &jpeg.Options{Quality: 80}) // Bisa ganti quality
+	if err != nil {
+		return "", nil, err
+	}
+
+	// Tambahkan padding kalau masih kurang
+	for buf.Len() < sizeInBytes {
+		buf.WriteByte(0) // dummy padding
+	}
+
+	filename = fmt.Sprintf("dummy_%d.jpg", sizeInBytes)
+	return filename, buf.Bytes(), nil
 }

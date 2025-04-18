@@ -56,6 +56,20 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		return nil, fiber.NewError(fiber.StatusBadRequest, "Stock must be positive number!")
 	}
 
+	// cek apakah catgory-nya ada
+	newCategory := new(entity.Category)
+	newCategory.ID = request.CategoryId
+	count, err := c.CategoryRepository.FindAndCountById(tx, newCategory)
+	if err != nil {
+		c.Log.Warnf("Failed to find category from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find category from database : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("Category not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Category not found!")
+	}
+
 	newProduct := new(entity.Product)
 	newProduct.CategoryId = request.CategoryId
 	newProduct.Name = request.Name
@@ -73,6 +87,21 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find product by id from database : %+v", err))
 	}
 
+	if len(files) == 0 {
+		c.Log.Warnf("Images must be uploaded!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Images must be uploaded!")
+	}
+
+	if len(positions) == 0 {
+		c.Log.Warnf("Image position must be included!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Image position must be included!")
+	}
+
+	if len(files) != len(positions) {
+		c.Log.Warnf("Each uploaded image must have a corresponding position!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Each uploaded image must have a corresponding position!")
+	}
+
 	newImages := make([]entity.Image, len(files))
 
 	for i, file := range files {
@@ -83,6 +112,7 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		newImages[i].ProductId = newProduct.ID
 		newImages[i].FileName = hashedFilename
 		newImages[i].Type = file.Header.Get("Content-Type")
+		fmt.Println("CONTENT TYPE : ", file.Header.Get("Content-Type"))
 		newImages[i].Position = position
 
 		// Simpan file ke direktori uploads
