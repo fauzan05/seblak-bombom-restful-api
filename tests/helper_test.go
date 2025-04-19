@@ -23,15 +23,31 @@ import (
 )
 
 func ClearAll() {
+	ClearImages()
+	ClearProducts()
+	ClearCategories()
 	ClearDiscountUsages()
 	ClearDiscountCoupons()
-	ClearCategories()
 	ClearTokens()
 	ClearWallets()
 	ClearAddresses()
 	ClearDeliveries()
 	ClearCarts()
 	ClearUsers()
+}
+
+func ClearImages() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.Image{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear images data : %+v", err)
+	}
+}
+
+func ClearProducts() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.Product{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear products data : %+v", err)
+	}
 }
 
 func ClearDiscountCoupons() {
@@ -355,7 +371,7 @@ func GenerateDummyJPEG(sizeInBytes int) (filename string, content []byte, err er
 	}
 
 	var buf bytes.Buffer
-	err = jpeg.Encode(&buf, img, &jpeg.Options{Quality: 80}) // Bisa ganti quality
+	err = jpeg.Encode(&buf, img, &jpeg.Options{Quality: 10}) // Bisa ganti quality
 	if err != nil {
 		return "", nil, err
 	}

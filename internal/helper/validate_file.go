@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func validateFile(maxFileSizeRequest int, file *multipart.FileHeader) error {
+func ValidateFile(maxFileSizeRequest int, file *multipart.FileHeader) error {
 	// Batas ukuran file
 	var maxFileSize = maxFileSizeRequest << 20
 
@@ -15,7 +15,7 @@ func validateFile(maxFileSizeRequest int, file *multipart.FileHeader) error {
 	}
 
 	// Validasi MIME type
-	validMIMETypes := []string{"image/jpeg", "image/png", "image/gif"}
+	validMIMETypes := []string{"image/jpeg", "image/png", "image/gif", "image/jpg", "image/webp"}
 	fileType := file.Header.Get("Content-Type")
 	isValidType := false
 	for _, validType := range validMIMETypes {
@@ -26,7 +26,7 @@ func validateFile(maxFileSizeRequest int, file *multipart.FileHeader) error {
 	}
 
 	if !isValidType {
-		return fmt.Errorf("file type isn't valid, just only JPEG, PNG, and GIF are allowed")
+		return fmt.Errorf("file type isn't valid, just only JPEG, PNG, JPG, WEBP and GIF are allowed")
 	}
 
 	return nil
