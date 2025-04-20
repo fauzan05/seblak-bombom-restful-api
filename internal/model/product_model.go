@@ -21,8 +21,8 @@ type CreateProductRequest struct {
 	CategoryId  uint64  `json:"category_id" validate:"required"`
 	Name        string  `json:"name" validate:"required,max=100"`
 	Description string  `json:"description" validate:"required"`
-	Price       float32 `json:"price" validate:"required"`
-	Stock       int     `json:"stock" validate:"required"`
+	Price       float32 `json:"price"`
+	Stock       int     `json:"stock"`
 }
 
 type GetProductRequest struct {
@@ -34,8 +34,8 @@ type UpdateProductRequest struct {
 	CategoryId  uint64  `json:"category_id" validate:"required"`
 	Name        string  `json:"name" validate:"required,max=100"`
 	Description string  `json:"description" validate:"required"`
-	Price       float32 `json:"price" validate:"required"`
-	Stock       int     `json:"stock" validate:"required"`
+	Price       float32 `json:"price"`
+	Stock       int     `json:"stock"`
 }
 
 type DeleteProductRequest struct {

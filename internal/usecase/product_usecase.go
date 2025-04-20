@@ -57,6 +57,11 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		return nil, fiber.NewError(fiber.StatusBadRequest, "stock must be positive number!")
 	}
 
+	if request.Price < 0 {
+		c.Log.Warnf("price must be positive number!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "price must be positive number!")
+	}
+
 	if len(positions) == 0 {
 		c.Log.Warnf("image position must be included!")
 		return nil, fiber.NewError(fiber.StatusBadRequest, "image position must be included!")
@@ -87,8 +92,8 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 	}
 
 	if count == 0 {
-		c.Log.Warnf("category not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "category not found!")
+		c.Log.Warnf("category is not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "category is not found!")
 	}
 
 	newProduct := new(entity.Product)
@@ -138,6 +143,11 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 	if err := c.ImageRepository.CreateInBatch(tx, &newImages); err != nil {
 		c.Log.Warnf("failed to save images file_name into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save images file_name into database : %+v", err))
+	}
+
+	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
+		c.Log.Warnf("failed to get product from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get product from database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -216,8 +226,54 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
+	if request.Stock < 0 {
+		c.Log.Warnf("stock must be positive number!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "stock must be positive number!")
+	}
+
+	if request.Price < 0 {
+		c.Log.Warnf("price must be positive number!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "price must be positive number!")
+	}
+
+	// cek apakah jumlah new image file itu sama dengan jumlah new image position
+	if len(newImageFiles) > 0 && len(newImageFiles) != len(newImagePositions) {
+		c.Log.Warnf("each new uploaded image must have a corresponding position!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "each new uploaded image must have a corresponding position!")
+	}
+
+	// cek apakah gambarnya melebihi 5
+	if (len(newImageFiles) + len(updateCurrentImages.Images)) > 5 {
+		c.Log.Warnf("you can upload up to 5 images only!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "you can upload up to 5 images only!")
+	}
+
+	newCategory := new(entity.Category)
+	newCategory.ID = request.CategoryId
+	count, err := c.CategoryRepository.FindAndCountById(tx, newCategory)
+	if err != nil {
+		c.Log.Warnf("failed to find category from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find category from database : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("category is not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "category is not found!")
+	}
+
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ID
+	count, err = c.ProductRepository.FindAndCountById(tx, newProduct)
+	if err != nil {
+		c.Log.Warnf("failed to find product from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product from database : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("product is not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "product is not found!")
+	}
+
 	newProduct.CategoryId = request.CategoryId
 	newProduct.Name = request.Name
 	newProduct.Description = request.Description
@@ -234,6 +290,12 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 		newImages := make([]entity.Image, len(newImageFiles))
 
 		for i, file := range newImageFiles {
+			err = helper.ValidateFile(1, file)
+			if err != nil {
+				c.Log.Warnf(err.Error())
+				return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+			}
+			 
 			// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
 			hashedFilename := hashFileName(file.Filename)
 			var position, _ = strconv.Atoi(newImagePositions[i])
@@ -287,6 +349,11 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 				ID: deletedImage.ID,
 			}
 
+			if err := c.ImageRepository.FindById(tx, &deleteImage); err != nil {
+				c.Log.Warnf("failed to find current image data in the database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find current image data in the database : %+v", err))
+			}
+
 			if err := c.ImageRepository.Delete(tx, &deleteImage); err != nil {
 				c.Log.Warnf("failed to delete current image data in the database : %+v", err)
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete current image data in the database : %+v", err))
@@ -300,7 +367,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 		}
 	}
 
-	if err := c.ProductRepository.FindWithJoins(tx, newProduct, "Category"); err != nil {
+	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
 		c.Log.Warnf("failed to get product from database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get product from database : %+v", err))
 	}

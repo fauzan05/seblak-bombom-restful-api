@@ -9,8 +9,12 @@ import (
 	"image/jpeg"
 	"io"
 	"math"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/textproto"
+	"os"
+	"path/filepath"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
@@ -23,6 +27,7 @@ import (
 )
 
 func ClearAll() {
+	DeleteAllProductImages()
 	ClearImages()
 	ClearProducts()
 	ClearCategories()
@@ -383,4 +388,94 @@ func GenerateDummyJPEG(sizeInBytes int) (filename string, content []byte, err er
 
 	filename = fmt.Sprintf("dummy_%d.jpg", sizeInBytes)
 	return filename, buf.Bytes(), nil
+}
+
+func DeleteAllProductImages() {
+	folderPath := "../uploads/images/products/"
+
+	files, err := os.ReadDir(folderPath)
+	if err != nil {
+		log.Fatalf("Failed to read directory: %v", err)
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			err := os.Remove(filepath.Join(folderPath, file.Name()))
+			if err != nil {
+				log.Printf("Failed to delete file %s: %v", file.Name(), err)
+			}
+		}
+	}
+}
+
+func DoCreateProduct(t *testing.T, token string, totalData int, getProductByIndex int) model.ProductResponse {
+	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
+	var getProduct model.ProductResponse
+	for i := 1; i <= totalData; i++ {
+		// Simulasi multipart body
+		var b bytes.Buffer
+		writer := multipart.NewWriter(&b)
+
+		// Tambahkan field JSON sebagai string field biasa
+		_ = writer.WriteField("category_id", fmt.Sprintf("%d", createCategory.ID))
+		_ = writer.WriteField("name", fmt.Sprintf("Produk %d", i))
+		_ = writer.WriteField("description", fmt.Sprintf("Ini adalah produk %d", i))
+		_ = writer.WriteField("price", fmt.Sprintf("2500%d", i))
+		_ = writer.WriteField("stock", fmt.Sprintf("100%d", i))
+		positions := []int{1, 2, 3}
+		for _, pos := range positions {
+			_ = writer.WriteField("positions", fmt.Sprintf("%d", pos))
+		}
+
+		// Buat file image dummy
+		for i := 1; i <= 3; i++ {
+			filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
+			assert.Nil(t, err)
+
+			partHeader := textproto.MIMEHeader{}
+			partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="images"; filename="%s"`, filename))
+			partHeader.Set("Content-Type", "image/jpeg")
+
+			fileWriter, err := writer.CreatePart(partHeader)
+			assert.Nil(t, err)
+
+			_, err = fileWriter.Write(content)
+			assert.Nil(t, err)
+		}
+
+		writer.Close()
+
+		request := httptest.NewRequest(http.MethodPost, "/api/products", &b)
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBody := new(model.ApiResponse[model.ProductResponse])
+		err = json.Unmarshal(bytes, responseBody)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Equal(t, createCategory.ID, responseBody.Data.Category.ID)
+		assert.Equal(t, fmt.Sprintf("Produk %d", i), responseBody.Data.Name)
+		assert.Equal(t, fmt.Sprintf("Ini adalah produk %d", i), responseBody.Data.Description)
+		convertPriceToFloat32, err := strconv.Atoi(fmt.Sprintf("2500%d", i))
+		assert.Nil(t, err)
+		assert.Equal(t, float32(convertPriceToFloat32), responseBody.Data.Price)
+		convertStockToInt, err := strconv.Atoi(fmt.Sprintf("100%d", i))
+		assert.Nil(t, err)
+		assert.Equal(t, convertStockToInt, responseBody.Data.Stock)
+		assert.NotNil(t, responseBody.Data.CreatedAt)
+		assert.NotNil(t, responseBody.Data.UpdatedAt)
+
+		if i == getProductByIndex {
+			getProduct = responseBody.Data
+		}
+	}
+
+	return getProduct
 }

@@ -41,9 +41,18 @@ func (c *ProductController) Create(ctx *fiber.Ctx) error {
 	request.CategoryId = categoryID
 	request.Name = form.Value["name"][0]
 	request.Description = form.Value["description"][0]
-	parsePrice64, _ := strconv.ParseFloat(form.Value["price"][0], 64)
+	parsePrice64, err := strconv.ParseFloat(form.Value["price"][0], 64)
+	if err != nil {
+		c.Log.Warnf("Invalid price : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid price : %+v", err))
+	}
+	
 	request.Price = float32(parsePrice64)
-	request.Stock, _ = strconv.Atoi(form.Value["stock"][0])
+	request.Stock, err = strconv.Atoi(form.Value["stock"][0])
+	if err != nil {
+		c.Log.Warnf("Invalid stock : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid stock : %+v", err))
+	}
 
 	files := form.File["images"]
 	positions := form.Value["positions"]
@@ -153,12 +162,14 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Invalid product ID : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid product ID : %+v", err))
 	}
+
 	request.ID = getProductId
 	categoryID, err := strconv.ParseUint(form.Value["category_id"][0], 10, 64)
 	if err != nil {
 		c.Log.Warnf("Invalid category ID : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid category ID : %+v", err))
 	}
+
 	request.CategoryId = categoryID
 	request.Name = form.Value["name"][0]
 	request.Description = form.Value["description"][0]
@@ -167,6 +178,7 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Invalid price : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid price : %+v", err))
 	}
+	
 	request.Price = float32(parsePrice64)
 	request.Stock, err = strconv.Atoi(form.Value["stock"][0])
 	if err != nil {
@@ -177,6 +189,12 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 	// Inisialisasi NEW IMAGES
 	newImageFiles := form.File["new_images"]
 	newImagePositions := form.Value["new_positions"]
+
+	// Validasi apakah current_images jumlahnya sama dengan current_positions
+	if len(form.Value["current_images"]) != len(form.Value["current_positions"]) {
+		c.Log.Warnf("each current image must have a corresponding current position!")
+		return fiber.NewError(fiber.StatusBadRequest, "each current image must have a corresponding current position!")
+	}
 
 	// Inisialisasi CURRENT IMAGES
 	updateImagesRequest := model.UpdateImagesRequest{}
@@ -201,8 +219,8 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 	// Inisialisasi DELETED IMAGES
 	deleteImagesRequest := model.DeleteImagesRequest{}
 	if len(form.Value["images_deleted"]) > 0 {
-		imagesDeleted := strings.Split(form.Value["images_deleted"][0], ",")
-		for _, imageId := range imagesDeleted {
+		// imagesDeleted := strings.Split(form.Value["images_deleted"][0], ",")
+		for _, imageId := range form.Value["images_deleted"] {
 			imageId, err := strconv.ParseUint(imageId, 10, 64)
 			if err != nil {
 				c.Log.Warnf("Invalid image ID : %+v", err)

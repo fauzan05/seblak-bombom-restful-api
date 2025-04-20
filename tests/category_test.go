@@ -354,7 +354,6 @@ func TestGetAllCategoryPagination(t *testing.T) {
 		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
 	}
 
-	// get by id
 	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=2&search=makanan&column=id&sort_by=desc", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
