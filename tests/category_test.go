@@ -432,7 +432,7 @@ func TestDeleteCategoryById(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
 
-func TestDeleteCategories(t *testing.T) {
+func TestDeleteCategoriesIdNotValid(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)

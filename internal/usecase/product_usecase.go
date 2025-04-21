@@ -163,11 +163,21 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ID
+	count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
+	if err != nil {
+		c.Log.Warnf("failed to find product from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product from database : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("product is not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "product is not found!")
+	} 
 
 	// Mengambil data produk
 	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
@@ -408,10 +418,12 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 
 		// Hapus file gambar
 		for _, currentImage := range *currentImages {
-			err = os.Remove(filePath + currentImage.FileName)
-			if err != nil {
-				fmt.Printf("failed to delete image file : %v\n", err)
-				return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete image file : %v\n", err))
+			if currentImage.FileName != "" {
+				err = os.Remove(filePath + currentImage.FileName)
+				if err != nil {
+					fmt.Printf("failed to delete image file : %v\n", err)
+					return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete image file : %v\n", err))
+				}
 			}
 		}
 	}

@@ -32,8 +32,8 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		c.Log.Warnf("Cannot parse multipart form data: %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse multipart form data: %+v", err))
+		c.Log.Warnf("cannot parse multipart form data: %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data: %+v", err))
 	}
 
 	request := new(model.CreateApplicationRequest)
@@ -64,13 +64,13 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 	
 	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {
-		c.Log.Warnf("Failed to create new application : %+v", err)
+		c.Log.Warnf("failed to create new application : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.ApplicationResponse]{
 		Code:   201,
-		Status: "Success to create/update application settings",
+		Status: "success to create/update application settings",
 		Data:   response,
 	})
 }
@@ -78,13 +78,13 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 func (c *ApplicationController) Get(ctx *fiber.Ctx) error {
 	response, err := c.UseCase.Get(ctx.Context())
 	if err != nil {
-		c.Log.Warnf("Failed to get application settings : %+v", err)
+		c.Log.Warnf("failed to get application settings : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.ApplicationResponse]{
 		Code:   200,
-		Status: "Success to get application settings",
+		Status: "success to get application settings",
 		Data:   response,
 	})
 }

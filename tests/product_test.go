@@ -68,11 +68,20 @@ func TestCreateProduct(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
 	assert.Equal(t, createCategory.ID, responseBody.Data.Category.ID)
 	assert.Equal(t, "Produk 1", responseBody.Data.Name)
 	assert.Equal(t, "Ini adalah produk 1", responseBody.Data.Description)
 	assert.Equal(t, float32(25000), responseBody.Data.Price)
 	assert.Equal(t, 1000, responseBody.Data.Stock)
+	assert.Equal(t, 3, len(responseBody.Data.Images))
+	for _, image := range responseBody.Data.Images {
+		assert.NotNil(t, image.ID)
+		assert.NotNil(t, image.FileName)
+		assert.NotNil(t, image.Type)
+		assert.NotNil(t, image.CreatedAt)
+		assert.NotNil(t, image.UpdatedAt)
+	}
 	assert.NotNil(t, responseBody.Data.CreatedAt)
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
 }
@@ -1747,4 +1756,165 @@ func TestGetProductById(t *testing.T) {
 		assert.Equal(t, getProduct.Images[i].CreatedAt, image.CreatedAt)
 		assert.Equal(t, getProduct.Images[i].UpdatedAt, image.UpdatedAt)
 	}
+}
+
+func TestGetProductByIdNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+
+	request := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/products/%d", 1), nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
+}
+
+func TestDeleteProduct(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
+	var getAllIds string
+	for i := 1; i <= 5; i++ {
+		// Simulasi multipart body
+		var b bytes.Buffer
+		writer := multipart.NewWriter(&b)
+
+		// Tambahkan field JSON sebagai string field biasa
+		_ = writer.WriteField("category_id", fmt.Sprintf("%d", createCategory.ID))
+		_ = writer.WriteField("name", "Produk 1")
+		_ = writer.WriteField("description", "Ini adalah produk 1")
+		_ = writer.WriteField("price", "25000")
+		_ = writer.WriteField("stock", "1000")
+		positions := []int{1, 2, 3}
+		for _, pos := range positions {
+			_ = writer.WriteField("positions", fmt.Sprintf("%d", pos))
+		}
+
+		// Buat file image dummy
+		for i := 1; i <= 3; i++ {
+			filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
+			assert.Nil(t, err)
+
+			partHeader := textproto.MIMEHeader{}
+			partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="images"; filename="%s"`, filename))
+			partHeader.Set("Content-Type", "image/jpeg")
+
+			fileWriter, err := writer.CreatePart(partHeader)
+			assert.Nil(t, err)
+
+			_, err = fileWriter.Write(content)
+			assert.Nil(t, err)
+		}
+
+		writer.Close()
+
+		request := httptest.NewRequest(http.MethodPost, "/api/products", &b)
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBody := new(model.ApiResponse[model.ProductResponse])
+		err = json.Unmarshal(bytes, responseBody)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBody.Data.ID)
+		assert.Equal(t, createCategory.ID, responseBody.Data.Category.ID)
+		assert.Equal(t, "Produk 1", responseBody.Data.Name)
+		assert.Equal(t, "Ini adalah produk 1", responseBody.Data.Description)
+		assert.Equal(t, float32(25000), responseBody.Data.Price)
+		assert.Equal(t, 1000, responseBody.Data.Stock)
+		assert.Equal(t, 3, len(responseBody.Data.Images))
+		for _, image := range responseBody.Data.Images {
+			assert.NotNil(t, image.ID)
+			assert.NotNil(t, image.FileName)
+			assert.NotNil(t, image.Type)
+			assert.NotNil(t, image.CreatedAt)
+			assert.NotNil(t, image.UpdatedAt)
+		}
+		assert.NotNil(t, responseBody.Data.CreatedAt)
+		assert.NotNil(t, responseBody.Data.UpdatedAt)
+		getAllIds += fmt.Sprintf("%d,", responseBody.Data.ID)
+	}
+
+	request := httptest.NewRequest(http.MethodDelete, "/api/products?ids="+getAllIds, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	// cek apakah produk masih ada
+	request = httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&column=products.id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err = app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyPagination := new(model.ApiResponsePagination[*[]model.ProductResponse])
+	err = json.Unmarshal(bytes, responseBodyPagination)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 0, len(*responseBodyPagination.Data))
+	assert.Equal(t, int64(0), responseBodyPagination.TotalDatas)
+	assert.Equal(t, 0, responseBodyPagination.TotalPages)
+	assert.Equal(t, 2, responseBodyPagination.CurrentPages)
+	assert.Equal(t, 5, responseBodyPagination.DataPerPages) 
+}
+
+func TestDeleteProductIdNotValid(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	var getAllIds string = "b,3,#,m"
+	request := httptest.NewRequest(http.MethodDelete, "/api/products?ids="+getAllIds, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode) 
+	assert.Contains(t, responseBody.Error, "invalid product ID :") 
 }
