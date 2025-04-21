@@ -49,7 +49,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	}
 
 	orderRequest.CurrentBalance = auth.Wallet.Balance
-	response, err := c.UseCase.Add(ctx.Context(), orderRequest)
+	response, err := c.UseCase.Add(ctx, orderRequest)
 	if err != nil {
 		c.Log.Warnf("Failed to create a new order : %+v", err)
 		return err

@@ -87,14 +87,14 @@ func NewDatabaseTest(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 }
 
 func NewDatabaseDev(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
-	username := viper.GetString("database.docker.username")
-	password := viper.GetString("database.docker.password")
-	host := viper.GetString("database.docker.host")
-	port := viper.GetInt("database.docker.port")
-	database_name := viper.GetString("database.docker.name")
-	idleConnection := viper.GetInt("database.docker.pool.idle")
-	maxConnection := viper.GetInt("database.docker.pool.max")
-	maxLifeTimeConnection := viper.GetInt("database.docker.pool.lifetime")
+	username := viper.GetString("database.dev.username")
+	password := viper.GetString("database.dev.password")
+	host := viper.GetString("database.dev.host")
+	port := viper.GetInt("database.dev.port")
+	database_name := viper.GetString("database.dev.name")
+	idleConnection := viper.GetInt("database.dev.pool.idle")
+	maxConnection := viper.GetInt("database.dev.pool.max")
+	maxLifeTimeConnection := viper.GetInt("database.dev.pool.lifetime")
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database_name)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{

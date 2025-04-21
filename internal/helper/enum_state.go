@@ -28,12 +28,14 @@ const (
 	FAILED_PAYMENT    PaymentStatus = "failed"    // Pembayaran gagal
 
 	// order status
-	ORDER_PENDING         OrderStatus = "pending_order"
-	ORDER_RECEIVED        OrderStatus = "order_received"
-	ORDER_BEING_DELIVERED OrderStatus = "order_being_delivered"
-	ORDER_DELIVERED       OrderStatus = "order_delivered"
-	READY_FOR_PICKUP      OrderStatus = "ready_for_pickup"
-	ORDER_REJECTED        OrderStatus = "order_rejected"
+	ORDER_PENDING                OrderStatus = "pending_order"
+	ORDER_RECEIVED               OrderStatus = "order_received"
+	ORDER_BEING_DELIVERED        OrderStatus = "order_being_delivered"
+	ORDER_DELIVERED              OrderStatus = "order_delivered"
+	READY_FOR_PICKUP             OrderStatus = "ready_for_pickup"
+	ORDER_REJECTED               OrderStatus = "order_rejected"
+	ORDER_CANCELLED              OrderStatus = "order_cancelled"
+	ORDER_CANCELLATION_REQUESTED OrderStatus = "order_cancellation_requested"
 
 	// discount type
 	NOMINAL DiscountType = "nominal"
@@ -42,8 +44,8 @@ const (
 	TRANSACTION NotificationType = "transaction"
 	PROMOTION   NotificationType = "promotion"
 	// wallet status
-	ACTIVE  WalletStatus = "active"
-	INACIVE WalletStatus = "inactive"
+	ACTIVE_WALLET  WalletStatus = "active"
+	INACIVE_WALLET WalletStatus = "inactive"
 
 	// payment method
 	PAYMENT_METHOD_QR_CODE PaymentMethod = "QR_CODE"
@@ -97,6 +99,8 @@ const (
 	PAYOUT_CANCELLED PayoutStatus = "cancelled"
 	PAYOUT_FAILED    PayoutStatus = "failed"
 	PAYOUT_SUCCEEDED PayoutStatus = "succeeded"
+	PAYOUT_EXPIRED   PayoutStatus = "expired"
+	PAYOUT_REFUNDED  PayoutStatus = "refunded"
 
 	PAYOUT_METHOD_ONLINE  PayoutMethod = "online"
 	PAYOUT_METHOD_OFFLINE PayoutMethod = "offline"

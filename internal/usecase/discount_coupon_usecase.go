@@ -61,18 +61,8 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 	newDiscount.Code = request.Code
 	newDiscount.Value = request.Value
 	newDiscount.Type = request.Type
-	newDiscount.Start, err = time.Parse(time.RFC3339, request.Start)
-	if err != nil {
-		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
-	}
-
-	newDiscount.End, err = time.Parse(time.RFC3339, request.End)
-	if err != nil {
-		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
-	}
-
+	newDiscount.Start = request.Start.ToTime()
+	newDiscount.End = request.End.ToTime()
 	newDiscount.Status = request.Status
 	newDiscount.TotalMaxUsage = request.TotalMaxUsage
 	newDiscount.MaxUsagePerUser = request.MaxUsagePerUser
@@ -154,12 +144,18 @@ func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateD
 
 	newDiscount := new(entity.DiscountCoupon)
 	newDiscount.ID = request.ID
-	if err := c.DiscountCouponRepository.FindById(tx, newDiscount); err != nil {
-		c.Log.Warnf("Can't find discount by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't find discount by id : %+v", err))
+	count, err := c.DiscountCouponRepository.FindAndCountById(tx, newDiscount)
+	if err != nil {
+		c.Log.Warnf("Can't find discount by code : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't find discount by code : %+v", err))
 	}
 
-	count, err := c.DiscountCouponRepository.CountDiscountByCodeIsExist(tx, newDiscount, newDiscount.Code, request.Code)
+	if count == 0 {
+		c.Log.Warnf("Discount coupon not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Discount coupon not found!")
+	}
+
+	count, err = c.DiscountCouponRepository.CountDiscountByCodeIsExist(tx, newDiscount, newDiscount.Code, request.Code)
 	if err != nil {
 		c.Log.Warnf("Can't find discount by code : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't find discount by code : %+v", err))
@@ -176,18 +172,8 @@ func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateD
 	newDiscount.Code = request.Code
 	newDiscount.Value = request.Value
 	newDiscount.Type = request.Type
-	newDiscount.Start, err = time.Parse(time.RFC3339, request.Start)
-	if err != nil {
-		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
-	}
-
-	newDiscount.End, err = time.Parse(time.RFC3339, request.End)
-	if err != nil {
-		c.Log.Warnf("Can't parse to time : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't parse to time : %+v", err))
-	}
-
+	newDiscount.Start = request.Start.ToTime()
+	newDiscount.End = request.End.ToTime()
 	newDiscount.Status = request.Status
 	newDiscount.TotalMaxUsage = request.TotalMaxUsage
 	newDiscount.MaxUsagePerUser = request.MaxUsagePerUser
@@ -258,7 +244,7 @@ func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) 
 		discountCouponCode, _ := row["discount_coupon_code"].(string)
 		discountCouponValue, _ := strconv.ParseFloat(row["discount_coupon_value"].(string), 32)
 
-		discountCouponType, _ := strconv.Atoi(row["discount_coupon_type"].(string))
+		discountCouponType := row["discount_coupon_type"].(string)
 		discountCouponStartStr, _ := row["discount_coupon_start"].(string)
 		discountCouponStart, err := time.Parse(time.RFC3339, discountCouponStartStr)
 		if err != nil {
@@ -301,8 +287,8 @@ func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) 
 			UsedCount:       discountCouponUsedCount,
 			MinOrderValue:   discountCouponMinOrderValue,
 			Status:          discountCouponStatus,
-			Created_At:      discountCouponCreatedAt,
-			Updated_At:      discountCouponUpdatedAt,
+			CreatedAt:       discountCouponCreatedAt,
+			UpdatedAt:       discountCouponUpdatedAt,
 		}
 
 		// Tambahkan ke hasil

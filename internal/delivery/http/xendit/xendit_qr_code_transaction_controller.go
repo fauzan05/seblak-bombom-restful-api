@@ -1,24 +1,27 @@
 package http
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase/xendit"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type XenditQRCodeTransctionController struct {
 	Log                 *logrus.Logger
 	UseCase             *usecase.XenditTransactionQRCodeUseCase
-	
+	DB *gorm.DB	
 }
 
-func NewXenditQRCodeTransctionController(useCase *usecase.XenditTransactionQRCodeUseCase, logger *logrus.Logger) *XenditQRCodeTransctionController {
+func NewXenditQRCodeTransctionController(useCase *usecase.XenditTransactionQRCodeUseCase, logger *logrus.Logger, db *gorm.DB) *XenditQRCodeTransctionController {
 	return &XenditQRCodeTransctionController{
 		Log:     logger,
 		UseCase: useCase,
+		DB: db,
 	}
 }
 
@@ -28,11 +31,17 @@ func (c *XenditQRCodeTransctionController) Create(ctx *fiber.Ctx) error {
 		c.Log.Warnf("Cannot parse data : %+v", err)
 		return err
 	}
-
-	response, err := c.UseCase.Add(ctx, xenditRequest)
+	tx := c.DB.WithContext(ctx.Context()).Begin()
+	defer tx.Rollback()
+	response, err := c.UseCase.Add(ctx, xenditRequest, tx)
 	if err != nil {
 		c.Log.Warnf("Failed to create new xendit transaction order : %+v", err)
 		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.XenditTransactionResponse]{

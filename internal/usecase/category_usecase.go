@@ -127,13 +127,26 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 
 	newCategory := new(entity.Category)
 	newCategory.ID = request.ID
+	// temukan category apakah ada 
+	count, err := c.CategoryRepository.FindAndCountById(tx, newCategory)
+	if err != nil {
+		c.Log.Warnf("Failed to find category by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find category by id : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("Category not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Category not found!")
+	}
+
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
-	newCategory.Updated_At = time.Now().UTC()
+	newCategory.UpdatedAt = time.Now().UTC()
 	if err := c.CategoryRepository.Update(tx, newCategory); err != nil {
 		c.Log.Warnf("Failed to update category : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update category : %+v", err))
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
@@ -210,8 +223,8 @@ func MapCategories(rows []map[string]any, results *[]entity.Category) error {
 			ID:          categoryId,
 			Name:        categoryName,
 			Description: categoryDesc,
-			Created_At:  categoryCreatedAt,
-			Updated_At:  categoryUpdatedAt,
+			CreatedAt:  categoryCreatedAt,
+			UpdatedAt:  categoryUpdatedAt,
 		}
 
 		// Tambahkan ke hasil

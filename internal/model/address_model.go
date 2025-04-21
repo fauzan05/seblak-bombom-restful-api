@@ -1,15 +1,17 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+)
 
 type AddressResponse struct {
-	ID              uint64           `json:"id"`
-	CompleteAddress string           `json:"complete_address"`
-	GoogleMapsLink  string           `json:"google_maps_link"`
-	IsMain          bool             `json:"is_main"`
-	Delivery        DeliveryResponse `json:"delivery"`
-	CreatedAt       time.Time        `json:"created_at"`
-	UpdatedAt       time.Time        `json:"updated_at"`
+	ID              uint64             `json:"id"`
+	CompleteAddress string             `json:"complete_address"`
+	GoogleMapsLink  string             `json:"google_maps_link"`
+	IsMain          bool               `json:"is_main"`
+	Delivery        DeliveryResponse   `json:"delivery"`
+	CreatedAt       helper.TimeRFC3339 `json:"created_at"`
+	UpdatedAt       helper.TimeRFC3339 `json:"updated_at"`
 }
 
 type AddressCreateRequest struct {

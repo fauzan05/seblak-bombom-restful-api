@@ -1,16 +1,18 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+)
 
 type OrderProductResponse struct {
-	ID          uint64    `json:"id,omitempty"`
-	OrderId     uint64    `json:"order_id,omitempty"`
-	ProductId   uint64    `json:"product_id,omitempty"`
-	ProductName string    `json:"product_name,omitempty"`
-	Price       string    `json:"price,omitempty"`
-	Quantity    int       `json:"quantity,omitempty"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	ID          uint64             `json:"id,omitempty"`
+	OrderId     uint64             `json:"order_id,omitempty"`
+	ProductId   uint64             `json:"product_id,omitempty"`
+	ProductName string             `json:"product_name,omitempty"`
+	Price       float32            `json:"price,omitempty"`
+	Quantity    int                `json:"quantity,omitempty"`
+	CreatedAt   helper.TimeRFC3339 `json:"created_at,omitempty"`
+	UpdatedAt   helper.TimeRFC3339 `json:"updated_at,omitempty"`
 }
 
 type CreateOrderProductRequest struct {

@@ -8,51 +8,62 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
+	xenditUseCase "seblak-bombom-restful-api/internal/usecase/xendit"
 	"time"
+
+	"slices"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/xendit/xendit-go/v6"
 	"gorm.io/gorm"
-	"slices"
 )
 
 type OrderUseCase struct {
-	DB                     *gorm.DB
-	Log                    *logrus.Logger
-	Validate               *validator.Validate
-	OrderRepository        *repository.OrderRepository
-	ProductRepository      *repository.ProductRepository
-	CategoryRepository     *repository.CategoryRepository
-	AddressRepository      *repository.AddressRepository
-	DiscountRepository     *repository.DiscountCouponRepository
-	DeliveryRepository     *repository.DeliveryRepository
-	OrderProductRepository *repository.OrderProductRepository
-	WalletRepository       *repository.WalletRepository
+	DB                             *gorm.DB
+	Log                            *logrus.Logger
+	Validate                       *validator.Validate
+	OrderRepository                *repository.OrderRepository
+	ProductRepository              *repository.ProductRepository
+	CategoryRepository             *repository.CategoryRepository
+	AddressRepository              *repository.AddressRepository
+	DiscountRepository             *repository.DiscountCouponRepository
+	DeliveryRepository             *repository.DeliveryRepository
+	OrderProductRepository         *repository.OrderProductRepository
+	WalletRepository               *repository.WalletRepository
+	XenditTransactionRepository    *repository.XenditTransctionRepository
+	XenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase
+	XenditClient                   *xendit.APIClient
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
 	discountRepository *repository.DiscountCouponRepository, deliveryRepository *repository.DeliveryRepository,
-	orderProductRepository *repository.OrderProductRepository, walletRepository *repository.WalletRepository) *OrderUseCase {
+	orderProductRepository *repository.OrderProductRepository, walletRepository *repository.WalletRepository,
+	xenditTransactionRepository *repository.XenditTransctionRepository, xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase,
+	xenditClient *xendit.APIClient) *OrderUseCase {
 	return &OrderUseCase{
-		DB:                     db,
-		Log:                    log,
-		Validate:               validate,
-		OrderRepository:        orderRepository,
-		ProductRepository:      productRepository,
-		CategoryRepository:     categoryRepository,
-		AddressRepository:      addressRepository,
-		DiscountRepository:     discountRepository,
-		DeliveryRepository:     deliveryRepository,
-		OrderProductRepository: orderProductRepository,
-		WalletRepository:       walletRepository,
+		DB:                             db,
+		Log:                            log,
+		Validate:                       validate,
+		OrderRepository:                orderRepository,
+		ProductRepository:              productRepository,
+		CategoryRepository:             categoryRepository,
+		AddressRepository:              addressRepository,
+		DiscountRepository:             discountRepository,
+		DeliveryRepository:             deliveryRepository,
+		OrderProductRepository:         orderProductRepository,
+		WalletRepository:               walletRepository,
+		XenditTransactionRepository:    xenditTransactionRepository,
+		XenditTransactionQRCodeUseCase: xenditTransactionQRCodeUseCase,
+		XenditClient:                   xenditClient,
 	}
 }
 
-func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderRequest) (*model.OrderResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
 
 	err := c.Validate.Struct(request)
@@ -103,9 +114,10 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 			Quantity:    orderProductRequest.Quantity,
 		}
 		orderProducts = append(orderProducts, orderProduct)
-		newOrder.Amount += orderProduct.Price * float32(orderProduct.Quantity)
+		newOrder.TotalFinalPrice += orderProduct.Price * float32(orderProduct.Quantity)
 	}
 
+	newOrder.TotalProductPrice = newOrder.TotalFinalPrice
 	newOrder.DeliveryCost = 0
 	newOrder.IsDelivery = request.IsDelivery
 	if newOrder.IsDelivery {
@@ -118,7 +130,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		}
 
 		// jumlahkan semua total termasuk ongkir
-		newOrder.Amount += newDelivery.Cost
+		newOrder.TotalFinalPrice += newDelivery.Cost
 		newOrder.DeliveryCost = newDelivery.Cost
 	}
 
@@ -137,6 +149,7 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		newDiscount := new(entity.DiscountCoupon)
 		newDiscount.ID = request.DiscountId
 		count, err := c.DiscountRepository.FindAndCountById(tx, newDiscount)
+		newOrder.DiscountValue = newDiscount.Value
 		if err != nil {
 			c.Log.Warnf("Failed to find discount by code : %+v", err)
 			return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Failed to find discount by code : %+v", err))
@@ -149,13 +162,13 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				if newDiscount.Type == helper.PERCENT {
 					newOrder.DiscountType = helper.PERCENT
 					discount := float32(newDiscount.Value) / float32(100)
-					afterDiscount := newOrder.Amount * discount
-					newOrder.Amount -= afterDiscount
+					afterDiscount := newOrder.TotalFinalPrice * discount
+					newOrder.TotalFinalPrice -= afterDiscount
 					// simpan total diskon/potongan harganya
 					newOrder.TotalDiscount = afterDiscount
 				} else if newDiscount.Type == helper.NOMINAL {
 					newOrder.DiscountType = helper.NOMINAL
-					newOrder.Amount -= newDiscount.Value
+					newOrder.TotalFinalPrice -= newDiscount.Value
 					// simpan total diskon/potongan harganya
 					newOrder.TotalDiscount = newDiscount.Value
 				}
@@ -194,8 +207,10 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		}
 	}
 
+	newOrder.PaymentStatus = helper.PENDING_PAYMENT
+
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
-		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE && request.PaymentMethod != helper.PAYMENT_METHOD_EWALLET {
+		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE {
 			c.Log.Warnf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway))
 		} else {
@@ -204,12 +219,6 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				helper.PAYMENT_METHOD_QR_CODE: {
 					helper.XENDIT_QR_DANA_CHANNEL_CODE,
 					helper.XENDIT_QR_LINKAJA_CHANNEL_CODE,
-				},
-				helper.PAYMENT_METHOD_EWALLET: {
-					helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
-					helper.XENDIT_EWALLET_LINKAJA_CHANNEL_CODE,
-					helper.XENDIT_EWALLET_OVO_CHANNEL_CODE,
-					helper.XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE,
 				},
 			}
 
@@ -227,25 +236,30 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 				return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway))
 			}
 		}
-	}
+	} else if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
+		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
+			c.Log.Warnf("Payment method %s is not available on payment gateway System!", request.PaymentMethod)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway System!", request.PaymentMethod))
+		} else {
+			// langsung paid dan proses walletnya
+			if request.CurrentBalance < newOrder.TotalFinalPrice {
+				// tampilkan error bahwa saldo kurang
+				c.Log.Warnf("Your balance is insufficient to perform this transaction!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
+			}
 
-	newOrder.PaymentStatus = helper.PENDING_PAYMENT
-	if newOrder.PaymentMethod == helper.PAYMENT_METHOD_WALLET {
-		// langsung paid dan proses walletnya
-		if request.CurrentBalance < newOrder.Amount {
-			// tampilkan error bahwa saldo kurang
-			c.Log.Warnf("Your balance is insufficient to perform this transaction!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
+			newBalance := request.CurrentBalance - newOrder.TotalFinalPrice
+			newWallet := new(entity.Wallet)
+			if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
+				c.Log.Warnf("Failed to update new balance : %+v", err)
+				return nil, fiber.NewError(fiber.StatusBadRequest, "Failed to update new balance!")
+			}
+
+			newOrder.PaymentStatus = helper.PAID_PAYMENT
 		}
-
-		newBalance := request.CurrentBalance - newOrder.Amount
-		newWallet := new(entity.Wallet)
-		if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
-			c.Log.Warnf("Failed to update new balance : %+v", err)
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Failed to update new balance!")
-		}
-
-		newOrder.PaymentStatus = helper.PAID_PAYMENT
+	} else {
+		// berikan error bahwa payment method tidak tersedia/tidak valid
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Payment method is not valid or available!")
 	}
 
 	// mengambil alamat utama yang diambil oleh user
@@ -271,10 +285,42 @@ func (c *OrderUseCase) Add(ctx context.Context, request *model.CreateOrderReques
 		c.Log.Warnf("Failed to add all order products into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add all order products into database : %+v", err))
 	}
+
 	// mengisi kolom invoice ke tabel order setelah mendapatkan ID order nya
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to add invoice code : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add invoice code : %+v", err))
+	}
+
+	// jika pembayaran menggunakan xendit,maka panggil xendit usecase
+	if newOrder.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT && newOrder.PaymentMethod == helper.PAYMENT_METHOD_QR_CODE {
+		newXenditQRCodeRequest := new(model.CreateXenditTransaction)
+		newXenditQRCodeRequest.OrderId = newOrder.ID
+		result, err := c.XenditTransactionQRCodeUseCase.Add(ctx, newXenditQRCodeRequest, tx)
+		if err != nil {
+			c.Log.Warn(err)
+			return nil, err
+		}
+
+		newXenditTransaction := new(entity.XenditTransactions)
+		newXenditTransaction.ID = result.ID
+		newXenditTransaction.OrderId = result.OrderId
+		newXenditTransaction.ReferenceId = result.ReferenceId
+		newXenditTransaction.Amount = result.Amount
+		newXenditTransaction.Currency = result.Currency
+		newXenditTransaction.PaymentMethod = result.PaymentMethod
+		newXenditTransaction.PaymentMethodId = result.PaymentMethodId
+		newXenditTransaction.ChannelCode = result.ChannelCode
+		newXenditTransaction.QrString = result.QrString
+		newXenditTransaction.Status = result.Status
+		newXenditTransaction.Description = result.Description
+		newXenditTransaction.FailureCode = result.FailureCode
+		newXenditTransaction.Metadata = result.Metadata
+		newXenditTransaction.ExpiresAt = helper.TimeRFC3339.ToTime(result.ExpiresAt)
+		newXenditTransaction.CreatedAt = helper.TimeRFC3339.ToTime(result.CreatedAt)
+		newXenditTransaction.UpdatedAt = helper.TimeRFC3339.ToTime(result.UpdatedAt)
+
+		newOrder.XenditTransaction = newXenditTransaction
 	}
 
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
@@ -327,39 +373,199 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Order not found by order id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Order not found by order id : %+v", err))
+		c.Log.Warnf("Order not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "Order not found!")
 	}
-
+	
 	// validate first before update order status state into database
-	// if rejected
-	if request.OrderStatus == helper.ORDER_PENDING {
-		if newOrder.OrderStatus == helper.ORDER_PENDING {
-			c.Log.Warnf("Can't cancel an order that has been cancelled!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been cancelled!")
-		}
-		
-		// find user wallet
-		findWallet := new(entity.Wallet)
-		if err := c.WalletRepository.FindEntityByUserId(tx, findWallet, newOrder.UserId); err != nil {
-			c.Log.Warnf("Failed to find wallet by user id from database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id from database : %+v", err))
+	// if cancelled
+	if request.OrderStatus == helper.ORDER_CANCELLED {
+		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED || newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+			c.Log.Warnf("Can't cancel an order that has been rejected/cancelled/cancellation requested!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been rejected/cancelled/cancellation requested!")
 		}
 
-		// return to wallet balance
-		newWallet := new(entity.Wallet)
-		newWallet.ID = findWallet.ID
-		updateBalance := map[string]any{
-			"balance": newOrder.Amount,
+		if newOrder.OrderStatus == helper.ORDER_PENDING && newOrder.PaymentStatus == helper.PAID_PAYMENT {
+			// jika pending dan paid maka kembalikan saldo
+			// find user wallet
+			findWallet := new(entity.Wallet)
+			count, err := c.WalletRepository.FindAndCountFirstWalletByUserId(tx, findWallet, newOrder.UserId, "active")
+			if err != nil {
+				c.Log.Warnf("Failed to find wallet by user id from database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id from database : %+v", err))
+			}
+
+			if count < 1 {
+				c.Log.Warnf("The selected wallet is not found!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "The selected wallet is not found!")
+			}
+
+			// return to wallet balance
+			newWallet := new(entity.Wallet)
+			newWallet.ID = findWallet.ID
+			totalBalance := newOrder.TotalFinalPrice + findWallet.Balance
+			updateBalance := map[string]any{
+				"balance": totalBalance,
+			}
+
+			if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
+				c.Log.Warnf("Failed to update wallet balance : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance : %+v", err))
+			}
+
+			newOrder.OrderStatus = request.OrderStatus
+		} else if newOrder.OrderStatus == helper.ORDER_PENDING && newOrder.PaymentStatus != helper.PENDING_PAYMENT {
+			newOrder.PaymentStatus = helper.CANCELLED_PAYMENT
+			newOrder.OrderStatus = request.OrderStatus
+		} else if newOrder.OrderStatus == helper.ORDER_RECEIVED {
+			// memerlukan persetujuan seller
+			newOrder.OrderStatus = helper.ORDER_CANCELLATION_REQUESTED
+		} else if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
+			c.Log.Warnf("Can't cancel an order that is ready for pickup!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that is ready for pickup!")
+		} else if (newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED) {
+			c.Log.Warnf("Can't cancel an order that is being delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that is being delivered!")
+		} else if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+			c.Log.Warnf("Can't cancel an order that has been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been delivered!")
 		}
 
-		if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
-			c.Log.Warnf("Failed to update wallet balance : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance : %+v", err))
+	} else if request.OrderStatus == helper.ORDER_REJECTED {
+		if newOrder.OrderStatus == helper.ORDER_REJECTED {
+			c.Log.Warnf("Can't reject an order that has been rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that has been rejected!")
 		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLED {
+			c.Log.Warnf("Can't reject an order that has been cancelled!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that has been cancelled!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_RECEIVED {
+			c.Log.Warnf("Can't reject an order that has been received!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that has been received!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
+			c.Log.Warnf("Can't reject an order that is been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that is been delivered!")
+		}
+
+		// maka balikkan saldo customer
+		if newOrder.PaymentStatus == helper.PAID_PAYMENT {
+			// find user wallet
+			// kembalikan saldo ke user
+			findWallet := new(entity.Wallet)
+			count, err := c.WalletRepository.FindAndCountFirstWalletByUserId(tx, findWallet, newOrder.UserId, "active")
+			if err != nil {
+				c.Log.Warnf("Failed to find wallet by user id from database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id from database : %+v", err))
+			}
+
+			if count < 1 {
+				c.Log.Warnf("The selected wallet is not found!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "The selected wallet is not found!")
+			}
+
+			// return to wallet balance
+			newWallet := new(entity.Wallet)
+			newWallet.ID = findWallet.ID
+			totalBalance := newOrder.TotalFinalPrice + findWallet.Balance
+			updateBalance := map[string]any{
+				"balance": totalBalance,
+			}
+
+			if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
+				c.Log.Warnf("Failed to update wallet balance : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance : %+v", err))
+			}
+		}
+
+		newOrder.OrderStatus = request.OrderStatus
+	} else if request.OrderStatus == helper.ORDER_RECEIVED {
+		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+			c.Log.Warnf("Can't accept an order that has not been paid yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has not been paid yet!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+			c.Log.Warnf("Can't accept an order that has been cancelled/rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has been cancelled/rejected!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_RECEIVED {
+			c.Log.Warnf("Can't accept an order that has been received!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has been received!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
+			c.Log.Warnf("Can't accept an order that is being delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that is being delivered!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+			c.Log.Warnf("Can't accept an order that has been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has been delivered!")
+		}
+
+		if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
+			c.Log.Warnf("Can't accept an order that is ready for pickup!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that is ready for pickup!")
+		}
+
+		newOrder.OrderStatus = request.OrderStatus
+	} else if request.OrderStatus == helper.READY_FOR_PICKUP {
+		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+			c.Log.Warnf("Can't pick up an order that has not been paid yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has not been paid yet!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+			c.Log.Warnf("Can't pick up an order that is ready for pickup!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that is ready for pickup!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+			c.Log.Warnf("Can't pick up an order that has been cancelled/rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has been cancelled/rejected!")
+		}	
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+			c.Log.Warnf("Can't pick up an order that has a cancellation request!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has a cancellation request!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+			c.Log.Warnf("Can't pick up an order that has been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has been delivered!")
+		}
+
+		newOrder.OrderStatus = request.OrderStatus
+	} else if request.OrderStatus == helper.ORDER_DELIVERED {
+		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+			c.Log.Warnf("Can't complete an order that has not been paid yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has not been paid yet!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+			c.Log.Warnf("Can't complete an order that has been completed!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has been completed!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+			c.Log.Warnf("Can't complete an order that has been cancelled/rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has been cancelled/rejected!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+			c.Log.Warnf("Can't complete an order that has a cancellation request!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has a cancellation request!")
+		}
+
+		newOrder.OrderStatus = request.OrderStatus
 	}
 
-	newOrder.OrderStatus = request.OrderStatus
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("Failed to update status order by id : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update status order by id : %+v", err))

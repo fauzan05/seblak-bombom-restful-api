@@ -113,7 +113,7 @@ func (c *MidtransCoreAPIOrderUseCase) Add(ctx context.Context, request *model.Cr
 		PaymentType: paymentType,
 		TransactionDetails: midtrans.TransactionDetails{
 			OrderID:  strconv.Itoa(int(selectedOrder.ID)),
-			GrossAmt: int64(selectedOrder.Amount),
+			GrossAmt: int64(selectedOrder.TotalFinalPrice),
 		},
 		Items: &midtransItemDetails,
 		CustomExpiry: &customExpiry,

@@ -15,3 +15,7 @@ type ApiResponsePagination[T any] struct {
 	CurrentPages int    `json:"current_pages"`
 	DataPerPages int    `json:"data_per_pages"`
 }
+
+type ErrorResponse[message string] struct {
+	Error message `json:"errors"`
+}

@@ -2,6 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -16,12 +17,12 @@ func MidtransCoreAPIToResponse(midtransCoreAPIOrder *entity.MidtransCoreAPIOrder
 		GrossAmount:       midtransCoreAPIOrder.GrossAmount,
 		Currency:          midtransCoreAPIOrder.Currency,
 		PaymentType:       midtransCoreAPIOrder.PaymentType,
-		ExpiryTime:        midtransCoreAPIOrder.ExpiryTime,
-		TransactionTime:   midtransCoreAPIOrder.TransactionTime,
+		ExpiryTime:        helper.TimeRFC3339(midtransCoreAPIOrder.ExpiryTime),
+		TransactionTime:   helper.TimeRFC3339(midtransCoreAPIOrder.TransactionTime),
 		TransactionStatus: midtransCoreAPIOrder.TransactionStatus,
 		FraudStatus:       midtransCoreAPIOrder.FraudStatus,
 		Actions:           MidtransActionsToResponse(&midtransCoreAPIOrder.Actions),
-		CreatedAt:         midtransCoreAPIOrder.CreatedAt,
-		UpdatedAt:         midtransCoreAPIOrder.UpdatedAt,
+		CreatedAt:         helper.TimeRFC3339(midtransCoreAPIOrder.CreatedAt),
+		UpdatedAt:         helper.TimeRFC3339(midtransCoreAPIOrder.UpdatedAt),
 	}
 }

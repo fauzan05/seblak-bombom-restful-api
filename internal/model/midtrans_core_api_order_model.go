@@ -2,7 +2,6 @@ package model
 
 import (
 	"seblak-bombom-restful-api/internal/helper"
-	"time"
 )
 
 type MidtransCoreAPIOrderResponse struct {
@@ -15,13 +14,13 @@ type MidtransCoreAPIOrderResponse struct {
 	GrossAmount       float32                  `json:"gross_amount"`
 	Currency          string                   `json:"currency"`
 	PaymentType       string                   `json:"payment_type"`
-	ExpiryTime        time.Time                `json:"expiry_time"`
-	TransactionTime   time.Time                `json:"transaction_time"`
+	ExpiryTime        helper.TimeRFC3339       `json:"expiry_time"`
+	TransactionTime   helper.TimeRFC3339       `json:"transaction_time"`
 	TransactionStatus helper.TransactionStatus `json:"transaction_status"`
 	FraudStatus       string                   `json:"fraud_status"`
 	Actions           *[]ActionResponse        `json:"actions"`
-	CreatedAt         time.Time                `json:"created_at"`
-	UpdatedAt         time.Time                `json:"updated_at"`
+	CreatedAt         helper.TimeRFC3339       `json:"created_at"`
+	UpdatedAt         helper.TimeRFC3339       `json:"updated_at"`
 }
 
 type ActionResponse struct {

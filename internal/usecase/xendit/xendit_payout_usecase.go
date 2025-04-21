@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
@@ -27,24 +28,21 @@ type XenditPayoutUseCase struct {
 }
 
 func NewXenditPayoutUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
-	XenditPayoutRepository *repository.XenditPayoutRepository,
+	xenditPayoutRepository *repository.XenditPayoutRepository,
 	xenditClient *xendit.APIClient, walletRepository *repository.WalletRepository,
 	userRepository *repository.UserRepository) *XenditPayoutUseCase {
 	return &XenditPayoutUseCase{
 		DB:                     db,
 		Log:                    log,
 		Validate:               validate,
-		XenditPayoutRepository: XenditPayoutRepository,
+		XenditPayoutRepository: xenditPayoutRepository,
 		WalletRepository:       walletRepository,
 		UserRepository:         userRepository,
 		XenditClient:           xenditClient,
 	}
 }
 
-func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXenditPayout) (*model.XenditPayoutResponse, error) {
-	tx := c.DB.WithContext(ctx.Context()).Begin()
-	defer tx.Rollback()
-
+func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXenditPayout, tx *gorm.DB) (*model.XenditPayoutResponse, error) {
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
@@ -95,7 +93,7 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 
 	if resErr != nil {
 		c.Log.Warnf("Failed to create new xendit payout : %+v", resErr.FullError())
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create new xendit payout : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to create new xendit payout : %+v", resErr.FullError()))
 	}
 
 	newXenditPayout := new(entity.XenditPayout)
@@ -103,7 +101,7 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 	newXenditPayout.UserID = request.UserId
 	newXenditPayout.BusinessID = resp.Payout.GetBusinessId()
 	newXenditPayout.ReferenceID = resp.Payout.GetReferenceId()
-	newXenditPayout.Amount = float64(resp.Payout.GetAmount())
+	newXenditPayout.Amount = resp.Payout.GetAmount()
 	newXenditPayout.Currency = resp.Payout.GetCurrency()
 	newXenditPayout.Description = resp.Payout.GetDescription()
 	newXenditPayout.ChannelCode = resp.Payout.GetChannelCode()
@@ -111,16 +109,11 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
 	newXenditPayout.Status = resp.Payout.GetStatus()
 	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
-	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+	newXenditPayout.EstimatedArrival = estimatedArrivalTime
 
 	if err := c.XenditPayoutRepository.Create(tx, newXenditPayout); err != nil {
 		c.Log.Warnf("Failed to insert xendit payout into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to insert xendit payout into database : %+v", err))
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return converter.XenditPayoutToResponse(newXenditPayout), nil
@@ -132,7 +125,7 @@ func (c *XenditPayoutUseCase) GetBalance(ctx *fiber.Ctx) (*model.GetWithdrawable
 	resp, _, resErr := c.XenditClient.BalanceApi.GetBalance(ctx.Context()).Execute()
 	if resErr != nil {
 		c.Log.Warnf("Failed to get xendit balance : %+v", resErr.FullError())
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit balance : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to get xendit balance : %+v", resErr.FullError()))
 	}
 
 	newWallet := new(entity.Wallet)
@@ -155,9 +148,10 @@ func (c *XenditPayoutUseCase) GetPayoutById(ctx *fiber.Ctx, request *model.GetPa
 
 	resp, _, resErr := c.XenditClient.PayoutApi.GetPayoutById(ctx.Context(), request.PayoutId).
 		Execute()
+
 	if resErr != nil {
 		c.Log.Warnf("Failed to get xendit payout by id : %+v", resErr.FullError())
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit payout by id : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to get xendit payout by id : %+v", resErr.FullError()))
 	}
 
 	newXenditPayout := new(entity.XenditPayout)
@@ -168,7 +162,7 @@ func (c *XenditPayoutUseCase) GetPayoutById(ctx *fiber.Ctx, request *model.GetPa
 	}
 	newXenditPayout.BusinessID = resp.Payout.GetBusinessId()
 	newXenditPayout.ReferenceID = resp.Payout.GetReferenceId()
-	newXenditPayout.Amount = float64(resp.Payout.GetAmount())
+	newXenditPayout.Amount = resp.Payout.GetAmount()
 	newXenditPayout.Currency = resp.Payout.GetCurrency()
 	newXenditPayout.Description = resp.Payout.GetDescription()
 	newXenditPayout.ChannelCode = resp.Payout.GetChannelCode()
@@ -176,7 +170,7 @@ func (c *XenditPayoutUseCase) GetPayoutById(ctx *fiber.Ctx, request *model.GetPa
 	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
 	newXenditPayout.Status = resp.Payout.GetStatus()
 	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
-	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+	newXenditPayout.EstimatedArrival = estimatedArrivalTime
 
 	return converter.XenditPayoutToResponse(newXenditPayout), nil
 }
@@ -195,7 +189,7 @@ func (c *XenditPayoutUseCase) CancelPayout(ctx *fiber.Ctx, request *model.Cancel
 
 	if resErr != nil {
 		c.Log.Warnf("Failed to cancel xendit payout : %+v", resErr.FullError())
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to cancel xendit payout : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to cancel xendit payout : %+v", resErr.FullError()))
 	}
 
 	newXenditPayout := new(entity.XenditPayout)
@@ -206,7 +200,7 @@ func (c *XenditPayoutUseCase) CancelPayout(ctx *fiber.Ctx, request *model.Cancel
 	}
 	newXenditPayout.BusinessID = resp.Payout.GetBusinessId()
 	newXenditPayout.ReferenceID = resp.Payout.GetReferenceId()
-	newXenditPayout.Amount = float64(resp.Payout.GetAmount())
+	newXenditPayout.Amount = resp.Payout.GetAmount()
 	newXenditPayout.Currency = resp.Payout.GetCurrency()
 	newXenditPayout.Description = resp.Payout.GetDescription()
 	newXenditPayout.ChannelCode = resp.Payout.GetChannelCode()
@@ -214,7 +208,7 @@ func (c *XenditPayoutUseCase) CancelPayout(ctx *fiber.Ctx, request *model.Cancel
 	newXenditPayout.AccountHolderName = resp.Payout.ChannelProperties.GetAccountHolderName()
 	newXenditPayout.Status = resp.Payout.GetStatus()
 	estimatedArrivalTime := resp.Payout.GetEstimatedArrivalTime()
-	newXenditPayout.EstimatedArrival = &estimatedArrivalTime
+	newXenditPayout.EstimatedArrival = estimatedArrivalTime
 
 	return converter.XenditPayoutToResponse(newXenditPayout), nil
 }

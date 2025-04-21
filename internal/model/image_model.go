@@ -1,15 +1,17 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+)
 
 type ImageResponse struct {
-	ID        uint64    `json:"id,omitempty"`
-	ProductId uint64    `json:"product_id,omitempty"`
-	FileName  string    `json:"file_name,omitempty"`
-	Type      string    `json:"type,omitempty"`
-	Position  int       `json:"position,omitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	ID        uint64             `json:"id,omitempty"`
+	ProductId uint64             `json:"product_id,omitempty"`
+	FileName  string             `json:"file_name,omitempty"`
+	Type      string             `json:"type,omitempty"`
+	Position  int                `json:"position,omitempty"`
+	CreatedAt helper.TimeRFC3339 `json:"created_at,omitempty"`
+	UpdatedAt helper.TimeRFC3339 `json:"updated_at,omitempty"`
 }
 
 type AddImagesRequest struct {

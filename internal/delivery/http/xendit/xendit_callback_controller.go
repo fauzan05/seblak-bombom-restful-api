@@ -11,9 +11,8 @@ import (
 )
 
 type XenditCallbackController struct {
-	Log                 *logrus.Logger
-	UseCase             *usecase.XenditCallbackUseCase
-	
+	Log     *logrus.Logger
+	UseCase *usecase.XenditCallbackUseCase
 }
 
 func NewXenditCallbackController(useCase *usecase.XenditCallbackUseCase, logger *logrus.Logger) *XenditCallbackController {

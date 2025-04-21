@@ -55,7 +55,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %v", err))
 	}
 
-	user := &entity.User{}
+	user := new(entity.User)
 	total, err := c.UserRepository.UserCountByEmail(c.DB, user, request.Email)
 	if err != nil {
 		c.Log.Warnf("Failed to count users from database : %+v", err)
@@ -63,7 +63,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	}
 
 	if total > 0 {
-		c.Log.Warnf("Email user has already exists!",)
+		c.Log.Warnf("Email user has already exists!")
 		return nil, fiber.NewError(fiber.StatusConflict, "Email user has already exists!")
 	}
 
@@ -88,7 +88,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	newWallet := &entity.Wallet{}
 	newWallet.UserId = user.ID
 	newWallet.Balance = 0
-	newWallet.Status = helper.ACTIVE
+	newWallet.Status = helper.ACTIVE_WALLET
 	if err := c.WalletRepository.Create(tx, newWallet); err != nil {
 		c.Log.Warnf("Failed to create a new wallet into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create a new wallet into database : %+v", err))
@@ -110,7 +110,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	return converter.UserToResponse(user), nil
 }
 
-func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequst) (*model.UserTokenResponse, error) {
+func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserTokenResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -162,7 +162,7 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 		c.Log.Warnf("Token isn't valid : %+v", err)
 		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Token isn't valid : %+v", err))
 	}
-	
+
 	expiredDate := user.Token.ExpiryDate
 	if expiredDate.Before(time.Now()) {
 		c.Log.Warn("Token is expired!")

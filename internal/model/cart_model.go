@@ -1,13 +1,15 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+)
 
 type CartResponse struct {
 	ID        uint64             `json:"id,omitempty"`
 	UserID    uint64             `json:"user_id,omitempty"`
 	CartItems []CartItemResponse `json:"cart_items"`
-	CreatedAt time.Time          `json:"created_at,omitempty"`
-	UpdatedAt time.Time          `json:"updated_at,omitempty"`
+	CreatedAt helper.TimeRFC3339 `json:"created_at,omitempty"`
+	UpdatedAt helper.TimeRFC3339 `json:"updated_at,omitempty"`
 }
 
 type CreateCartRequest struct {

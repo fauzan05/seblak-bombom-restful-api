@@ -23,12 +23,45 @@ func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
 	return db.Save(&entity).Error
 }
 
-func (r *Repository[T]) UpdateCustomColumns(db *gorm.DB, entity *T, updateFields map[string]interface{}) error {
+func (r *Repository[T]) UpdateCustomColumns(db *gorm.DB, entity *T, updateFields map[string]any) error {
 	return db.Model(entity).Updates(updateFields).Error
 }
 
-func (r *Repository[T]) FindEntityByUserId(db *gorm.DB, entity *T, userId uint64) error {
-	return db.Where("user_id = ?", userId).First(entity).Error
+func (r *Repository[T]) FindAndCountEntityByUserId(db *gorm.DB, entity *T, userId uint64) (int64, error) {
+	var count int64
+	err := db.Where("user_id = ?", userId).Find(&entity).Count(&count).Error
+	if err != nil {
+		return int64(0), err
+	}
+	return count, nil
+}
+
+func (r *Repository[T]) FindAndCountFirstWalletByUserId(db *gorm.DB, entity *T, userId uint64, status string) (int64, error) {
+    var count int64
+
+    // Menggunakan entity langsung tanpa & karena entity sudah merupakan pointer
+    err := db.Model(entity).Where("user_id = ? AND status = ?", userId, status).Count(&count).Error
+    if err != nil {
+        return 0, err
+    }
+
+    // Mencari record pertama yang sesuai dengan kriteria
+    result := db.Where("user_id = ? AND status = ?", userId, status).First(entity)
+    if result.Error != nil {
+        if result.Error == gorm.ErrRecordNotFound {
+            // Jika data tidak ditemukan, kembalikan count dan nil error
+            return count, nil
+        }
+        // Jika ada error lain, kembalikan error tersebut
+        return 0, result.Error
+    }
+
+    // Kembalikan count dan nil error jika tidak ada masalah
+    return count, nil
+}
+
+func (r *Repository[T]) FindFirstPayoutByXenditPayoutId(db *gorm.DB, entity *T, xenditPayoutId string) error {
+	return db.Where("xendit_payout_id = ?", xenditPayoutId).First(entity).Error
 }
 
 func (r *Repository[T]) FindAndUpdateAddressToNonPrimary(db *gorm.DB, entity *T) error {
@@ -188,7 +221,7 @@ func (r *Repository[T]) FindByEmail(db *gorm.DB, entity *T, email string) error 
 
 func (r *Repository[T]) CheckEmailIsExists(db *gorm.DB, currentEmail string, requestEmail string) (int64, error) {
 	var total int64
-	err := db.Model(&entity.User{}).Where("email = ? AND email != ?", requestEmail, currentEmail).Count(&total).Error
+	err := db.Model(&entity.User{}).Where("email = ?", requestEmail).Where("email != ?", currentEmail).Count(&total).Error
 	return total, err
 }
 
@@ -258,8 +291,8 @@ func (r *Repository[T]) FirstXenditTransactionByOrderId(db *gorm.DB, entity *T, 
 	return db.Where("order_id = ?", orderId).Preload(preload1).Preload(preload2).First(&entity).Error
 }
 
-func (r *Repository[T]) FindXenditTransactionByOrderId(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
-	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+func (r *Repository[T]) FindEntityByOrderId(db *gorm.DB, entity *T, orderId uint64) error {
+	return db.Where("order_id = ?", orderId).Find(&entity).Error
 }
 
 func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) error {
@@ -301,7 +334,7 @@ func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 
 	return query.Order("id desc").Offset(offset).Limit(pageSize).Find(entity).Error
 }
 
-func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string, categoryId uint64) error {
+func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string]any, page int, pageSize int, search string, sortingColumn string, sortBy string, categoryId uint64) error {
 	offset := (page - 1) * pageSize
 	if sortingColumn == "" {
 		sortingColumn = "products.id"
@@ -340,7 +373,7 @@ func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string
 
 	defer rows.Close()
 
-	var results []map[string]interface{}
+	var results []map[string]any
 	for rows.Next() {
 		var (
 			productID         string
@@ -376,7 +409,7 @@ func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string
 		}
 
 		// Masukkan produk ke hasil
-		product := map[string]interface{}{
+		product := map[string]any{
 			"product_id":          productID,
 			"product_name":        productName,
 			"product_desc":        productDesc,
@@ -389,7 +422,7 @@ func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string
 			"category_desc":       categoryDesc,
 			"category_created_at": categoryCreatedAt,
 			"category_updated_at": categoryUpdatedAt,
-			"images":              []map[string]interface{}{}, // Placeholder untuk images
+			"images":              []map[string]any{}, // Placeholder untuk images
 		}
 		results = append(results, product)
 	}
@@ -398,7 +431,7 @@ func (r *Repository[T]) FindProductsPagination(db *gorm.DB, entity *[]map[string
 	return nil
 }
 
-func (r *Repository[T]) FetchImagesForProducts(db *gorm.DB, products *[]map[string]interface{}) error {
+func (r *Repository[T]) FetchImagesForProducts(db *gorm.DB, products *[]map[string]any) error {
 	// Ambil semua product_id
 	productIDs := []string{}
 	for _, product := range *products {
@@ -426,7 +459,7 @@ func (r *Repository[T]) FetchImagesForProducts(db *gorm.DB, products *[]map[stri
 	defer rows.Close()
 
 	// Buat map untuk mengelompokkan images berdasarkan product_id
-	imagesMap := make(map[string][]map[string]interface{})
+	imagesMap := make(map[string][]map[string]any)
 	for rows.Next() {
 		var (
 			imageID        string
@@ -452,7 +485,7 @@ func (r *Repository[T]) FetchImagesForProducts(db *gorm.DB, products *[]map[stri
 		}
 
 		// Tambahkan ke map
-		image := map[string]interface{}{
+		image := map[string]any{
 			"image_id":         imageID,
 			"image_filename":   imageFilename,
 			"image_position":   imagePosition,
@@ -474,7 +507,7 @@ func (r *Repository[T]) FetchImagesForProducts(db *gorm.DB, products *[]map[stri
 	return nil
 }
 
-func (r *Repository[T]) GetProductsWithPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string, categoryId uint64) error {
+func (r *Repository[T]) GetProductsWithPagination(db *gorm.DB, entity *[]map[string]any, page int, pageSize int, search string, sortingColumn string, sortBy string, categoryId uint64) error {
 	// Ambil data produk dengan paginasi
 	err := r.FindProductsPagination(db, entity, page, pageSize, search, sortingColumn, sortBy, categoryId)
 	if err != nil {
@@ -546,7 +579,7 @@ func (r *Repository[T]) FindAllProductByCartItem(db *gorm.DB, entity *[]T, userI
 	return db.Where("user_id = ?", userId).Preload("Product").Find(entity).Error
 }
 
-func (r *Repository[T]) GetCategoriesWithPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+func (r *Repository[T]) GetCategoriesWithPagination(db *gorm.DB, entity *[]map[string]any, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
 	// Ambil data produk dengan paginasi
 	err := r.FindCategoriesPagination(db, entity, page, pageSize, search, sortingColumn, sortBy)
 	if err != nil {
@@ -556,7 +589,7 @@ func (r *Repository[T]) GetCategoriesWithPagination(db *gorm.DB, entity *[]map[s
 	return nil
 }
 
-func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[string]any, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
 	offset := (page - 1) * pageSize
 	if sortingColumn == "" {
 		sortingColumn = "categories.id"
@@ -582,7 +615,7 @@ func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[stri
 
 	defer rows.Close()
 
-	var results []map[string]interface{}
+	var results []map[string]any
 	for rows.Next() {
 		var (
 			categoryID        string
@@ -604,7 +637,7 @@ func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[stri
 		}
 
 		// Masukkan kategori ke hasil
-		category := map[string]interface{}{
+		category := map[string]any{
 			"category_id":         categoryID,
 			"category_name":       categoryName,
 			"category_desc":       categoryDesc,
@@ -618,7 +651,7 @@ func (r *Repository[T]) FindCategoriesPagination(db *gorm.DB, entity *[]map[stri
 	return nil
 }
 
-func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map[string]any, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
 	offset := (page - 1) * pageSize
 	if sortingColumn == "" {
 		sortingColumn = "discount_coupons.id"
@@ -654,7 +687,7 @@ func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map
 
 	defer rows.Close()
 
-	var results []map[string]interface{}
+	var results []map[string]any
 	for rows.Next() {
 		var (
 			discountCouponID              string
@@ -696,7 +729,7 @@ func (r *Repository[T]) FindDiscountCouponsPagination(db *gorm.DB, entity *[]map
 		}
 
 		// Masukkan kategori ke hasil
-		discount := map[string]interface{}{
+		discount := map[string]any{
 			"discount_coupon_id":                 discountCouponID,
 			"discount_coupon_name":               discountCouponName,
 			"discount_coupon_desc":               discountCouponDesc,
@@ -729,7 +762,7 @@ func (r *Repository[T]) CountDiscountCouponItems(db *gorm.DB, entity *T, search 
 	return count, nil
 }
 
-func (r *Repository[T]) FindDeliveriesPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+func (r *Repository[T]) FindDeliveriesPagination(db *gorm.DB, entity *[]map[string]any, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
 	offset := (page - 1) * pageSize
 	if sortingColumn == "" {
 		sortingColumn = "deliveries.id"
@@ -762,7 +795,7 @@ func (r *Repository[T]) FindDeliveriesPagination(db *gorm.DB, entity *[]map[stri
 
 	defer rows.Close()
 
-	var results []map[string]interface{}
+	var results []map[string]any
 	for rows.Next() {
 		var (
 			deliveryID        string
@@ -790,7 +823,7 @@ func (r *Repository[T]) FindDeliveriesPagination(db *gorm.DB, entity *[]map[stri
 		}
 
 		// Masukkan delivery ke hasil
-		delivery := map[string]interface{}{
+		delivery := map[string]any{
 			"delivery_id":         deliveryID,
 			"delivery_city":       deliveryCity,
 			"delivery_district":   deliveryDistrict,
@@ -820,7 +853,7 @@ func (r *Repository[T]) CountDeliveryItems(db *gorm.DB, entity *T, search string
 	return count, nil
 }
 
-func (r *Repository[T]) FindXenditPayoutsPagination(db *gorm.DB, entity *[]map[string]interface{}, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
+func (r *Repository[T]) FindXenditPayoutsPagination(db *gorm.DB, entity *[]map[string]any, page int, pageSize int, search string, sortingColumn string, sortBy string) error {
 	offset := (page - 1) * pageSize
 	if sortingColumn == "" {
 		sortingColumn = "xendit_payouts.id"
@@ -846,7 +879,7 @@ func (r *Repository[T]) FindXenditPayoutsPagination(db *gorm.DB, entity *[]map[s
 
 	defer rows.Close()
 
-	var results []map[string]interface{}
+	var results []map[string]any
 	for rows.Next() {
 		var (
 			categoryID        string
@@ -868,7 +901,7 @@ func (r *Repository[T]) FindXenditPayoutsPagination(db *gorm.DB, entity *[]map[s
 		}
 
 		// Masukkan kategori ke hasil
-		category := map[string]interface{}{
+		category := map[string]any{
 			"category_id":         categoryID,
 			"category_name":       categoryName,
 			"category_desc":       categoryDesc,

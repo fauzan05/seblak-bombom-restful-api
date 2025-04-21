@@ -1,13 +1,15 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+)
 
 type CategoryResponse struct {
-	ID          uint64    `json:"id,omitempty"`
-	Name        string    `json:"name,omitempty"`
-	Description string    `json:"description,omitempty"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	ID          uint64             `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	CreatedAt   helper.TimeRFC3339 `json:"created_at"`
+	UpdatedAt   helper.TimeRFC3339 `json:"updated_at"`
 }
 
 type CreateCategoryRequest struct {

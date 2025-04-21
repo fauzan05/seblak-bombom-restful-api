@@ -15,8 +15,8 @@ type Application struct {
 	PhoneNumber    string      `gorm:"column:phone_number"`
 	Email          string      `gorm:"column:email"`
 	SocialMedia    SocialMedia `gorm:"embedded"`
-	Created_At     time.Time   `gorm:"column:created_at;autoCreateTime;<-:create"`
-	Updated_At     time.Time   `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	CreatedAt      time.Time   `gorm:"column:created_at;autoCreateTime;<-:create"`
+	UpdatedAt      time.Time   `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }
 
 func (u *Application) TableName() string {

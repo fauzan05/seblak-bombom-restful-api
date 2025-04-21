@@ -13,8 +13,8 @@ type Notification struct {
 	IsRead     bool                    `gorm:"column:is_read"`
 	Type       helper.NotificationType `gorm:"column:type"`
 	Link       string                  `gorm:"column:link"`
-	Created_At time.Time               `gorm:"column:created_at;autoCreateTime;<-:create"`
-	Updated_At time.Time               `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	CreatedAt time.Time               `gorm:"column:created_at;autoCreateTime;<-:create"`
+	UpdatedAt time.Time               `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }
 
 func (c *Notification) TableName() string {

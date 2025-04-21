@@ -8,17 +8,20 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type XenditPayoutController struct {
 	Log     *logrus.Logger
 	UseCase *usecase.XenditPayoutUseCase
+	DB      *gorm.DB
 }
 
-func NewXenditPayoutController(useCase *usecase.XenditPayoutUseCase, logger *logrus.Logger) *XenditPayoutController {
+func NewXenditPayoutController(useCase *usecase.XenditPayoutUseCase, logger *logrus.Logger, db *gorm.DB) *XenditPayoutController {
 	return &XenditPayoutController{
 		Log:     logger,
 		UseCase: useCase,
+		DB:      db,
 	}
 }
 
@@ -37,10 +40,17 @@ func (c *XenditPayoutController) Create(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
 	}
 
-	response, err := c.UseCase.AddPayout(ctx, xenditPayoutRequest)
+	tx := c.DB.WithContext(ctx.Context()).Begin()
+	defer tx.Rollback()
+	response, err := c.UseCase.AddPayout(ctx, xenditPayoutRequest, tx)
 	if err != nil {
 		c.Log.Warnf("Failed to create new xendit payout : %+v", err)
 		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.XenditPayoutResponse]{
@@ -83,7 +93,7 @@ func (c *XenditPayoutController) GetPayoutById(ctx *fiber.Ctx) error {
 
 func (c *XenditPayoutController) Cancel(ctx *fiber.Ctx) error {
 	payoutId := ctx.Params("payoutId")
-	
+
 	xenditPayoutRequest := new(model.CancelXenditPayout)
 	xenditPayoutRequest.PayoutId = payoutId
 

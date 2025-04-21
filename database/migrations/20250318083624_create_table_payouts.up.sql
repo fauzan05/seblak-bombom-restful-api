@@ -10,10 +10,11 @@ CREATE TABLE payouts (
         "accepted",
         "cancelled",
         "failed",
-        "succeeded"
+        "succeeded",
+        "refunded",
+        "expired"
     ) NOT NULL,
     notes TEXT,
-    cancellation_notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id),

@@ -6,17 +6,17 @@ import (
 )
 
 type UserResponse struct {
-	ID        uint64            `json:"id"`
-	FirstName string            `json:"first_name"`
-	LastName  string            `json:"last_name"`
-	Email     string            `json:"email"`
-	Phone     string            `json:"phone"`
-	Addresses []AddressResponse `json:"addresses,omitempty"`
-	Role      helper.Role       `json:"role"`
-	Wallet    WalletResponse    `json:"wallet"`
-	Cart      CartResponse      `json:"cart"`
-	CreatedAt time.Time         `json:"created_at"`
-	UpdatedAt time.Time         `json:"updated_at"`
+	ID        uint64             `json:"id"`
+	FirstName string             `json:"first_name"`
+	LastName  string             `json:"last_name"`
+	Email     string             `json:"email"`
+	Phone     string             `json:"phone"`
+	Addresses []AddressResponse  `json:"addresses,omitempty"`
+	Role      helper.Role        `json:"role"`
+	Wallet    WalletResponse     `json:"wallet"`
+	Cart      CartResponse       `json:"cart"`
+	CreatedAt helper.TimeRFC3339 `json:"created_at"`
+	UpdatedAt helper.TimeRFC3339 `json:"updated_at"`
 }
 
 type RegisterUserRequest struct {
@@ -45,16 +45,16 @@ type UpdateUserPasswordRequest struct {
 	NewPasswordConfirm string `json:"new_password_confirm" validate:"required,max=100,eqfield=NewPassword"`
 }
 
-type LoginUserRequst struct {
+type LoginUserRequest struct {
 	Email    string `json:"email" validate:"required,max=100"`
 	Password string `json:"password" validate:"required,max=100"`
 }
 
 type UserTokenResponse struct {
-	Token      string    `json:"token"`
-	ExpiryDate time.Time `json:"expiry_date"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	Token      string             `json:"token"`
+	ExpiryDate time.Time          `json:"expiry_date"`
+	CreatedAt  helper.TimeRFC3339 `json:"created_at"`
+	UpdatedAt  helper.TimeRFC3339 `json:"updated_at"`
 }
 
 type GetUserByTokenRequest struct {

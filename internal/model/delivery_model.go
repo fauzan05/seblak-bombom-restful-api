@@ -1,16 +1,18 @@
 package model
 
-import "time"
+import (
+	"seblak-bombom-restful-api/internal/helper"
+)
 
 type DeliveryResponse struct {
-	ID        uint64    `json:"id"`
-	City      string    `json:"city"`
-	District  string    `json:"district"`
-	Village   string    `json:"village"`
-	Hamlet    string    `json:"hamlet"`
-	Cost      float32   `json:"cost"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint64             `json:"id"`
+	City      string             `json:"city"`
+	District  string             `json:"district"`
+	Village   string             `json:"village"`
+	Hamlet    string             `json:"hamlet"`
+	Cost      float32            `json:"cost"`
+	CreatedAt helper.TimeRFC3339 `json:"created_at"`
+	UpdatedAt helper.TimeRFC3339 `json:"updated_at"`
 }
 
 type CreateDeliveryRequest struct {
