@@ -37,16 +37,16 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newApplication := new(entity.Application)
 	if request.ID > 0 {
 		newApplication.ID = request.ID
 		if err := c.ApplicationRepository.FindById(tx, newApplication); err != nil {
-			c.Log.Warnf("Failed to find current application data in database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find current application data in database : %+v", err))
+			c.Log.Warnf("failed to find current application data in database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find current application data in database : %+v", err))
 		}
 	}
 
@@ -55,8 +55,8 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 		hashedFilename = hashFileName(request.Logo.Filename)
 		err = ctx.SaveFile(request.Logo, fmt.Sprintf("../uploads/images/application/%s", hashedFilename))
 		if err != nil {
-			c.Log.Warnf("Failed to save uploaded file: %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to save uploaded file: %+v", err))
+			c.Log.Warnf("failed to save uploaded file: %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save uploaded file: %+v", err))
 		}
 
 		// delete data gambar sebelumnya
@@ -65,8 +65,8 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 				filePath := "../uploads/images/application/"
 				err = os.Remove(filePath + newApplication.LogoFilename)
 				if err != nil {
-					c.Log.Warnf("Error deleting file: %v\n", err)
-					return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Error deleting file: %v\n", err))
+					c.Log.Warnf("failed to delete image file: %v\n", err)
+					return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed delete image file: %v\n", err))
 				}
 			}
 		}
@@ -74,8 +74,8 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 
 	count, err := c.ApplicationRepository.FindCount(tx, newApplication)
 	if err != nil {
-		c.Log.Warnf("Failed to find application in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find application in database : %+v", err))
+		c.Log.Warnf("failed to find application in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application in database : %+v", err))
 	}
 
 	newApplication.AppName = request.AppName
@@ -102,20 +102,20 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 	if count < 1 {
 		// boleh dibuat
 		if err := c.ApplicationRepository.Create(tx, newApplication); err != nil {
-			c.Log.Warnf("Failed to create new application request : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create new application request : %+v", err))
+			c.Log.Warnf("failed to create new application request : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new application request : %+v", err))
 		}
 	} else if count > 0 {
 		// tidak boleh buat lagi, dan mengupdate yang sekarang
 		if err := c.ApplicationRepository.Update(tx, newApplication); err != nil {
-			c.Log.Warnf("Failed to update new application request : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update new application request : %+v", err))
+			c.Log.Warnf("failed to update new application request : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update new application request : %+v", err))
 		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.ApplicationToResponse(newApplication), nil
@@ -126,8 +126,8 @@ func (c *ApplicationUseCase) Get(ctx context.Context) (*model.ApplicationRespons
 
 	newApplication := new(entity.Application)
 	if err := c.ApplicationRepository.FindFirst(tx, newApplication); err != nil {
-		c.Log.Warnf("Failed to find application request : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find application request : %+v", err))
+		c.Log.Warnf("failed to find application request : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application request : %+v", err))
 	}
 
 	return converter.ApplicationToResponse(newApplication), nil

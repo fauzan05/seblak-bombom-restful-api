@@ -27,15 +27,15 @@ func (c *PayoutController) Create(ctx *fiber.Ctx) error {
 	getId := ctx.Params("userId")
 	userId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("Failed to convert user_id to integer : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to convert user_id to integer : %+v", err))
+		c.Log.Warnf("failed to convert user_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert user_id to integer : %+v", err))
 	}
 
 	request := new(model.CreatePayoutRequest)
 	request.UserId = uint64(userId)
 	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Cannot parse data : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
+		c.Log.Warnf("cannot parse data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
 	if request.Method == helper.PAYOUT_METHOD_ONLINE {
@@ -44,7 +44,7 @@ func (c *PayoutController) Create(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {
-		c.Log.Warnf("Failed to create a new payout request : %+v", err)
+		c.Log.Warnf("failed to create a new payout request : %+v", err)
 		return err
 	}
 

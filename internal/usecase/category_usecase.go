@@ -39,21 +39,21 @@ func (c *CategoryUseCase) Add(ctx context.Context, request *model.CreateCategory
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newCategory := new(entity.Category)
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
 	if err := c.CategoryRepository.Create(tx, newCategory); err != nil {
-		c.Log.Warnf("Failed to create category into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed create category into database : %+v", err))
+		c.Log.Warnf("failed to create category into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed create category into database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.CategoryToResponse(newCategory), nil
@@ -64,15 +64,15 @@ func (c *CategoryUseCase) GetById(ctx context.Context, request *model.GetCategor
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newCategory := new(entity.Category)
 	newCategory.ID = request.ID
 	if err := c.CategoryRepository.FindById(tx, newCategory); err != nil {
-		c.Log.Warnf("Can't find category by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't find category by id : %+v", err))
+		c.Log.Warnf("can't find category by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("can't find category by id : %+v", err))
 	}
 
 	return converter.CategoryToResponse(newCategory), nil
@@ -87,23 +87,23 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 
 	var result []map[string]any // entity kosong yang akan diisi
 	if err := c.CategoryRepository.FindCategoriesPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
-		c.Log.Warnf("Failed to find all categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find all categories : %+v", err))
+		c.Log.Warnf("failed to find all categories : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find all categories : %+v", err))
 	}
 
 	newCategories := new([]entity.Category)
 	err := MapCategories(result, newCategories)
 	if err != nil {
-		c.Log.Warnf("Failed to map categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed map categories : %+v", err))
+		c.Log.Warnf("failed to map categories : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed map categories : %+v", err))
 	}
 
 	var totalPages int = 0
 	newCategory := new(entity.Category)
 	totalCategories, err := c.CategoryRepository.CountCategoryItems(tx, newCategory, search)
 	if err != nil {
-		c.Log.Warnf("Failed to count categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to count categories: %+v", err))
+		c.Log.Warnf("failed to count categories : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count categories: %+v", err))
 	}
 
 	// Hitung total halaman
@@ -121,8 +121,8 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newCategory := new(entity.Category)
@@ -130,26 +130,26 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 	// temukan category apakah ada 
 	count, err := c.CategoryRepository.FindAndCountById(tx, newCategory)
 	if err != nil {
-		c.Log.Warnf("Failed to find category by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find category by id : %+v", err))
+		c.Log.Warnf("failed to find category by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find category by id : %+v", err))
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Category not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "Category not found!")
+		c.Log.Warnf("category not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "category not found!")
 	}
 
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
 	newCategory.UpdatedAt = time.Now().UTC()
 	if err := c.CategoryRepository.Update(tx, newCategory); err != nil {
-		c.Log.Warnf("Failed to update category : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update category : %+v", err))
+		c.Log.Warnf("failed to update category : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update category : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.CategoryToResponse(newCategory), nil
@@ -161,8 +161,8 @@ func (c *CategoryUseCase) Delete(ctx context.Context, request *model.DeleteCateg
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newCategories := []entity.Category{}
@@ -175,13 +175,13 @@ func (c *CategoryUseCase) Delete(ctx context.Context, request *model.DeleteCateg
 	}
 
 	if err := c.CategoryRepository.DeleteInBatch(tx, &newCategories); err != nil {
-		c.Log.Warnf("Failed to delete category : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete category : %+v", err))
+		c.Log.Warnf("failed to delete category : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete category : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return true, nil

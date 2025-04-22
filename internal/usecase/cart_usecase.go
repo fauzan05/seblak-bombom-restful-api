@@ -42,43 +42,43 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	// dicek apakah quantity yang dikirim itu negatif/nol
 	if request.Quantity < 1 {
-		c.Log.Warnf("Quantity must be more than 0 if first time adding product to cart!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Quantity must be more than 0 if first time adding product to cart!")
+		c.Log.Warnf("quantity must be more than 0 if first time adding product to cart!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "quantity must be more than 0 if first time adding product to cart!")
 	}
 
 	// dicek apakah produknya ada atau tidak
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ProductID
 	if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
-		c.Log.Warnf("Failed to find product by id into product table : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find product by id into product table : %+v", err))
+		c.Log.Warnf("failed to find product by id into product table : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product by id into product table : %+v", err))
 	}
 
 	// cek apakah produk tersedia atau tidak
 	if newProduct.Stock < 1 {
-		c.Log.Warnf("Product was out of stock!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Product was out of stock!")
+		c.Log.Warnf("product was out of stock!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "product was out of stock!")
 	}
 
 	// cek apakah permintaan melebihi stok yang tersedia
 	newProduct.Stock -= request.Quantity
 	if newProduct.Stock < 0 {
 		// jika jumlah kuantitasnya melebihi stok yang tersedia
-		c.Log.Warnf("Quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, newProduct.Stock)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, newProduct.Stock))
+		c.Log.Warnf("quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, newProduct.Stock)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, newProduct.Stock))
 	}
 
 	// dicek terlebih dahulu apakah ada cart dengan user yang sama dan produk yang sama.
 	newCart := new(entity.Cart)
 	if err := c.CartRepository.FindCartByUserId(tx, newCart, request.UserID); err != nil {
-		c.Log.Warnf("Failed to find cart by user id from cart table : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to find cart by user id from cart table : %+v", err))
+		c.Log.Warnf("failed to find cart by user id from cart table : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to find cart by user id from cart table : %+v", err))
 	}
 
 	newCartItem := new(entity.CartItem)
@@ -86,8 +86,8 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 		// jika tidak ada maka buat cart baru
 		newCart.UserID = request.UserID
 		if err := c.CartRepository.Create(tx, newCart); err != nil {
-			c.Log.Warnf("Failed to create cart by user id into cart table : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create cart by user id into cart table : %+v", err))
+			c.Log.Warnf("failed to create cart by user id into cart table : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create cart by user id into cart table : %+v", err))
 		}
 
 		// setelah itu insert datanya ke tabel cart_items
@@ -95,28 +95,28 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 		newCartItem.ProductID = request.ProductID
 		newCartItem.Quantity = request.Quantity
 		if err := c.CartItemRepository.Create(tx, newCartItem); err != nil {
-			c.Log.Warnf("Failed to create cart item by user id into cart table : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create cart item by user id into cart table : %+v", err))
+			c.Log.Warnf("failed to create cart item by user id into cart table : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create cart item by user id into cart table : %+v", err))
 		}
 
 		// kurangi stok produknya
 		if err := c.ProductRepository.Update(tx, newProduct); err != nil {
-			c.Log.Warnf("Failed to update product quantity into product table : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update product quantity into product table : %+v", err))
+			c.Log.Warnf("failed to update product quantity into product table : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update product quantity into product table : %+v", err))
 		}
 
 	} else if newCart.ID > 0 {
 		// jika tidak ada maka gunakan cart yang ada
 		if err := c.CartRepository.FindWithPreloads(tx, newCart, "CartItems"); err != nil {
-			c.Log.Warnf("Failed to find cart item by user id from cart from database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find cart item by user id from cart from database : %+v", err))
+			c.Log.Warnf("failed to find cart item by user id from cart from database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find cart item by user id from cart from database : %+v", err))
 		}
 
 		// temukan apakah ada user id dan produk id yang sama di cart items
 		totalCartItem, err := c.CartItemRepository.FindCartItemByUserIdAndProductId(tx, newCartItem, newCart.ID, request.ProductID)
 		if err != nil {
-			c.Log.Warnf("Failed to find cart item by user id and product id from cart from database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find cart item by user id and product id from cart from database : %+v", err))
+			c.Log.Warnf("failed to find cart item by user id and product id from cart from database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find cart item by user id and product id from cart from database : %+v", err))
 		}
 
 		if totalCartItem == 0 {
@@ -127,8 +127,8 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 			newCartItem.Quantity = request.Quantity
 
 			if err := c.CartItemRepository.Create(tx, newCartItem); err != nil {
-				c.Log.Warnf("Failed to create cart item by user id into database : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create cart item by user id into database : %+v", err))
+				c.Log.Warnf("failed to create cart item by user id into database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create cart item by user id into database : %+v", err))
 			}
 		} else {
 			// update quantitynya saja
@@ -138,8 +138,8 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 			}
 
 			if err := c.CartItemRepository.UpdateCustomColumns(tx, newCartItem, updateQuantity); err != nil {
-				c.Log.Warnf("Failed to update quantity cart item into database : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update quantity cart item into database : %+v", err))
+				c.Log.Warnf("failed to update quantity cart item into database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update quantity cart item into database : %+v", err))
 			}
 		}
 
@@ -151,16 +151,16 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 		}
 
 		if err := c.ProductRepository.UpdateCustomColumns(tx, newProductUpdate, updateProductQuantity); err != nil {
-			c.Log.Warnf("Failed to update stock product into database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update stock product into database : %+v", err))
+			c.Log.Warnf("failed to update stock product into database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update stock product into database : %+v", err))
 		}
 	}
 
 	newCart.CartItems = nil
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.CartToResponse(newCart), nil
@@ -171,14 +171,14 @@ func (c *CartUseCase) GetAllByCurrentUser(ctx context.Context, request *model.Ge
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newCart := new(entity.Cart)
 	if err := c.CartRepository.FindCartItemByUserId(tx, newCart, request.UserID); err != nil {
-		c.Log.Warnf("Failed to find all cart item by current user in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to find all cart item by current user in database : %+v", err))
+		c.Log.Warnf("failed to find all cart item by current user in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to find all cart item by current user in database : %+v", err))
 	}
 
 	return converter.CartToResponse(newCart), nil
@@ -190,28 +190,28 @@ func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateC
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newCartItem := new(entity.CartItem)
 	newCartItem.ID = request.CartItemID
 	count, err := c.CartItemRepository.FindAndCountById(tx, newCartItem)
 	if err != nil {
-		c.Log.Warnf("Failed to find cart item by cart item id in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find cart item by cart item id in database : %+v", err))
+		c.Log.Warnf("failed to find cart item by cart item id in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find cart item by cart item id in database : %+v", err))
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Cart item by id not found!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Cart item by id not found!")
+		c.Log.Warnf("cart item by id not found!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "cart item by id not found!")
 	}
 
 	findProduct := new(entity.Product)
 	findProduct.ID = newCartItem.ProductID
 	if err := c.ProductRepository.FindFirst(tx, findProduct); err != nil {
-		c.Log.Warnf("Failed to find product by id in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find product by id in database : %+v", err))
+		c.Log.Warnf("failed to find product by id in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product by id in database : %+v", err))
 	}
 
 	newCartItem.Quantity = newCartItem.Quantity + request.Quantity
@@ -221,8 +221,8 @@ func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateC
 		deleteCartItem := new(entity.CartItem)
 		deleteCartItem.ID = request.CartItemID
 		if err := c.CartItemRepository.Delete(tx, deleteCartItem); err != nil {
-			c.Log.Warnf("Failed to delete cart item by cart item id in database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete cart item by cart item id in database : %+v", err))
+			c.Log.Warnf("failed to delete cart item by cart item id in database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete cart item by cart item id in database : %+v", err))
 		}
 	} else {
 		// tambah/kurang
@@ -233,8 +233,8 @@ func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateC
 		}
 
 		if err := c.CartItemRepository.UpdateCustomColumns(tx, updateCartItem, updateQuantity); err != nil {
-			c.Log.Warnf("Failed to update quantity of cart item in database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update quantity of cart item in database : %+v", err))
+			c.Log.Warnf("failed to update quantity of cart item in database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update quantity of cart item in database : %+v", err))
 		}
 	}
 
@@ -247,13 +247,13 @@ func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateC
 	}
 
 	if err := c.ProductRepository.UpdateCustomColumns(tx, updateProduct, updateStock); err != nil {
-		c.Log.Warnf("Failed to update stock of product in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update stock of product in database : %+v", err))
+		c.Log.Warnf("failed to update stock of product in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update stock of product in database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.CartItemToResponse(newCartItem), nil
@@ -265,28 +265,28 @@ func (c *CartUseCase) DeleteItem(ctx context.Context, request *model.DeleteCartR
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newCartItem := new(entity.CartItem)
 	newCartItem.ID = request.CartItemID
 	count, err := c.CartItemRepository.FindAndCountById(tx, newCartItem)
 	if err != nil {
-		c.Log.Warnf("Failed to find cart item by cart item id in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find cart item by cart item id in database : %+v", err))
+		c.Log.Warnf("failed to find cart item by cart item id in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find cart item by cart item id in database : %+v", err))
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Find cart item by id not found!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Cart item by id not found!")
+		c.Log.Warnf("cart item not found!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "cart item not found!")
 	}
 
 	findProduct := new(entity.Product)
 	findProduct.ID = newCartItem.ProductID
 	if err := c.ProductRepository.FindFirst(tx, findProduct); err != nil {
-		c.Log.Warnf("Failed to find product by id in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find product by id in database : %+v", err))
+		c.Log.Warnf("failed to find product by id in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product by id in database : %+v", err))
 	}
 	
 	// update stok produk
@@ -298,21 +298,21 @@ func (c *CartUseCase) DeleteItem(ctx context.Context, request *model.DeleteCartR
 	}
 
 	if err := c.ProductRepository.UpdateCustomColumns(tx, updateProduct, updateStock); err != nil {
-		c.Log.Warnf("Failed to update stock of product in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update stock of product in database : %+v", err))
+		c.Log.Warnf("failed to update stock of product in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update stock of product in database : %+v", err))
 	}
 
 	// delete cart items
 	newCartItem = new(entity.CartItem)
 	newCartItem.ID = request.CartItemID
 	if err := c.CartItemRepository.Delete(tx, newCartItem); err != nil {
-		c.Log.Warnf("Failed to delete product from cart in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to delete product from cart in database : %+v", err))
+		c.Log.Warnf("failed to delete product from cart in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete product from cart in database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.CartItemToResponse(newCartItem), nil

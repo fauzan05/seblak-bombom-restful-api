@@ -24,19 +24,19 @@ func NewWalletController(useCase *usecase.WalletUseCase, logger *logrus.Logger) 
 func (c *WalletController) TopUpBalance(ctx *fiber.Ctx) error {
 	request := new(model.TopUpWalletBalance)
 	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Cannot parse data : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
+		c.Log.Warnf("cannot parse data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
 	response, err := c.UseCase.AddBalance(ctx.Context(), request)
 	if err != nil {
-		c.Log.Warnf("Failed to top up balance : %+v", err)
+		c.Log.Warnf("failed to top up balance : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.WalletResponse]{
 		Code:   201,
-		Status: "Success to top up balance",
+		Status: "success to top up balance",
 		Data:   &response,
 	})
 }
@@ -113,7 +113,7 @@ func (c *WalletController) TopUpBalance(ctx *fiber.Ctx) error {
 
 // 	updateCategory := new(model.UpdateCategoryRequest)
 // 	if err := ctx.BodyParser(updateCategory); err != nil {
-// 		c.Log.Warnf("Cannot parse data : %+v", err)
+// 		c.Log.Warnf("cannot parse data : %+v", err)
 // 		return err
 // 	}
 // 	updateCategory.ID = uint64(categoryId)

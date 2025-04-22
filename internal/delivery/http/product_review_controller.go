@@ -26,20 +26,20 @@ func (c *ProductReviewController) Create(ctx *fiber.Ctx) error {
 	auth := middleware.GetCurrentUser(ctx)
 	request := new(model.CreateProductReviewRequest)
 	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Cannot parse data : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse data : %+v", err))
+		c.Log.Warnf("cannot parse data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
 	request.UserId = auth.ID
 	response, err := c.UseCase.Add(ctx.Context(), request)
 	if err != nil {
-		c.Log.Warnf("Failed to create a product review : %+v", err)
+		c.Log.Warnf("failed to create a product review : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.ProductReviewResponse]{
 		Code:   201,
-		Status: "Success to create a product review",
+		Status: "success to create a product review",
 		Data:   response,
 	})
 }

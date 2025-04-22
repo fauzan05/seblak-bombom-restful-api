@@ -68,8 +68,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newOrder := new(entity.Order)
@@ -77,33 +77,33 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	// temukan produk untuk memastikan ketersediaan dan masukkan data produk ke slice OrderProduct serta mengkalkulasikan tagihannya
 	for _, orderProductRequest := range request.OrderProducts {
 		if orderProductRequest.Quantity < 0 {
-			c.Log.Warnf("Quantity must be positive number : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, "Quantity must be positive number!")
+			c.Log.Warnf("quantity must be positive number : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "quantity must be positive number!")
 		}
 		newProduct := new(entity.Product)
 		newProduct.ID = orderProductRequest.ProductId
 		count, err := c.ProductRepository.FindAndCountProductById(tx, newProduct)
 		if count < 1 {
-			c.Log.Warnf("Find product by id not found : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, "Product selected is not found!")
+			c.Log.Warnf("product not found : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "product not found!")
 		}
 
 		if newProduct.Stock < 1 {
-			c.Log.Warnf("Product out of stock : %+v", err)
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Product selected is out of stock!")
+			c.Log.Warnf("product out of stock : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, "product out of stock!")
 		}
 
 		// pastikan permintaan tidak melebihi stok produk yang terkini
 		newProduct.Stock -= orderProductRequest.Quantity
 		if newProduct.Stock < 0 {
-			c.Log.Warnf("Quantity order of product is out of limit : %+v", err)
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Quantity order of product is out of limit")
+			c.Log.Warnf("quantity order of product is out of limit : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, "quantity order of product is out of limit")
 		}
 
 		// setelah dipastikan tidak melebihi stok produk yang terkini, kurangi stok produk terkini
 		if err := c.ProductRepository.Update(tx, newProduct); err != nil {
-			c.Log.Warnf("Failed to update stock of product : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, "An error occurred on the server. Please try again later!")
+			c.Log.Warnf("failed to update stock of product : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update stock of product : %+v", err))
 		}
 
 		orderProduct := entity.OrderProduct{
@@ -125,8 +125,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newDelivery := new(entity.Delivery)
 		newDelivery.ID = request.DeliveryId
 		if err := c.DeliveryRepository.FindFirst(tx, newDelivery); err != nil {
-			c.Log.Warnf("Can't find delivery settings : %+v", err)
-			return nil, fiber.NewError(fiber.StatusNotFound, "Can't find delivery settings because not yet exist or not yet created")
+			c.Log.Warnf("can't find delivery settings : %+v", err)
+			return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("can't find delivery settings : %+v", err))
 		}
 
 		// jumlahkan semua total termasuk ongkir
@@ -151,8 +151,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		count, err := c.DiscountRepository.FindAndCountById(tx, newDiscount)
 		newOrder.DiscountValue = newDiscount.Value
 		if err != nil {
-			c.Log.Warnf("Failed to find discount by code : %+v", err)
-			return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Failed to find discount by code : %+v", err))
+			c.Log.Warnf("failed to find discount by code : %+v", err)
+			return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to find discount by code : %+v", err))
 		}
 
 		// cek apakah diskonnya ada dan statusnya aktif (true)
@@ -173,37 +173,37 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 					newOrder.TotalDiscount = newDiscount.Value
 				}
 			} else if newDiscount.End.Before(time.Now()) {
-				c.Log.Warnf("Discount has expired!")
-				return nil, fiber.NewError(fiber.StatusBadRequest, "Discount has expired!")
+				c.Log.Warnf("discount has expired!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "discount has expired!")
 			}
 		} else if count < 1 && !newDiscount.Status {
-			c.Log.Warnf("Discount has disabled or doesn't exists!")
-			return nil, fiber.NewError(fiber.StatusNotFound, "Discount has disabled or doesn't exists!")
+			c.Log.Warnf("discount has disabled or doesn't exists!")
+			return nil, fiber.NewError(fiber.StatusNotFound, "discount has disabled or doesn't exists!")
 		}
 	}
 
 	if !helper.IsValidPaymentMethod(request.PaymentMethod) {
-		c.Log.Warnf("Invalid payment method!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid payment method!")
+		c.Log.Warnf("invalid payment method!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid payment method!")
 	}
 	newOrder.PaymentMethod = request.PaymentMethod
 
 	if !helper.IsValidChannelCode(request.ChannelCode) {
-		c.Log.Warnf("Invalid channel code!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid channel code!")
+		c.Log.Warnf("invalid channel code!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid channel code!")
 	}
 	newOrder.ChannelCode = request.ChannelCode
 
 	if !helper.IsValidPaymentGateway(request.PaymentGateway) {
-		c.Log.Warnf("Invalid payment gateway!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Invalid payment gateway!")
+		c.Log.Warnf("invalid payment gateway!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid payment gateway!")
 	}
 	newOrder.PaymentGateway = request.PaymentGateway
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
 		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
-			c.Log.Warnf("Payment method %s is not available on payment gateway System!", request.PaymentMethod)
-			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway System!", request.PaymentMethod))
+			c.Log.Warnf("payment method %s is not available on payment gateway system!", request.PaymentMethod)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("payment method %s is not available on payment gateway system!", request.PaymentMethod))
 		}
 	}
 
@@ -211,8 +211,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
 		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE {
-			c.Log.Warnf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
-			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway))
+			c.Log.Warnf("payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway))
 		} else {
 
 			validChannelCodes := map[helper.PaymentMethod][]helper.ChannelCode{
@@ -232,42 +232,42 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 			// Jika tidak valid, berikan error
 			if !isValid {
-				c.Log.Warnf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway)
-				return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway))
+				c.Log.Warnf("channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway)
+				return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway))
 			}
 		}
 	} else if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
 		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
-			c.Log.Warnf("Payment method %s is not available on payment gateway System!", request.PaymentMethod)
-			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Payment method %s is not available on payment gateway System!", request.PaymentMethod))
+			c.Log.Warnf("payment method %s is not available on payment gateway system!", request.PaymentMethod)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("payment method %s is not available on payment gateway system!", request.PaymentMethod))
 		} else {
 			// langsung paid dan proses walletnya
 			if request.CurrentBalance < newOrder.TotalFinalPrice {
 				// tampilkan error bahwa saldo kurang
-				c.Log.Warnf("Your balance is insufficient to perform this transaction!")
-				return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
+				c.Log.Warnf("your balance is insufficient to perform this transaction!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "your balance is insufficient to perform this transaction!")
 			}
 
 			newBalance := request.CurrentBalance - newOrder.TotalFinalPrice
 			newWallet := new(entity.Wallet)
 			if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
-				c.Log.Warnf("Failed to update new balance : %+v", err)
-				return nil, fiber.NewError(fiber.StatusBadRequest, "Failed to update new balance!")
+				c.Log.Warnf("failed to update new balance : %+v", err)
+				return nil, fiber.NewError(fiber.StatusBadRequest, "failed to update new balance!")
 			}
 
 			newOrder.PaymentStatus = helper.PAID_PAYMENT
 		}
 	} else {
 		// berikan error bahwa payment method tidak tersedia/tidak valid
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Payment method is not valid or available!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "payment method is not valid or available!")
 	}
 
 	// mengambil alamat utama yang diambil oleh user
 	newOrder.CompleteAddress = request.CompleteAddress
 
 	if err := c.OrderRepository.Create(tx, newOrder); err != nil {
-		c.Log.Warnf("Failed to create new order : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create new order : %+v", err))
+		c.Log.Warnf("failed to create new order : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new order : %+v", err))
 	}
 
 	timestamp := time.Now().Unix()
@@ -282,14 +282,14 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 	// insert semua data order product ke tabel order_products
 	if err := c.OrderProductRepository.CreateInBatch(tx, &orderProducts); err != nil {
-		c.Log.Warnf("Failed to add all order products into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add all order products into database : %+v", err))
+		c.Log.Warnf("failed to add all order products into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add all order products into database : %+v", err))
 	}
 
 	// mengisi kolom invoice ke tabel order setelah mendapatkan ID order nya
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
-		c.Log.Warnf("Failed to add invoice code : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to add invoice code : %+v", err))
+		c.Log.Warnf("failed to add invoice code : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add invoice code : %+v", err))
 	}
 
 	// jika pembayaran menggunakan xendit,maka panggil xendit usecase
@@ -324,13 +324,13 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	}
 
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
-		c.Log.Warnf("Failed to find newly created order : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find newly created order : %+v", err))
+		c.Log.Warnf("failed to find newly created order : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly created order : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.OrderToResponse(newOrder), nil
@@ -341,14 +341,14 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newOrders := new([]entity.Order)
 	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
-		c.Log.Warnf("Failed to find all orders by current user : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find all orders by user id : %+v", err))
+		c.Log.Warnf("failed to find all orders by current user : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find all orders by user id : %+v", err))
 	}
 
 	return converter.OrdersToResponse(newOrders), nil
@@ -360,29 +360,29 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newOrder := new(entity.Order)
 	newOrder.ID = request.ID
 	count, err := c.OrderRepository.FindAndCountById(tx, newOrder)
 	if err != nil {
-		c.Log.Warnf("Failed to find order by id into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find order by id into database : %+v", err))
+		c.Log.Warnf("failed to find order by id into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find order by id into database : %+v", err))
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Order not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "Order not found!")
+		c.Log.Warnf("order not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "order not found!")
 	}
 	
 	// validate first before update order status state into database
 	// if cancelled
 	if request.OrderStatus == helper.ORDER_CANCELLED {
 		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED || newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
-			c.Log.Warnf("Can't cancel an order that has been rejected/cancelled/cancellation requested!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been rejected/cancelled/cancellation requested!")
+			c.Log.Warnf("can't cancel an order that has been rejected/cancelled/cancellation requested!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that has been rejected/cancelled/cancellation requested!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_PENDING && newOrder.PaymentStatus == helper.PAID_PAYMENT {
@@ -391,13 +391,13 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			findWallet := new(entity.Wallet)
 			count, err := c.WalletRepository.FindAndCountFirstWalletByUserId(tx, findWallet, newOrder.UserId, "active")
 			if err != nil {
-				c.Log.Warnf("Failed to find wallet by user id from database : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id from database : %+v", err))
+				c.Log.Warnf("failed to find wallet by user id from database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find wallet by user id from database : %+v", err))
 			}
 
 			if count < 1 {
-				c.Log.Warnf("The selected wallet is not found!")
-				return nil, fiber.NewError(fiber.StatusBadRequest, "The selected wallet is not found!")
+				c.Log.Warnf("the selected wallet is not found!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "the selected wallet is not found!")
 			}
 
 			// return to wallet balance
@@ -409,8 +409,8 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			}
 
 			if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
-				c.Log.Warnf("Failed to update wallet balance : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance : %+v", err))
+				c.Log.Warnf("failed to update wallet balance : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
 			}
 
 			newOrder.OrderStatus = request.OrderStatus
@@ -421,35 +421,35 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			// memerlukan persetujuan seller
 			newOrder.OrderStatus = helper.ORDER_CANCELLATION_REQUESTED
 		} else if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
-			c.Log.Warnf("Can't cancel an order that is ready for pickup!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that is ready for pickup!")
+			c.Log.Warnf("can't cancel an order that is ready for pickup!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is ready for pickup!")
 		} else if (newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED) {
-			c.Log.Warnf("Can't cancel an order that is being delivered!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that is being delivered!")
+			c.Log.Warnf("can't cancel an order that is being delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is being delivered!")
 		} else if newOrder.OrderStatus == helper.ORDER_DELIVERED {
-			c.Log.Warnf("Can't cancel an order that has been delivered!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't cancel an order that has been delivered!")
+			c.Log.Warnf("can't cancel an order that has been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that has been delivered!")
 		}
 
 	} else if request.OrderStatus == helper.ORDER_REJECTED {
 		if newOrder.OrderStatus == helper.ORDER_REJECTED {
-			c.Log.Warnf("Can't reject an order that has been rejected!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that has been rejected!")
+			c.Log.Warnf("can't reject an order that has been rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that has been rejected!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLED {
-			c.Log.Warnf("Can't reject an order that has been cancelled!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that has been cancelled!")
+			c.Log.Warnf("can't reject an order that has been cancelled!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that has been cancelled!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_RECEIVED {
-			c.Log.Warnf("Can't reject an order that has been received!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that has been received!")
+			c.Log.Warnf("can't reject an order that has been received!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that has been received!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
-			c.Log.Warnf("Can't reject an order that is been delivered!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't reject an order that is been delivered!")
+			c.Log.Warnf("can't reject an order that is been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that is been delivered!")
 		}
 
 		// maka balikkan saldo customer
@@ -459,13 +459,13 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			findWallet := new(entity.Wallet)
 			count, err := c.WalletRepository.FindAndCountFirstWalletByUserId(tx, findWallet, newOrder.UserId, "active")
 			if err != nil {
-				c.Log.Warnf("Failed to find wallet by user id from database : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id from database : %+v", err))
+				c.Log.Warnf("failed to find wallet by user id from database : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find wallet by user id from database : %+v", err))
 			}
 
 			if count < 1 {
-				c.Log.Warnf("The selected wallet is not found!")
-				return nil, fiber.NewError(fiber.StatusBadRequest, "The selected wallet is not found!")
+				c.Log.Warnf("the selected wallet is not found!")
+				return nil, fiber.NewError(fiber.StatusBadRequest, "the selected wallet is not found!")
 			}
 
 			// return to wallet balance
@@ -477,103 +477,103 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			}
 
 			if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
-				c.Log.Warnf("Failed to update wallet balance : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance : %+v", err))
+				c.Log.Warnf("failed to update wallet balance : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
 			}
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
 	} else if request.OrderStatus == helper.ORDER_RECEIVED {
 		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
-			c.Log.Warnf("Can't accept an order that has not been paid yet!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has not been paid yet!")
+			c.Log.Warnf("can't accept an order that has not been paid yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has not been paid yet!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
-			c.Log.Warnf("Can't accept an order that has been cancelled/rejected!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has been cancelled/rejected!")
+			c.Log.Warnf("can't accept an order that has been cancelled/rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has been cancelled/rejected!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_RECEIVED {
-			c.Log.Warnf("Can't accept an order that has been received!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has been received!")
+			c.Log.Warnf("can't accept an order that has been received!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has been received!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
-			c.Log.Warnf("Can't accept an order that is being delivered!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that is being delivered!")
+			c.Log.Warnf("can't accept an order that is being delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that is being delivered!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
-			c.Log.Warnf("Can't accept an order that has been delivered!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that has been delivered!")
+			c.Log.Warnf("can't accept an order that has been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has been delivered!")
 		}
 
 		if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
-			c.Log.Warnf("Can't accept an order that is ready for pickup!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't accept an order that is ready for pickup!")
+			c.Log.Warnf("can't accept an order that is ready for pickup!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that is ready for pickup!")
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
 	} else if request.OrderStatus == helper.READY_FOR_PICKUP {
 		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
-			c.Log.Warnf("Can't pick up an order that has not been paid yet!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has not been paid yet!")
+			c.Log.Warnf("can't pick up an order that has not been paid yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has not been paid yet!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
-			c.Log.Warnf("Can't pick up an order that is ready for pickup!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that is ready for pickup!")
+			c.Log.Warnf("can't pick up an order that is ready for pickup!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that is ready for pickup!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
-			c.Log.Warnf("Can't pick up an order that has been cancelled/rejected!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has been cancelled/rejected!")
+			c.Log.Warnf("can't pick up an order that has been cancelled/rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has been cancelled/rejected!")
 		}	
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
-			c.Log.Warnf("Can't pick up an order that has a cancellation request!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has a cancellation request!")
+			c.Log.Warnf("can't pick up an order that has a cancellation request!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has a cancellation request!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
-			c.Log.Warnf("Can't pick up an order that has been delivered!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't pick up an order that has been delivered!")
+			c.Log.Warnf("can't pick up an order that has been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has been delivered!")
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
 	} else if request.OrderStatus == helper.ORDER_DELIVERED {
 		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
-			c.Log.Warnf("Can't complete an order that has not been paid yet!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has not been paid yet!")
+			c.Log.Warnf("can't complete an order that has not been paid yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has not been paid yet!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
-			c.Log.Warnf("Can't complete an order that has been completed!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has been completed!")
+			c.Log.Warnf("can't complete an order that has been completed!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has been completed!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
-			c.Log.Warnf("Can't complete an order that has been cancelled/rejected!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has been cancelled/rejected!")
+			c.Log.Warnf("can't complete an order that has been cancelled/rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has been cancelled/rejected!")
 		}
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
-			c.Log.Warnf("Can't complete an order that has a cancellation request!")
-			return nil, fiber.NewError(fiber.StatusBadRequest, "Can't complete an order that has a cancellation request!")
+			c.Log.Warnf("can't complete an order that has a cancellation request!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has a cancellation request!")
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
 	}
 
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
-		c.Log.Warnf("Failed to update status order by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update status order by id : %+v", err))
+		c.Log.Warnf("failed to update status order by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update status order by id : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.OrderToResponse(newOrder), nil
@@ -584,14 +584,14 @@ func (c *OrderUseCase) GetByUserId(ctx context.Context, request *model.GetOrders
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newOrders := new([]entity.Order)
 	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
-		c.Log.Warnf("Failed to get all orders by user id in the database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get all orders by user id from database : %+v", err))
+		c.Log.Warnf("failed to get all orders by user id in the database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get all orders by user id from database : %+v", err))
 	}
 
 	return converter.OrdersToResponse(newOrders), nil

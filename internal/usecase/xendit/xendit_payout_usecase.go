@@ -45,21 +45,21 @@ func NewXenditPayoutUseCase(db *gorm.DB, log *logrus.Logger, validate *validator
 func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXenditPayout, tx *gorm.DB) (*model.XenditPayoutResponse, error) {
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	// cek apakah saldo melebihi yang ada
 	newUser := new(entity.User)
 	newUser.ID = request.UserId
 	if err := c.UserRepository.FindWithPreloads(tx, newUser, "Wallet"); err != nil {
-		c.Log.Warnf("Failed to find wallet by user id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find wallet by user id : %+v", err))
+		c.Log.Warnf("failed to find wallet by user id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find wallet by user id : %+v", err))
 	}
 
 	if request.Amount > newUser.Wallet.Balance {
-		c.Log.Warnf("Your balance is insufficient to perform this transaction!")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "Your balance is insufficient to perform this transaction!")
+		c.Log.Warnf("your balance is insufficient to perform this transaction!")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "your balance is insufficient to perform this transaction!")
 	}
 
 	resultBalance := newUser.Wallet.Balance - request.Amount
@@ -72,8 +72,8 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 	newWallet := new(entity.Wallet)
 	newWallet.ID = newUser.Wallet.ID
 	if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
-		c.Log.Warnf("Failed to update wallet balance in the database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance in the database : %+v", err))
+		c.Log.Warnf("failed to update wallet balance in the database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance in the database : %+v", err))
 	}
 
 	milli := time.Now().UnixMilli()
@@ -92,8 +92,8 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 		CreatePayoutRequest(*createPayoutRequest).Execute()
 
 	if resErr != nil {
-		c.Log.Warnf("Failed to create new xendit payout : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to create new xendit payout : %+v", resErr.FullError()))
+		c.Log.Warnf("failed to create new xendit payout : %+v", resErr.FullError())
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to create new xendit payout : %+v", resErr.FullError()))
 	}
 
 	newXenditPayout := new(entity.XenditPayout)
@@ -112,8 +112,8 @@ func (c *XenditPayoutUseCase) AddPayout(ctx *fiber.Ctx, request *model.CreateXen
 	newXenditPayout.EstimatedArrival = estimatedArrivalTime
 
 	if err := c.XenditPayoutRepository.Create(tx, newXenditPayout); err != nil {
-		c.Log.Warnf("Failed to insert xendit payout into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to insert xendit payout into database : %+v", err))
+		c.Log.Warnf("failed to insert xendit payout into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to insert xendit payout into database : %+v", err))
 	}
 
 	return converter.XenditPayoutToResponse(newXenditPayout), nil
@@ -124,15 +124,15 @@ func (c *XenditPayoutUseCase) GetBalance(ctx *fiber.Ctx) (*model.GetWithdrawable
 	var balance *float32
 	resp, _, resErr := c.XenditClient.BalanceApi.GetBalance(ctx.Context()).Execute()
 	if resErr != nil {
-		c.Log.Warnf("Failed to get xendit balance : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to get xendit balance : %+v", resErr.FullError()))
+		c.Log.Warnf("failed to get xendit balance : %+v", resErr.FullError())
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to get xendit balance : %+v", resErr.FullError()))
 	}
 
 	newWallet := new(entity.Wallet)
 	getActiveBalance, err := c.WalletRepository.FindAllActiveBalance(tx, newWallet)
 	if err != nil {
-		c.Log.Warnf("Failed to count balance on active wallet : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to count balance on active wallet : %+v", err))
+		c.Log.Warnf("failed to count balance on active wallet : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to count balance on active wallet : %+v", err))
 	}
 
 	respBalance := resp.GetBalance()
@@ -150,15 +150,15 @@ func (c *XenditPayoutUseCase) GetPayoutById(ctx *fiber.Ctx, request *model.GetPa
 		Execute()
 
 	if resErr != nil {
-		c.Log.Warnf("Failed to get xendit payout by id : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to get xendit payout by id : %+v", resErr.FullError()))
+		c.Log.Warnf("failed to get xendit payout by id : %+v", resErr.FullError())
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to get xendit payout by id : %+v", resErr.FullError()))
 	}
 
 	newXenditPayout := new(entity.XenditPayout)
 	newXenditPayout.ID = resp.Payout.Id
 	if err := c.XenditPayoutRepository.FindWith2Preloads(tx, newXenditPayout, "User", "User.Wallet"); err != nil {
-		c.Log.Warnf("Failed to get xendit payout from database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit payout from database : %+v", err))
+		c.Log.Warnf("failed to get xendit payout from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get xendit payout from database : %+v", err))
 	}
 	newXenditPayout.BusinessID = resp.Payout.GetBusinessId()
 	newXenditPayout.ReferenceID = resp.Payout.GetReferenceId()
@@ -180,23 +180,23 @@ func (c *XenditPayoutUseCase) CancelPayout(ctx *fiber.Ctx, request *model.Cancel
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	resp, _, resErr := c.XenditClient.PayoutApi.CancelPayout(ctx.Context(), request.PayoutId).
 		Execute()
 
 	if resErr != nil {
-		c.Log.Warnf("Failed to cancel xendit payout : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to cancel xendit payout : %+v", resErr.FullError()))
+		c.Log.Warnf("failed to cancel xendit payout : %+v", resErr.FullError())
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to cancel xendit payout : %+v", resErr.FullError()))
 	}
 
 	newXenditPayout := new(entity.XenditPayout)
 	newXenditPayout.ID = resp.Payout.Id
 	if err := c.XenditPayoutRepository.FindFirst(tx, newXenditPayout); err != nil {
-		c.Log.Warnf("Failed to get xendit payout from database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit payout from database : %+v", err))
+		c.Log.Warnf("failed to get xendit payout from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get xendit payout from database : %+v", err))
 	}
 	newXenditPayout.BusinessID = resp.Payout.GetBusinessId()
 	newXenditPayout.ReferenceID = resp.Payout.GetReferenceId()

@@ -32,8 +32,8 @@ func (c *ProductController) Create(ctx *fiber.Ctx) error {
 
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		c.Log.Warnf("Cannot parse multipart form data : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse multipart form data : %+v", err))
+		c.Log.Warnf("cannot parse multipart form data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data : %+v", err))
 	}
 
 	request := new(model.CreateProductRequest)
@@ -152,8 +152,8 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		c.Log.Warnf("Cannot parse multipart form data: %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Cannot parse multipart form data: %+v", err))
+		c.Log.Warnf("cannot parse multipart form data: %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data: %+v", err))
 	}
 
 	request := new(model.UpdateProductRequest)
