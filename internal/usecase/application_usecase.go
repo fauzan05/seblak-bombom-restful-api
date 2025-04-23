@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
@@ -52,6 +53,12 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 
 	var hashedFilename string
 	if request.Logo != nil {
+		err := helper.ValidateFile(1, request.Logo)
+		if err != nil {
+			c.Log.Warnf(err.Error())
+			return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
 		hashedFilename = hashFileName(request.Logo.Filename)
 		err = ctx.SaveFile(request.Logo, fmt.Sprintf("../uploads/images/application/%s", hashedFilename))
 		if err != nil {

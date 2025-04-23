@@ -27,6 +27,10 @@ import (
 )
 
 func ClearAll() {
+	DeleteAllApplicationImages()
+	ClearApplicationsSetting()
+	ClearOrderProducts()
+	ClearOrders()
 	DeleteAllProductImages()
 	ClearImages()
 	ClearProducts()
@@ -41,10 +45,31 @@ func ClearAll() {
 	ClearUsers()
 }
 
+func ClearApplicationsSetting() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.Application{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear application settings data : %+v", err)
+	}
+}
+
 func ClearImages() {
 	err := db.Unscoped().Where("1 = 1").Delete(&entity.Image{}).Error
 	if err != nil {
 		log.Fatalf("Failed clear images data : %+v", err)
+	}
+}
+
+func ClearOrders() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.Order{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear orders data : %+v", err)
+	}
+}
+
+func ClearOrderProducts() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.OrderProduct{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear order products data : %+v", err)
 	}
 }
 
@@ -392,6 +417,24 @@ func GenerateDummyJPEG(sizeInBytes int) (filename string, content []byte, err er
 
 func DeleteAllProductImages() {
 	folderPath := "../uploads/images/products/"
+
+	files, err := os.ReadDir(folderPath)
+	if err != nil {
+		log.Fatalf("Failed to read directory: %v", err)
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			err := os.Remove(filepath.Join(folderPath, file.Name()))
+			if err != nil {
+				log.Printf("Failed to delete file %s: %v", file.Name(), err)
+			}
+		}
+	}
+}
+
+func DeleteAllApplicationImages() {
+	folderPath := "../uploads/images/application/"
 
 	files, err := os.ReadDir(folderPath)
 	if err != nil {

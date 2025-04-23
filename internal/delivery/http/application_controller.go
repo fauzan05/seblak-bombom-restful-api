@@ -61,15 +61,15 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 	request.TwitterLink = strings.TrimSpace(form.Value["twitter_link"][0])
 	request.FacebookName = strings.TrimSpace(form.Value["facebook_name"][0])
 	request.FacebookLink = strings.TrimSpace(form.Value["facebook_link"][0])
-	
+
 	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to create new application : %+v", err)
 		return err
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.ApplicationResponse]{
-		Code:   201,
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.ApplicationResponse]{
+		Code:   200,
 		Status: "success to create/update application settings",
 		Data:   response,
 	})
