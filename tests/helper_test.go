@@ -27,6 +27,8 @@ import (
 )
 
 func ClearAll() {
+	ClearDiscountCouponUsages()
+	ClearXenditTransactions()
 	DeleteAllApplicationImages()
 	ClearApplicationsSetting()
 	ClearOrderProducts()
@@ -43,6 +45,20 @@ func ClearAll() {
 	ClearDeliveries()
 	ClearCarts()
 	ClearUsers()
+}
+
+func ClearDiscountCouponUsages() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.DiscountUsage{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear discount usages data : %+v", err)
+	}
+}
+
+func ClearXenditTransactions() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.XenditTransactions{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear xendit transactions data : %+v", err)
+	}
 }
 
 func ClearApplicationsSetting() {
@@ -282,7 +298,50 @@ func DoCreateManyDelivery(t *testing.T, totalData int) string {
 	return totalIds
 }
 
-func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, returnDataByI int) *model.DiscountCouponResponse {
+func DoCreateManyAddress(t *testing.T, token string, totalData int, returnDataByIndex int) *model.AddressResponse {
+	delivery := DoCreateDelivery(t, token)
+	var addresses *model.AddressResponse
+	for i := 1; i <= totalData; i++ {
+		requestBody := model.AddressCreateRequest{
+			DeliveryId:      delivery.ID,
+			CompleteAddress: fmt.Sprintf("Complete Address %+v", i),
+			GoogleMapsLink:  "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6",
+			IsMain:          true,
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/users/current/addresses", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBody := new(model.ApiResponse[model.AddressResponse])
+		err = json.Unmarshal(bytes, responseBody)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.Equal(t, requestBody.DeliveryId, responseBody.Data.Delivery.ID)
+		assert.Equal(t, requestBody.CompleteAddress, responseBody.Data.CompleteAddress)
+		assert.Equal(t, requestBody.GoogleMapsLink, responseBody.Data.GoogleMapsLink)
+		assert.Equal(t, requestBody.IsMain, responseBody.Data.IsMain)
+		assert.NotNil(t, responseBody.Data.CreatedAt)
+		assert.NotNil(t, responseBody.Data.UpdatedAt)
+
+		if i == returnDataByIndex {
+			addresses = &responseBody.Data
+		}
+	}
+	return addresses
+}
+
+func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, returnDataByIndex int) *model.DiscountCouponResponse {
 	start := "2025-01-01T00:00:01Z"
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
@@ -345,12 +404,64 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 		assert.NotNil(t, responseBody.Data.CreatedAt)
 		assert.NotNil(t, responseBody.Data.UpdatedAt)
 
-		if i == returnDataByI {
+		if i == returnDataByIndex {
 			getDiscountCoupon = &responseBody.Data
 		}
 	}
 
 	return getDiscountCoupon
+}
+
+func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc string, code string, tipe helper.DiscountType, value float32, start helper.TimeRFC3339, end helper.TimeRFC3339, totalMaxUsage int, maxUsagePerUser int, minOrderValue int, status bool) *model.DiscountCouponResponse {
+	requestBody := model.CreateDiscountCouponRequest{
+		Name:            name,
+		Description:     desc,
+		Code:            code,
+		Value:           value,
+		Type:            tipe,
+		Start:           start,
+		End:             end,
+		TotalMaxUsage:   totalMaxUsage,
+		MaxUsagePerUser: maxUsagePerUser,
+		UsedCount:       0,
+		MinOrderValue:   minOrderValue,
+		Status:          status,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/discount-coupons", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.DiscountCouponResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, requestBody.Name, responseBody.Data.Name)
+	assert.Equal(t, requestBody.Description, responseBody.Data.Description)
+	assert.Equal(t, requestBody.Code, responseBody.Data.Code)
+	assert.Equal(t, requestBody.Value, responseBody.Data.Value)
+	assert.Equal(t, requestBody.Type, responseBody.Data.Type)
+	assert.Equal(t, requestBody.Start.ToTime(), responseBody.Data.Start.ToTime())
+	assert.Equal(t, requestBody.End.ToTime(), responseBody.Data.End.ToTime())
+	assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
+	assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
+	assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
+	assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)
+	assert.Equal(t, requestBody.Status, responseBody.Data.Status)
+	assert.NotNil(t, responseBody.Data.CreatedAt)
+	assert.NotNil(t, responseBody.Data.UpdatedAt)
+
+	return &responseBody.Data
 }
 
 func DoCreateCategory(t *testing.T, token string, categoryName string, categoryDesc string) *model.CategoryResponse {
@@ -451,9 +562,9 @@ func DeleteAllApplicationImages() {
 	}
 }
 
-func DoCreateProduct(t *testing.T, token string, totalData int, getProductByIndex int) model.ProductResponse {
+func DoCreateProduct(t *testing.T, token string, totalData int, getProductByIndex int) *model.ProductResponse {
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
-	var getProduct model.ProductResponse
+	var getProduct *model.ProductResponse
 	for i := 1; i <= totalData; i++ {
 		// Simulasi multipart body
 		var b bytes.Buffer
@@ -516,9 +627,34 @@ func DoCreateProduct(t *testing.T, token string, totalData int, getProductByInde
 		assert.NotNil(t, responseBody.Data.UpdatedAt)
 
 		if i == getProductByIndex {
-			getProduct = responseBody.Data
+			getProduct = &responseBody.Data
 		}
 	}
 
 	return getProduct
+}
+
+func DoSetBalanceManually(token string, balance_value float32) {
+	var userEntity *entity.User
+	db.Model(&entity.User{}).Joins("left join tokens on tokens.user_id = users.id").Scan(&userEntity)
+
+	// update balance
+	db.Model(&entity.Wallet{}).Where("user_id = ?", userEntity.ID).Update("balance", balance_value)
+}
+
+func GetCurrentUserByToken(t *testing.T, token string) *model.UserResponse {
+	request := httptest.NewRequest(http.MethodGet, "/api/users/current", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.UserResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	return &responseBody.Data
 }
