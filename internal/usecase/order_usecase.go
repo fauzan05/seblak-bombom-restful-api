@@ -29,6 +29,7 @@ type OrderUseCase struct {
 	CategoryRepository             *repository.CategoryRepository
 	AddressRepository              *repository.AddressRepository
 	DiscountRepository             *repository.DiscountCouponRepository
+	DiscountUsageRepository        *repository.DiscountUsageRepository
 	DeliveryRepository             *repository.DeliveryRepository
 	OrderProductRepository         *repository.OrderProductRepository
 	WalletRepository               *repository.WalletRepository
@@ -40,10 +41,10 @@ type OrderUseCase struct {
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, productRepository *repository.ProductRepository,
 	categoryRepository *repository.CategoryRepository, addressRepository *repository.AddressRepository,
-	discountRepository *repository.DiscountCouponRepository, deliveryRepository *repository.DeliveryRepository,
-	orderProductRepository *repository.OrderProductRepository, walletRepository *repository.WalletRepository,
-	xenditTransactionRepository *repository.XenditTransctionRepository, xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase,
-	xenditClient *xendit.APIClient) *OrderUseCase {
+	discountRepository *repository.DiscountCouponRepository, discountUsageRepository *repository.DiscountUsageRepository,
+	deliveryRepository *repository.DeliveryRepository, orderProductRepository *repository.OrderProductRepository,
+	walletRepository *repository.WalletRepository, xenditTransactionRepository *repository.XenditTransctionRepository,
+	xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase, xenditClient *xendit.APIClient) *OrderUseCase {
 	return &OrderUseCase{
 		DB:                             db,
 		Log:                            log,
@@ -53,6 +54,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 		CategoryRepository:             categoryRepository,
 		AddressRepository:              addressRepository,
 		DiscountRepository:             discountRepository,
+		DiscountUsageRepository:        discountUsageRepository,
 		DeliveryRepository:             deliveryRepository,
 		OrderProductRepository:         orderProductRepository,
 		WalletRepository:               walletRepository,
@@ -74,6 +76,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 	newOrder := new(entity.Order)
 	orderProducts := []entity.OrderProduct{}
+	var totalPriceOrderProduct float32
 	// temukan produk untuk memastikan ketersediaan dan masukkan data produk ke slice OrderProduct serta mengkalkulasikan tagihannya
 	for _, orderProductRequest := range request.OrderProducts {
 		if orderProductRequest.Quantity < 0 {
@@ -115,6 +118,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		}
 		orderProducts = append(orderProducts, orderProduct)
 		newOrder.TotalFinalPrice += orderProduct.Price * float32(orderProduct.Quantity)
+		totalPriceOrderProduct = newOrder.TotalFinalPrice
 	}
 
 	newOrder.TotalProductPrice = newOrder.TotalFinalPrice
@@ -149,7 +153,6 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newDiscount := new(entity.DiscountCoupon)
 		newDiscount.ID = request.DiscountId
 		count, err := c.DiscountRepository.FindAndCountById(tx, newDiscount)
-		newOrder.DiscountValue = newDiscount.Value
 		if err != nil {
 			c.Log.Warnf("failed to find discount by code : %+v", err)
 			return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to find discount by code : %+v", err))
@@ -157,8 +160,45 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 		// cek apakah diskonnya ada dan statusnya aktif (true)
 		if count > 0 && newDiscount.Status {
-			// cek apakah sudah kadaluarsa atau belum
-			if newDiscount.End.After(time.Now()) {
+
+			// cek apakah diskon masih berlaku pada waktu hari ini
+			if newDiscount.End.After(time.Now()) && newDiscount.Start.Before(time.Now()) {
+				// cek apakah minimal ordernya sudah sesuai
+				if totalPriceOrderProduct < newDiscount.MinOrderValue {
+					c.Log.Warnf("the order does not meet the minimum purchase requirements for this discount coupon!")
+					return nil, fiber.NewError(fiber.StatusBadRequest, "the order does not meet the minimum purchase requirements for this discount coupon!")
+				}
+
+				// cek apakah user ini jatah diskonnya sudah habis atau belum
+				discountUsage := new(entity.DiscountUsage)
+				if err := c.DiscountUsageRepository.FindDiscountUsage(tx, discountUsage, newDiscount.ID, newOrder.UserId); err != nil {
+					c.Log.Warnf("%+v", err)
+					return nil, err
+				}
+
+				if discountUsage.ID > 0 {
+					// maka update saja
+					if discountUsage.UsageCount >= newDiscount.MaxUsagePerUser {
+						c.Log.Warnf("the usage limit for this discount coupon has been exceeded!")
+						return nil, fiber.NewError(fiber.StatusBadRequest, "the usage limit for this discount coupon has been exceeded!")
+					}
+
+					discountUsage.UsageCount = discountUsage.UsageCount + 1
+					if err := c.DiscountUsageRepository.Update(tx, discountUsage); err != nil {
+						c.Log.Warnf("failed to update usage count : %+v", err)
+						return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update usage count : %+v", err))
+					}
+				} else {
+					// maka create baru
+					discountUsage.UsageCount = discountUsage.UsageCount + 1
+					discountUsage.UserId = newOrder.UserId
+					discountUsage.CouponId = newDiscount.ID
+					if err := c.DiscountUsageRepository.Create(tx, discountUsage); err != nil {
+						c.Log.Warnf("failed to create new usage count : %+v", err)
+						return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new usage count : %+v", err))
+					}
+				}
+
 				if newDiscount.Type == helper.PERCENT {
 					newOrder.DiscountType = helper.PERCENT
 					discount := float32(newDiscount.Value) / float32(100)
@@ -172,9 +212,16 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 					// simpan total diskon/potongan harganya
 					newOrder.TotalDiscount = newDiscount.Value
 				}
-			} else if newDiscount.End.Before(time.Now()) {
-				c.Log.Warnf("discount has expired!")
-				return nil, fiber.NewError(fiber.StatusBadRequest, "discount has expired!")
+
+				newOrder.DiscountValue = newDiscount.Value
+			} else {
+				if newDiscount.End.Before(time.Now()) {
+					c.Log.Warnf("discount has expired and is no longer available!")
+					return nil, fiber.NewError(fiber.StatusBadRequest, "discount has expired and is no longer available!")
+				} else if newDiscount.Start.After(time.Now()) {
+					c.Log.Warnf("discount is not yet valid. It will be active starting %+s", newDiscount.Start.Format("January 06 2006 at 15:04:05"))
+					return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("discount is not yet valid. It will be active starting %+s", newDiscount.Start.Format("January 06 2006 at 15:04:05")))
+				}
 			}
 		} else if count < 1 && !newDiscount.Status {
 			c.Log.Warnf("discount has disabled or doesn't exists!")
@@ -376,7 +423,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		c.Log.Warnf("order not found!")
 		return nil, fiber.NewError(fiber.StatusNotFound, "order not found!")
 	}
-	
+
 	// validate first before update order status state into database
 	// if cancelled
 	if request.OrderStatus == helper.ORDER_CANCELLED {
@@ -423,7 +470,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		} else if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
 			c.Log.Warnf("can't cancel an order that is ready for pickup!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is ready for pickup!")
-		} else if (newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED) {
+		} else if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
 			c.Log.Warnf("can't cancel an order that is being delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is being delivered!")
 		} else if newOrder.OrderStatus == helper.ORDER_DELIVERED {
@@ -529,7 +576,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
 			c.Log.Warnf("can't pick up an order that has been cancelled/rejected!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has been cancelled/rejected!")
-		}	
+		}
 
 		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
 			c.Log.Warnf("can't pick up an order that has a cancellation request!")

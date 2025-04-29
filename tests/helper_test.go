@@ -412,7 +412,7 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 	return getDiscountCoupon
 }
 
-func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc string, code string, tipe helper.DiscountType, value float32, start helper.TimeRFC3339, end helper.TimeRFC3339, totalMaxUsage int, maxUsagePerUser int, minOrderValue int, status bool) *model.DiscountCouponResponse {
+func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc string, code string, tipe helper.DiscountType, value float32, start helper.TimeRFC3339, end helper.TimeRFC3339, totalMaxUsage int, maxUsagePerUser int, minOrderValue float32, status bool) *model.DiscountCouponResponse {
 	requestBody := model.CreateDiscountCouponRequest{
 		Name:            name,
 		Description:     desc,

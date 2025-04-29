@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 
+	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
@@ -37,27 +38,27 @@ func (r *Repository[T]) FindAndCountEntityByUserId(db *gorm.DB, entity *T, userI
 }
 
 func (r *Repository[T]) FindAndCountFirstWalletByUserId(db *gorm.DB, entity *T, userId uint64, status string) (int64, error) {
-    var count int64
+	var count int64
 
-    // Menggunakan entity langsung tanpa & karena entity sudah merupakan pointer
-    err := db.Model(entity).Where("user_id = ? AND status = ?", userId, status).Count(&count).Error
-    if err != nil {
-        return 0, err
-    }
+	// Menggunakan entity langsung tanpa & karena entity sudah merupakan pointer
+	err := db.Model(entity).Where("user_id = ? AND status = ?", userId, status).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
 
-    // Mencari record pertama yang sesuai dengan kriteria
-    result := db.Where("user_id = ? AND status = ?", userId, status).First(entity)
-    if result.Error != nil {
-        if result.Error == gorm.ErrRecordNotFound {
-            // Jika data tidak ditemukan, kembalikan count dan nil error
-            return count, nil
-        }
-        // Jika ada error lain, kembalikan error tersebut
-        return 0, result.Error
-    }
+	// Mencari record pertama yang sesuai dengan kriteria
+	result := db.Where("user_id = ? AND status = ?", userId, status).First(entity)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			// Jika data tidak ditemukan, kembalikan count dan nil error
+			return count, nil
+		}
+		// Jika ada error lain, kembalikan error tersebut
+		return 0, result.Error
+	}
 
-    // Kembalikan count dan nil error jika tidak ada masalah
-    return count, nil
+	// Kembalikan count dan nil error jika tidak ada masalah
+	return count, nil
 }
 
 func (r *Repository[T]) FindFirstPayoutByXenditPayoutId(db *gorm.DB, entity *T, xenditPayoutId string) error {
@@ -297,6 +298,15 @@ func (r *Repository[T]) FindEntityByOrderId(db *gorm.DB, entity *T, orderId uint
 
 func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) error {
 	return db.Joins(join).Find(&entity).Error
+}
+
+func (r *Repository[T]) FindDiscountUsage(db *gorm.DB, entity *T, couponId uint64, userId uint64) error {
+	err := db.Where("coupon_id = ?", couponId).Where("user_id = ?", userId).First(&entity).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil
+	}
+
+	return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find discount usage : %+v", err))
 }
 
 func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 string, preload2 string, page int, pageSize int, search string, specificColumn string, value uint64, columnName string, sortBy string) error {

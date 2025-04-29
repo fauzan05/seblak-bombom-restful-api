@@ -227,7 +227,6 @@ func (c *DiscountCouponUseCase) Remove(ctx context.Context, request *model.Delet
 }
 
 func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) error {
-
 	for _, row := range rows {
 		discountCouponIdStr, ok := row["discount_coupon_id"].(string)
 		if !ok || discountCouponIdStr == "" {
@@ -285,7 +284,7 @@ func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) 
 			TotalMaxUsage:   discountCouponTotalMaxUsage,
 			MaxUsagePerUser: discountCouponMaxUsagePerUser,
 			UsedCount:       discountCouponUsedCount,
-			MinOrderValue:   discountCouponMinOrderValue,
+			MinOrderValue:   float32(discountCouponMinOrderValue),
 			Status:          discountCouponStatus,
 			CreatedAt:       discountCouponCreatedAt,
 			UpdatedAt:       discountCouponUpdatedAt,

@@ -185,11 +185,11 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
-	start := "2025-05-01T00:00:01Z"
+	start := "2025-04-01T00:00:01+07:00"
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
 
-	end := "2025-05-15T23:59:59Z"
+	end := "2025-04-29T23:59:59+07:00"
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
@@ -367,16 +367,16 @@ func TestCreateOrderDiscountNotFound(t *testing.T) {
 	assert.Equal(t, "discount has disabled or doesn't exists!", responseBody.Error)
 }
 
-func TestCreateOrderDiscountExpired(t *testing.T) {
+func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
-	start := "2025-01-01T00:00:01Z"
+	start := "2025-05-01T00:00:01+07:00"
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
 
-	end := "2025-01-15T23:59:59Z"
+	end := "2025-05-15T23:59:59+07:00"
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
@@ -421,5 +421,115 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-	assert.Equal(t, "discount has expired!", responseBody.Error)
+	assert.Equal(t, "discount is not yet valid. It will be active starting May 25 2025 at 00:00:01", responseBody.Error)
+}
+
+func TestCreateOrderDiscountExpired(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := "2025-04-01T00:00:01+07:00"
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := "2025-04-28T23:59:59+07:00"
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "discount has expired and is no longer available!", responseBody.Error)
+}
+
+func TestCreateOrderDiscountMinOrder(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := "2025-04-01T00:00:01+07:00"
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := "2025-04-30T23:59:59+07:00"
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  1,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "the order does not meet the minimum purchase requirements for this discount coupon!", responseBody.Error)
 }
