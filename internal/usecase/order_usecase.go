@@ -397,6 +397,44 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	return converter.OrdersToResponse(newOrders), nil
 }
 
+func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.OrderResponse, int64, int, error) {
+	tx := c.DB.WithContext(ctx)
+
+	if page <= 0 {
+		page = 1
+	}
+
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = 5
+	orders, total, err := repository.Paginate(tx, entity.Order{}, *newPagination, func(q *gorm.DB) *gorm.DB {
+		return q.Preload("OrderProducts").
+					Preload("XenditTransaction")
+	})
+
+	fmt.Println("TOTAL : ", total)
+
+	for _, data := range orders {
+		fmt.Println("DATA ORDER : ", data)
+	}
+
+	var totalPages int = 0
+	newCategory := new(entity.Category)
+	totalCategories, err := c.CategoryRepository.CountCategoryItems(tx, newCategory, search)
+	if err != nil {
+		c.Log.Warnf("failed to count categories : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count categories: %+v", err))
+	}
+
+	// Hitung total halaman
+	totalPages = int(totalCategories / int64(perPage))
+	if totalCategories%int64(perPage) > 0 {
+		totalPages++
+	}
+
+	return converter.OrdersToResponse(nil), totalCategories, totalPages, nil
+}
+
 func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.UpdateOrderRequest) (*model.OrderResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

@@ -840,3 +840,10 @@ func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
 	currentUser := GetCurrentUserByToken(t, token)
 	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
 }
+
+func TestGetCurrentOrder(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+}

@@ -6,6 +6,7 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -76,6 +77,44 @@ func (c *OrderController) GetAllCurrent(ctx *fiber.Ctx) error {
 		Code:   200,
 		Status: "success to get all orders by current user",
 		Data:   response,
+	})
+}
+
+func (c *OrderController) GetAll(ctx *fiber.Ctx) error {
+	search := ctx.Query("search", "")
+	trimSearch := strings.TrimSpace(search)
+
+	// ambil data sorting
+	getColumn := ctx.Query("column", "")
+	getSortBy := ctx.Query("sort_by", "desc")
+
+	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
+	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
+	if err != nil {
+		c.Log.Warnf("invalid 'per_page' parameter : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'per_page' parameter : %+v", err))
+	}
+
+	// Ambil query parameter 'page' dengan default value 1 jika tidak disediakan
+	page, err := strconv.Atoi(ctx.Query("page", "1"))
+	if err != nil {
+		c.Log.Warnf("invalid 'page' parameter : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
+	}
+
+	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
+	if err != nil {
+		c.Log.Warnf("failed to get all orders by current user : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.OrderResponse]{
+		Code:   200,
+		Status: "success to get all orders by current user",
+		Data:   response,
+		TotalDatas: totalProducts,
+		CurrentPages: page,
+		TotalPages: totalPages,
 	})
 }
 

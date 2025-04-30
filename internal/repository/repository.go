@@ -8,6 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type Pagination struct {
+	Page     int
+	PageSize int
+}
+
 type Repository[T any] struct {
 	DB *gorm.DB
 }
@@ -302,11 +307,14 @@ func (r *Repository[T]) FindAllWithJoins(db *gorm.DB, entity *[]T, join string) 
 
 func (r *Repository[T]) FindDiscountUsage(db *gorm.DB, entity *T, couponId uint64, userId uint64) error {
 	err := db.Where("coupon_id = ?", couponId).Where("user_id = ?", userId).First(&entity).Error
-	if err == gorm.ErrRecordNotFound {
-		return nil
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-
-	return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find discount usage : %+v", err))
+	
+	return nil
 }
 
 func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 string, preload2 string, page int, pageSize int, search string, specificColumn string, value uint64, columnName string, sortBy string) error {
@@ -932,4 +940,30 @@ func (r *Repository[T]) CountXenditPayouts(db *gorm.DB, entity *T, search string
 		return int64(0), err
 	}
 	return count, nil
+}
+
+func Paginate[T any](db *gorm.DB, model T, pagination Pagination, queryFn func(*gorm.DB) *gorm.DB) ([]T, int64, error) {
+	var results []T
+	var total int64
+
+	// Apply optional query builder
+	q := queryFn(db.Model(model))
+
+	// Hitung total data
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (pagination.Page - 1) * pagination.PageSize
+
+	err := queryFn(db.Model(model)).
+		Limit(pagination.PageSize).
+		Offset(offset).
+		Find(&results).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return results, total, nil
 }

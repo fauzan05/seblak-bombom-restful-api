@@ -127,7 +127,7 @@ func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCateg
 
 	newCategory := new(entity.Category)
 	newCategory.ID = request.ID
-	// temukan category apakah ada 
+	// temukan category apakah ada
 	count, err := c.CategoryRepository.FindAndCountById(tx, newCategory)
 	if err != nil {
 		c.Log.Warnf("failed to find category by id : %+v", err)
@@ -223,8 +223,8 @@ func MapCategories(rows []map[string]any, results *[]entity.Category) error {
 			ID:          categoryId,
 			Name:        categoryName,
 			Description: categoryDesc,
-			CreatedAt:  categoryCreatedAt,
-			UpdatedAt:  categoryUpdatedAt,
+			CreatedAt:   categoryCreatedAt,
+			UpdatedAt:   categoryUpdatedAt,
 		}
 
 		// Tambahkan ke hasil
