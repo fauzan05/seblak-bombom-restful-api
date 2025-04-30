@@ -219,8 +219,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 					c.Log.Warnf("discount has expired and is no longer available!")
 					return nil, fiber.NewError(fiber.StatusBadRequest, "discount has expired and is no longer available!")
 				} else if newDiscount.Start.After(time.Now()) {
-					c.Log.Warnf("discount is not yet valid. It will be active starting %+s", newDiscount.Start.Format("January 06 2006 at 15:04:05"))
-					return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("discount is not yet valid. It will be active starting %+s", newDiscount.Start.Format("January 06 2006 at 15:04:05")))
+					c.Log.Warnf("discount is not yet valid. It will be active starting %+s", newDiscount.Start.Format("January 02 2006 at 15:04:05"))
+					return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("discount is not yet valid. It will be active starting %+s", newDiscount.Start.Format("January 02 2006 at 15:04:05")))
 				}
 			}
 		} else if count < 1 && !newDiscount.Status {
@@ -246,15 +246,35 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid payment gateway!")
 	}
 	newOrder.PaymentGateway = request.PaymentGateway
+	newOrder.PaymentStatus = helper.PENDING_PAYMENT
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
-		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
+		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET {
 			c.Log.Warnf("payment method %s is not available on payment gateway system!", request.PaymentMethod)
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("payment method %s is not available on payment gateway system!", request.PaymentMethod))
 		}
-	}
 
-	newOrder.PaymentStatus = helper.PENDING_PAYMENT
+		if request.ChannelCode != helper.WALLET_CHANNEL_CODE {
+			c.Log.Warnf("channel code %s is not available on payment gateway system!", request.ChannelCode)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("channel code %s is not available on payment gateway system!", request.ChannelCode))
+		}
+
+		// langsung paid dan proses walletnya
+		if request.CurrentBalance < newOrder.TotalFinalPrice {
+			// tampilkan error bahwa saldo kurang
+			c.Log.Warnf("your balance is insufficient to perform this transaction!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "your balance is insufficient to perform this transaction!")
+		}
+
+		newBalance := request.CurrentBalance - newOrder.TotalFinalPrice
+		newWallet := new(entity.Wallet)
+		if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
+			c.Log.Warnf("failed to update new balance : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, "failed to update new balance!")
+		}
+
+		newOrder.PaymentStatus = helper.PAID_PAYMENT
+	}
 
 	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
 		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE {
@@ -283,30 +303,6 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 				return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("channel code %s is not available on payment gateway %s!", request.ChannelCode, request.PaymentGateway))
 			}
 		}
-	} else if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
-		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET && request.ChannelCode != helper.WALLET_CHANNEL_CODE {
-			c.Log.Warnf("payment method %s is not available on payment gateway system!", request.PaymentMethod)
-			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("payment method %s is not available on payment gateway system!", request.PaymentMethod))
-		} else {
-			// langsung paid dan proses walletnya
-			if request.CurrentBalance < newOrder.TotalFinalPrice {
-				// tampilkan error bahwa saldo kurang
-				c.Log.Warnf("your balance is insufficient to perform this transaction!")
-				return nil, fiber.NewError(fiber.StatusBadRequest, "your balance is insufficient to perform this transaction!")
-			}
-
-			newBalance := request.CurrentBalance - newOrder.TotalFinalPrice
-			newWallet := new(entity.Wallet)
-			if err := c.WalletRepository.UpdateWalletBalance(tx, newWallet, newOrder.UserId, newBalance); err != nil {
-				c.Log.Warnf("failed to update new balance : %+v", err)
-				return nil, fiber.NewError(fiber.StatusBadRequest, "failed to update new balance!")
-			}
-
-			newOrder.PaymentStatus = helper.PAID_PAYMENT
-		}
-	} else {
-		// berikan error bahwa payment method tidak tersedia/tidak valid
-		return nil, fiber.NewError(fiber.StatusBadRequest, "payment method is not valid or available!")
 	}
 
 	// mengambil alamat utama yang diambil oleh user

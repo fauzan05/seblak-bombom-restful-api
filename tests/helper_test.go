@@ -656,5 +656,29 @@ func GetCurrentUserByToken(t *testing.T, token string) *model.UserResponse {
 
 	responseBody := new(model.ApiResponse[model.UserResponse])
 	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
 	return &responseBody.Data
+}
+
+func getRFC3339WithOffsetAndTime(days, weeks, months, hour, minute, second int) string {
+	loc, _ := time.LoadLocation("Asia/Jakarta") // GMT+7
+
+	// Ambil sekarang lalu tambah offset
+	base := time.Now().In(loc)
+	offset := base.AddDate(0, months, days+(weeks*7))
+
+	// Set waktu (jam, menit, detik) ke yang diinginkan
+	final := time.Date(
+		offset.Year(), offset.Month(), offset.Day(),
+		hour, minute, second, 0, loc,
+	)
+
+	return final.Format(time.RFC3339)
+}
+
+func roundFloat32(val float32, precision int) float32 {
+	f64 := float64(val)
+	multiplier := math.Pow(10, float64(precision))
+	rounded := math.Round(f64 * multiplier) / multiplier
+	return float32(rounded)
 }

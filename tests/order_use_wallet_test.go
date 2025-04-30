@@ -2,6 +2,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -25,9 +26,9 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.CreateOrderProductRequest{
@@ -70,7 +71,7 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
 	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_EWALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
 	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
 	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
 	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
@@ -93,6 +94,9 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 		assert.Equal(t, requestBody.OrderProducts[i].ProductId, product.ProductId)
 		assert.Equal(t, requestBody.OrderProducts[i].Quantity, product.Quantity)
 	}
+	// cek saldo
+	currentUser = GetCurrentUserByToken(t, token)
+	assert.Equal(t, (float32(150000) - responseBody.Data.TotalFinalPrice), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
@@ -108,9 +112,9 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.CreateOrderProductRequest{
@@ -153,7 +157,7 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
 	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_EWALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
 	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
 	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
 	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
@@ -177,6 +181,10 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 		assert.Equal(t, requestBody.OrderProducts[i].Quantity, product.Quantity)
 	}
 
+	// cek saldo
+	currentUser = GetCurrentUserByToken(t, token)
+	assert.Equal(t, (float32(150000) - responseBody.Data.TotalFinalPrice), currentUser.Wallet.Balance)
+
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
 
@@ -185,11 +193,11 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
-	start := "2025-04-01T00:00:01+07:00"
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
 
-	end := "2025-04-29T23:59:59+07:00"
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
@@ -201,9 +209,9 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.CreateOrderProductRequest{
@@ -246,7 +254,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
 	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_EWALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
 	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
 	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
 	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
@@ -270,6 +278,10 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 		assert.Equal(t, requestBody.OrderProducts[i].Quantity, product.Quantity)
 	}
 
+	// cek saldo
+	currentUser = GetCurrentUserByToken(t, token)
+	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
 
@@ -283,9 +295,9 @@ func TestCreateOrderBalanceInsufficient(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.CreateOrderProductRequest{
@@ -318,6 +330,10 @@ func TestCreateOrderBalanceInsufficient(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 	assert.Equal(t, "your balance is insufficient to perform this transaction!", responseBody.Error)
+
+	// cek saldo
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(50000), currentUser.Wallet.Balance)
 }
 
 func TestCreateOrderDiscountNotFound(t *testing.T) {
@@ -365,6 +381,9 @@ func TestCreateOrderDiscountNotFound(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, response.StatusCode)
 	assert.Equal(t, "discount has disabled or doesn't exists!", responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
 }
 
 func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
@@ -372,11 +391,11 @@ func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
-	start := "2025-05-01T00:00:01+07:00"
+	start := getRFC3339WithOffsetAndTime(1, 0, 0, 0, 0, 1)
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
 
-	end := "2025-05-15T23:59:59+07:00"
+	end := getRFC3339WithOffsetAndTime(5, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
@@ -421,7 +440,10 @@ func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
-	assert.Equal(t, "discount is not yet valid. It will be active starting May 25 2025 at 00:00:01", responseBody.Error)
+	assert.Equal(t, fmt.Sprintf("discount is not yet valid. It will be active starting %+s", parseStart.Format("January 02 2006 at 15:04:05")), responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
 }
 
 func TestCreateOrderDiscountExpired(t *testing.T) {
@@ -429,11 +451,11 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
-	start := "2025-04-01T00:00:01+07:00"
+	start := getRFC3339WithOffsetAndTime(0, -1, 0, 0, 0, 1)
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
 
-	end := "2025-04-28T23:59:59+07:00"
+	end := getRFC3339WithOffsetAndTime(-1, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
@@ -479,6 +501,8 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 	assert.Equal(t, "discount has expired and is no longer available!", responseBody.Error)
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
 }
 
 func TestCreateOrderDiscountMinOrder(t *testing.T) {
@@ -486,11 +510,11 @@ func TestCreateOrderDiscountMinOrder(t *testing.T) {
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
-	start := "2025-04-01T00:00:01+07:00"
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
 
-	end := "2025-04-30T23:59:59+07:00"
+	end := getRFC3339WithOffsetAndTime(0, 1, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
@@ -532,4 +556,287 @@ func TestCreateOrderDiscountMinOrder(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 	assert.Equal(t, "the order does not meet the minimum purchase requirements for this discount coupon!", responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
+}
+
+func TestCreateOrderPaymentMethodNotValid(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(0, 1, 0, 23, 59, 0)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentMethod:  "KAKA",
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  4,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid payment method!", responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
+}
+
+func TestCreateOrderChannelCodeNotValid(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    "KAKALA",
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  4,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid channel code!", responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
+}
+
+func TestCreateOrderPaymentGatewayNotValid(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: "LALA",
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  4,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid payment gateway!", responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
+}
+
+func TestCreateOrderWalletWrongPaymentMethod(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  4,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "payment method EWALLET is not available on payment gateway system!", responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
+}
+
+func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  4,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "channel code EWALLET_DANA is not available on payment gateway system!", responseBody.Error)
+
+	currentUser := GetCurrentUserByToken(t, token)
+	assert.Equal(t, float32(150000), currentUser.Wallet.Balance)
 }
