@@ -406,33 +406,30 @@ func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search
 
 	newPagination := new(repository.Pagination)
 	newPagination.Page = page
-	newPagination.PageSize = 5
-	orders, total, err := repository.Paginate(tx, entity.Order{}, *newPagination, func(q *gorm.DB) *gorm.DB {
-		return q.Preload("OrderProducts").
-					Preload("XenditTransaction")
-	})
-
-	fmt.Println("TOTAL : ", total)
-
-	for _, data := range orders {
-		fmt.Println("DATA ORDER : ", data)
+	newPagination.PageSize = perPage
+	if sortingColumn == "" {
+		sortingColumn = "orders.id"
 	}
+	sortingColumn = fmt.Sprintf("%s %s", sortingColumn, sortBy)
+	orders, totalOrder, err := repository.Paginate(tx, entity.Order{}, *newPagination, func(d *gorm.DB) *gorm.DB {
+		return d.Preload("OrderProducts").
+			Preload("OrderProducts.Product.Images").
+			Preload("XenditTransaction")
+	}, sortingColumn)
 
-	var totalPages int = 0
-	newCategory := new(entity.Category)
-	totalCategories, err := c.CategoryRepository.CountCategoryItems(tx, newCategory, search)
 	if err != nil {
-		c.Log.Warnf("failed to count categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count categories: %+v", err))
+		c.Log.Warnf("failed to paginate orders : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate orders : %+v", err))
 	}
 
 	// Hitung total halaman
-	totalPages = int(totalCategories / int64(perPage))
-	if totalCategories%int64(perPage) > 0 {
+	var totalPages int = 0
+	totalPages = int(totalOrder / int64(perPage))
+	if totalOrder%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.OrdersToResponse(nil), totalCategories, totalPages, nil
+	return converter.OrdersToResponse(&orders), totalOrder, totalPages, nil
 }
 
 func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.UpdateOrderRequest) (*model.OrderResponse, error) {

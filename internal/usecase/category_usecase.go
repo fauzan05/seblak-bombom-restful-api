@@ -85,34 +85,30 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 		page = 1
 	}
 
-	var result []map[string]any // entity kosong yang akan diisi
-	if err := c.CategoryRepository.FindCategoriesPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
-		c.Log.Warnf("failed to find all categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find all categories : %+v", err))
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = perPage
+	if sortingColumn == "" {
+		sortingColumn = "categories.id"
 	}
+	sortingColumn = fmt.Sprintf("%s %s", sortingColumn, sortBy)
+	categories, totalCategory, err := repository.Paginate(tx, entity.Category{}, *newPagination, func(d *gorm.DB) *gorm.DB {
+		return d.Where("categories.name LIKE ?", "%"+search+"%")
+	}, sortingColumn)
 
-	newCategories := new([]entity.Category)
-	err := MapCategories(result, newCategories)
 	if err != nil {
-		c.Log.Warnf("failed to map categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed map categories : %+v", err))
-	}
-
-	var totalPages int = 0
-	newCategory := new(entity.Category)
-	totalCategories, err := c.CategoryRepository.CountCategoryItems(tx, newCategory, search)
-	if err != nil {
-		c.Log.Warnf("failed to count categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count categories: %+v", err))
+		c.Log.Warnf("failed to paginate categories : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate categories : %+v", err))
 	}
 
 	// Hitung total halaman
-	totalPages = int(totalCategories / int64(perPage))
-	if totalCategories%int64(perPage) > 0 {
+	var totalPages int = 0
+	totalPages = int(totalCategory / int64(perPage))
+	if totalCategory%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.CategoriesToResponse(newCategories), totalCategories, totalPages, nil
+	return converter.CategoriesToResponse(&categories), totalCategory, totalPages, nil
 }
 
 func (c *CategoryUseCase) Update(ctx context.Context, request *model.UpdateCategoryRequest) (*model.CategoryResponse, error) {

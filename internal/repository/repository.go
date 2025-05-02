@@ -313,7 +313,7 @@ func (r *Repository[T]) FindDiscountUsage(db *gorm.DB, entity *T, couponId uint6
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-	
+
 	return nil
 }
 
@@ -942,26 +942,26 @@ func (r *Repository[T]) CountXenditPayouts(db *gorm.DB, entity *T, search string
 	return count, nil
 }
 
-func Paginate[T any](db *gorm.DB, model T, pagination Pagination, queryFn func(*gorm.DB) *gorm.DB) ([]T, int64, error) {
+func Paginate[T any](db *gorm.DB, model T, pagination Pagination, queryFn func(*gorm.DB) *gorm.DB, sorting string) ([]T, int64, error) {
 	var results []T
 	var total int64
 
-	// Apply optional query builder
-	q := queryFn(db.Model(model))
+	offset := (pagination.Page - 1) * pagination.PageSize
 
-	// Hitung total data
+	// Apply Unscoped before passing to queryFn
+	baseQuery := db.Unscoped().Model(model)
+	q := queryFn(baseQuery).Order(sorting)
+
+
+	// Hitung total
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	offset := (pagination.Page - 1) * pagination.PageSize
-
-	err := queryFn(db.Model(model)).
-		Limit(pagination.PageSize).
+	// Ambil data
+	if err := q.Limit(pagination.PageSize).
 		Offset(offset).
-		Find(&results).Error
-
-	if err != nil {
+		Find(&results).Error; err != nil {
 		return nil, 0, err
 	}
 

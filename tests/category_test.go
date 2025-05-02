@@ -376,6 +376,122 @@ func TestGetAllCategoryPagination(t *testing.T) {
 	assert.Equal(t, 10, responseBody.DataPerPages)
 }
 
+func TestGetAllCategoryPaginationSearchNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	for i := 1; i <= 25; i++ {
+		requestBody := model.CreateCategoryRequest{
+			Name:        fmt.Sprintf("Makanan %+v", i),
+			Description: fmt.Sprintf("Ini adalah makanan %+v", i),
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/categories", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBodyCreate := new(model.ApiResponse[model.CategoryResponse])
+		err = json.Unmarshal(bytes, responseBodyCreate)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBodyCreate.Data.ID)
+		assert.Equal(t, requestBody.Name, responseBodyCreate.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBodyCreate.Data.Description)
+		assert.NotNil(t, responseBodyCreate.Data.CreatedAt)
+		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=zzz&column=id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.CategoryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 0, len(*responseBody.Data))
+	assert.Equal(t, int64(0), responseBody.TotalDatas)
+	assert.Equal(t, 0, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	assert.Equal(t, 10, responseBody.DataPerPages)
+}
+
+func TestGetAllCategoryPaginationSortingColumn(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	for i := 1; i <= 25; i++ {
+		requestBody := model.CreateCategoryRequest{
+			Name:        fmt.Sprintf("Makanan %+v", i),
+			Description: fmt.Sprintf("Ini adalah makanan %+v", i),
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/categories", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBodyCreate := new(model.ApiResponse[model.CategoryResponse])
+		err = json.Unmarshal(bytes, responseBodyCreate)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBodyCreate.Data.ID)
+		assert.Equal(t, requestBody.Name, responseBodyCreate.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBodyCreate.Data.Description)
+		assert.NotNil(t, responseBodyCreate.Data.CreatedAt)
+		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=makanan&column=categories.name&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.CategoryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 10, len(*responseBody.Data))
+	assert.Equal(t, int64(25), responseBody.TotalDatas)
+	assert.Equal(t, 3, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	assert.Equal(t, 10, responseBody.DataPerPages)
+}
+
 func TestDeleteCategoryById(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)

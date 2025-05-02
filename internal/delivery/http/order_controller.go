@@ -102,7 +102,7 @@ func (c *OrderController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
+	response, totalOrders, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("failed to get all orders by current user : %+v", err)
 		return err
@@ -112,9 +112,10 @@ func (c *OrderController) GetAll(ctx *fiber.Ctx) error {
 		Code:   200,
 		Status: "success to get all orders by current user",
 		Data:   response,
-		TotalDatas: totalProducts,
-		CurrentPages: page,
+		TotalDatas: totalOrders,
 		TotalPages: totalPages,
+		CurrentPages: page,
+		DataPerPages: perPage,
 	})
 }
 

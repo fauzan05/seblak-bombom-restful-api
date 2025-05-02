@@ -182,4 +182,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 
 	// Balance
 	auth.Get("/balance", c.XenditPayoutController.GetAdminBalance)
+
+	// Orders
+	auth.Get("/orders", c.OrderController.GetAll)
 }
