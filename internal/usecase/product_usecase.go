@@ -177,7 +177,7 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 	if count == 0 {
 		c.Log.Warnf("product is not found!")
 		return nil, fiber.NewError(fiber.StatusNotFound, "product is not found!")
-	} 
+	}
 
 	// Mengambil data produk
 	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
@@ -196,34 +196,48 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 		page = 1
 	}
 
-	var result []map[string]any // entity kosong yang akan diisi
-	if err := c.ProductRepository.GetProductsWithPagination(tx, &result, page, perPage, search, sortingColumn, sortBy, categoryId); err != nil {
-		c.Log.Warnf("failed to get all products from database : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get all products from database : %+v", err))
+	if sortingColumn == "" {
+		sortingColumn = "products.id"
 	}
 
-	newProducts := new([]entity.Product)
-	err := MapProducts(result, newProducts)
-	if err != nil {
-		c.Log.Warnf("failed map products : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed map products : %+v", err))
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = perPage
+	newPagination.Column = sortingColumn
+	newPagination.SortBy = sortBy
+	allowedColumns := map[string]bool{
+		"products.id":          true,
+		"products.name":        true,
+		"categories.name":      true,
+		"products.description": true,
+		"products.created_at":  true,
+		"products.updated_at":  true,
 	}
 
-	var totalPages int = 0
-	getAllProducts := new(entity.Product)
-	totalProducts, err := c.ProductRepository.CountProductItems(tx, getAllProducts, search, categoryId)
+	if !allowedColumns[newPagination.Column] {
+		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
+		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+	}
+	
+	products, totalProduct, err := repository.Paginate(tx, &entity.Product{}, newPagination, func(d *gorm.DB) *gorm.DB {
+		return d.Joins("JOIN categories ON categories.id = products.category_id").
+			Preload("Category").
+			Preload("Images").Where("products.name LIKE ?", "%"+search+"%")
+	})
+
 	if err != nil {
-		c.Log.Warnf("failed to count products: %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count products: %+v", err))
+		c.Log.Warnf("failed to paginate category : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate category : %+v", err))
 	}
 
 	// Hitung total halaman
-	totalPages = int(totalProducts / int64(perPage))
-	if totalProducts%int64(perPage) > 0 {
+	var totalPages int = 0
+	totalPages = int(totalProduct / int64(perPage))
+	if totalProduct%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.ProductsToResponse(newProducts), totalProducts, totalPages, nil
+	return converter.ProductsToResponse(&products), totalProduct, totalPages, nil
 }
 
 func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, request *model.UpdateProductRequest, newImageFiles []*multipart.FileHeader, newImagePositions []string, updateCurrentImages model.UpdateImagesRequest, deletedImages model.DeleteImagesRequest) (*model.ProductResponse, error) {
@@ -305,7 +319,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 				c.Log.Warnf(err.Error())
 				return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 			}
-			 
+
 			// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
 			hashedFilename := hashFileName(file.Filename)
 			var position, _ = strconv.Atoi(newImagePositions[i])

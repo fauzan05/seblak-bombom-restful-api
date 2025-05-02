@@ -1687,6 +1687,106 @@ func TestGetProductPagination(t *testing.T) {
 	assert.Equal(t, 5, responseBody.DataPerPages)
 }
 
+func TestGetProductPaginationSortingDesc(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateProduct(t, token, 27, 0)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&search=produk&column=products.id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.ProductResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 5, len(*responseBody.Data))
+	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, 6, responseBody.TotalPages)
+	assert.Equal(t, 2, responseBody.CurrentPages)
+	assert.Equal(t, 5, responseBody.DataPerPages)
+
+	for _, product := range *responseBody.Data {
+		assert.NotEmpty(t, product.Images)
+		assert.NotEmpty(t, product.Category)
+	}
+
+	products := *responseBody.Data
+	for i := range len(products) - 1 {
+		assert.Greater(t, products[i].ID, products[i+1].ID)
+	}
+}
+
+func TestGetProductPaginationSortingDescColumnNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateProduct(t, token, 27, 0)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&search=produk&column=products.lala&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid sort column : products.lala", responseBody.Error)
+}
+
+func TestGetProductPaginationSortingAsc(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateProduct(t, token, 27, 0)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&search=produk&column=products.id&sort_by=asc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.ProductResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 5, len(*responseBody.Data))
+	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, 6, responseBody.TotalPages)
+	assert.Equal(t, 2, responseBody.CurrentPages)
+	assert.Equal(t, 5, responseBody.DataPerPages)
+
+	for _, product := range *responseBody.Data {
+		assert.NotEmpty(t, product.Images)
+		assert.NotEmpty(t, product.Category)
+	}
+
+	products := *responseBody.Data
+	for i := range len(products) - 1 {
+		assert.Less(t, products[i].ID, products[i+1].ID)
+	}
+}
+
 func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
@@ -1703,7 +1803,7 @@ func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody := new(model.ApiResponsePagination[*[]model.CategoryResponse])
+	responseBody := new(model.ApiResponsePagination[*[]model.ProductResponse])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
@@ -1891,7 +1991,7 @@ func TestDeleteProduct(t *testing.T) {
 	assert.Equal(t, int64(0), responseBodyPagination.TotalDatas)
 	assert.Equal(t, 0, responseBodyPagination.TotalPages)
 	assert.Equal(t, 2, responseBodyPagination.CurrentPages)
-	assert.Equal(t, 5, responseBodyPagination.DataPerPages) 
+	assert.Equal(t, 5, responseBodyPagination.DataPerPages)
 }
 
 func TestDeleteProductIdNotValid(t *testing.T) {
@@ -1915,6 +2015,6 @@ func TestDeleteProductIdNotValid(t *testing.T) {
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
-	assert.Equal(t, http.StatusBadRequest, response.StatusCode) 
-	assert.Contains(t, responseBody.Error, "invalid product ID :") 
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Contains(t, responseBody.Error, "invalid product ID :")
 }

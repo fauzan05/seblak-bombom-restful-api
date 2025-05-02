@@ -119,7 +119,7 @@ func (c *AddressUseCase) GetById(ctx context.Context, request *model.GetAddressR
 
 	newAddress := new(entity.Address)
 	newAddress.ID = request.ID
-	if err := c.AddressRepository.FindWithPreloads(tx, newAddress, "delivery"); err != nil {
+	if err := c.AddressRepository.FindWithPreloads(tx, newAddress, "Delivery"); err != nil {
 		c.Log.Warnf("failed to find address by id : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed find address by id : %+v", err))
 	}

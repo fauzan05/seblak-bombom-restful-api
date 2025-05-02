@@ -69,34 +69,52 @@ func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 		page = 1
 	}
 
-	var result []map[string]any // entity kosong yang akan diisi
-	if err := c.DeliveryRepository.FindDeliveriesPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
-		c.Log.Warnf("failed to find all deliveries : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find all deliveries : %+v", err))
+	if sortingColumn == "" {
+		sortingColumn = "deliveries.id"
 	}
 
-	newDelivery := new([]entity.Delivery)
-	err := MapDeliveries(result, newDelivery)
-	if err != nil {
-		c.Log.Warnf("failed to map delivery : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed map delivery : %+v", err))
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = perPage
+	newPagination.Column = sortingColumn
+	newPagination.SortBy = sortBy
+	allowedColumns := map[string]bool{
+		"deliveries.id":         true,
+		"deliveries.cost":       true,
+		"deliveries.city":       true,
+		"deliveries.district":   true,
+		"deliveries.village":    true,
+		"deliveries.hamlet":     true,
+		"deliveries.created_at": true,
+		"deliveries.updated_at": true,
 	}
 
-	var totalPages int = 0
-	getAllDelivery := new(entity.Delivery)
-	totalDeliveries, err := c.DeliveryRepository.CountDeliveryItems(tx, getAllDelivery, search)
+	if !allowedColumns[newPagination.Column] {
+		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
+		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+	}
+	
+	deliveries, totalDelivery, err := repository.Paginate(tx, &entity.Delivery{}, newPagination, func(d *gorm.DB) *gorm.DB {
+		return d.Where("deliveries.cost LIKE ?", "%"+search+"%").
+			Or("deliveries.city LIKE ?", "%"+search+"%").
+			Or("deliveries.district LIKE ?", "%"+search+"%").
+			Or("deliveries.village LIKE ?", "%"+search+"%").
+			Or("deliveries.hamlet LIKE ?", "%"+search+"%")
+	})
+
 	if err != nil {
-		c.Log.Warnf("failed to count products: %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count products: %+v", err))
+		c.Log.Warnf("failed to paginate deliveries : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate deliveries : %+v", err))
 	}
 
 	// Hitung total halaman
-	totalPages = int(totalDeliveries / int64(perPage))
-	if totalDeliveries%int64(perPage) > 0 {
+	var totalPages int = 0
+	totalPages = int(totalDelivery / int64(perPage))
+	if totalDelivery%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.DeliveriesToResponse(newDelivery), totalDeliveries, totalPages, nil
+	return converter.DeliveriesToResponse(&deliveries), totalDelivery, totalPages, nil
 }
 
 func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliveryRequest) (*model.DeliveryResponse, error) {
@@ -128,7 +146,7 @@ func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliver
 	newDelivery.Hamlet = request.Hamlet
 	newDelivery.Cost = request.Cost
 
-	fmt.Println(newDelivery);
+	fmt.Println(newDelivery)
 	if err := c.DeliveryRepository.Update(tx, newDelivery); err != nil {
 		c.Log.Warnf("can't update delivery settings by : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("can't update delivery settings by : %+v", err))
@@ -213,12 +231,12 @@ func MapDeliveries(rows []map[string]interface{}, results *[]entity.Delivery) er
 
 		// Buat objek kategori
 		newDelivery := entity.Delivery{
-			ID:         deliveryId,
-			City:       deliveryCity,
-			District:   deliveryDistrict,
-			Village:    deliveryVillage,
-			Hamlet:     deliveryHamlet,
-			Cost:       float32(deliveryCost),
+			ID:        deliveryId,
+			City:      deliveryCity,
+			District:  deliveryDistrict,
+			Village:   deliveryVillage,
+			Hamlet:    deliveryHamlet,
+			Cost:      float32(deliveryCost),
 			CreatedAt: categoryCreatedAt,
 			UpdatedAt: categoryUpdatedAt,
 		}

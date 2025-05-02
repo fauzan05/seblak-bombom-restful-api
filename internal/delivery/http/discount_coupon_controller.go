@@ -65,7 +65,13 @@ func (c *DiscountCouponController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalDiscountCoupons, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
+	status, err := strconv.ParseBool(ctx.Query("status", "true"))
+	if err != nil {
+		c.Log.Warnf("invalid 'status' parameter : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'status' parameter : %+v", err))
+	}
+
+	response, totalDiscountCoupons, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, status)
 	if err != nil {
 		c.Log.Warnf("failed to get all discounts : %+v", err)
 		return err

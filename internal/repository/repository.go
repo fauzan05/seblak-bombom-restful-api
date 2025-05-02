@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -11,6 +12,8 @@ import (
 type Pagination struct {
 	Page     int
 	PageSize int
+	Column   string
+	SortBy   string
 }
 
 type Repository[T any] struct {
@@ -337,7 +340,6 @@ func (r *Repository[T]) FindAllWith2Preloads(db *gorm.DB, entity *[]T, preload1 
 
 	// tambahkan query sort by
 	if columnName != "" && sortBy != "" {
-		fmt.Println("KOLOMNYA : ", columnName+" "+sortBy)
 		query = query.Order(columnName + " " + sortBy)
 	}
 
@@ -942,16 +944,21 @@ func (r *Repository[T]) CountXenditPayouts(db *gorm.DB, entity *T, search string
 	return count, nil
 }
 
-func Paginate[T any](db *gorm.DB, model T, pagination Pagination, queryFn func(*gorm.DB) *gorm.DB, sorting string) ([]T, int64, error) {
+func Paginate[T any](db *gorm.DB, model *T, pagination *Pagination, queryFn func(*gorm.DB) *gorm.DB) ([]T, int64, error) {
 	var results []T
 	var total int64
 
 	offset := (pagination.Page - 1) * pagination.PageSize
 
+	// Validasi arah sort
+	sortBy := strings.ToLower(pagination.SortBy)
+	if sortBy != "asc" && sortBy != "desc" {
+		sortBy = "asc" // fallback
+	}
+
 	// Apply Unscoped before passing to queryFn
 	baseQuery := db.Unscoped().Model(model)
-	q := queryFn(baseQuery).Order(sorting)
-
+	q := queryFn(baseQuery).Order(fmt.Sprintf("%s %s", pagination.Column, pagination.SortBy))
 
 	// Hitung total
 	if err := q.Count(&total).Error; err != nil {

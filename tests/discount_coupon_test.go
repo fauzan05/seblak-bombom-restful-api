@@ -135,7 +135,7 @@ func TestGetDiscountCouponPagination(t *testing.T) {
 	token := DoLoginAdmin(t)
 	DoCreateManyDiscountCoupon(t, token, 27, 1)
 
-	request := httptest.NewRequest(http.MethodGet, "/api/discount-coupons?search=diskon&column=id&sort_by=asc&per_page=5&page=3", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/discount-coupons?search=diskon&column=discount_coupons.id&sort_by=asc&per_page=5&page=3", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
@@ -155,6 +155,30 @@ func TestGetDiscountCouponPagination(t *testing.T) {
 	assert.Equal(t, int64(27), responseBody.TotalDatas)
 	assert.Equal(t, 5, responseBody.DataPerPages)
 	assert.Equal(t, 6, responseBody.TotalPages)
+}
+
+func TestGetDiscountCouponPaginationSortingColumnNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyDiscountCoupon(t, token, 27, 1)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/discount-coupons?search=diskon&column=discount_coupons.mama&sort_by=asc&per_page=5&page=3", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid sort column : discount_coupons.mama", responseBody.Error)
 }
 
 func TestGetDiscountCouponById(t *testing.T) {

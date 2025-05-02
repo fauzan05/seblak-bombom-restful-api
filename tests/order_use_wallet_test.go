@@ -102,6 +102,96 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
 
+func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	currentUser := GetCurrentUserByToken(t, token)
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+	newDelivery := new(entity.Delivery)
+	db.Model(entity.Delivery{}).First(newDelivery)
+	db.Delete(newDelivery)
+	
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     0,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		IsDelivery:     false,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.OrderResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.Invoice)
+	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, float32(0), responseBody.Data.DiscountValue)
+	assert.Equal(t, float32(0), responseBody.Data.TotalDiscount)
+	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
+	assert.Equal(t, currentUser.FirstName, responseBody.Data.FirstName)
+	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
+	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
+	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
+	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+	assert.Equal(t, false, responseBody.Data.IsDelivery)
+	assert.Equal(t, float32(0), responseBody.Data.DeliveryCost)
+	for _, address := range currentUser.Addresses {
+		if address.IsMain {
+			assert.Equal(t, address.Delivery.Cost, responseBody.Data.DeliveryCost)
+			assert.Equal(t, address.CompleteAddress, responseBody.Data.CompleteAddress)
+			break
+		}
+	}
+	assert.Equal(t, "Yang cepet ya!", responseBody.Data.Note)
+	var totalProductPrice float32 = product.Price * 4
+
+	assert.Equal(t, totalProductPrice, responseBody.Data.TotalProductPrice)
+	assert.Equal(t, totalProductPrice+0-responseBody.Data.TotalDiscount, responseBody.Data.TotalFinalPrice)
+	assert.Equal(t, len(requestBody.OrderProducts), len(responseBody.Data.OrderProducts))
+	for i, product := range responseBody.Data.OrderProducts {
+		assert.Equal(t, requestBody.OrderProducts[i].ProductId, product.ProductId)
+		assert.Equal(t, requestBody.OrderProducts[i].Quantity, product.Quantity)
+	}
+	// cek saldo
+	currentUser = GetCurrentUserByToken(t, token)
+	assert.Equal(t, (float32(150000) - responseBody.Data.TotalFinalPrice), currentUser.Wallet.Balance)
+
+	assert.Nil(t, responseBody.Data.XenditTransaction)
+}
+
 func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
@@ -187,6 +277,59 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	assert.Equal(t, (float32(150000) - responseBody.Data.TotalFinalPrice), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
+}
+
+func TestCreateOrderAsAdminWithDeliveryAndDeliveryDeleted(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	GetCurrentUserByToken(t, token)
+	DoSetBalanceManually(token, float32(150000))
+
+	DoCreateManyAddress(t, token, 2, 1)
+
+	newDelivery := new(entity.Delivery)
+	db.Model(entity.Delivery{}).First(newDelivery)
+	db.Delete(newDelivery)
+
+	product := DoCreateProduct(t, token, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     0,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		IsDelivery:     true,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
+	assert.Equal(t, "delivery not found, please selected one!", responseBody.Error)
 }
 
 func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {

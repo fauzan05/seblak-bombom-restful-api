@@ -85,16 +85,31 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 		page = 1
 	}
 
-	newPagination := new(repository.Pagination)
-	newPagination.Page = page
-	newPagination.PageSize = perPage
 	if sortingColumn == "" {
 		sortingColumn = "categories.id"
 	}
-	sortingColumn = fmt.Sprintf("%s %s", sortingColumn, sortBy)
-	categories, totalCategory, err := repository.Paginate(tx, entity.Category{}, *newPagination, func(d *gorm.DB) *gorm.DB {
+
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = perPage
+	newPagination.Column = sortingColumn
+	newPagination.SortBy = sortBy
+	allowedColumns := map[string]bool{
+		"categories.id":          true,
+		"categories.name":        true,
+		"categories.description": true,
+		"categories.created_at":  true,
+		"categories.updated_at":  true,
+	}
+
+	if !allowedColumns[newPagination.Column] {
+		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
+		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+	}
+	
+	categories, totalCategory, err := repository.Paginate(tx, &entity.Category{}, newPagination, func(d *gorm.DB) *gorm.DB {
 		return d.Where("categories.name LIKE ?", "%"+search+"%")
-	}, sortingColumn)
+	})
 
 	if err != nil {
 		c.Log.Warnf("failed to paginate categories : %+v", err)

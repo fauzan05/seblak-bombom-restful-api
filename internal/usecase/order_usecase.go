@@ -404,18 +404,51 @@ func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search
 		page = 1
 	}
 
-	newPagination := new(repository.Pagination)
-	newPagination.Page = page
-	newPagination.PageSize = perPage
 	if sortingColumn == "" {
 		sortingColumn = "orders.id"
 	}
-	sortingColumn = fmt.Sprintf("%s %s", sortingColumn, sortBy)
-	orders, totalOrder, err := repository.Paginate(tx, entity.Order{}, *newPagination, func(d *gorm.DB) *gorm.DB {
+
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = perPage
+	newPagination.Column = sortingColumn
+	newPagination.SortBy = sortBy
+	allowedColumns := map[string]bool{
+		"orders.id":                  true,
+		"orders.invoice":             true,
+		"orders.total_final_price":   true,
+		"orders.total_product_price": true,
+		"orders.discount_value":      true,
+		"orders.discount_type":       true,
+		"orders.total_discount":      true,
+		"orders.user_id":             true,
+		"orders.first_name":          true,
+		"orders.last_name":           true,
+		"orders.email":               true,
+		"orders.phone":               true,
+		"orders.payment_gateway":     true,
+		"orders.payment_method":      true,
+		"orders.channel_code":        true,
+		"orders.payment_status":      true,
+		"orders.order_status":        true,
+		"orders.is_delivery":         true,
+		"orders.delivery_cost":       true,
+		"orders.complete_address":    true,
+		"orders.note":                true,
+		"orders.created_at":          true,
+		"orders.updated_at":          true,
+	}
+
+	if !allowedColumns[newPagination.Column] {
+		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
+		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+	}
+	
+	orders, totalOrder, err := repository.Paginate(tx, &entity.Order{}, newPagination, func(d *gorm.DB) *gorm.DB {
 		return d.Preload("OrderProducts").
 			Preload("OrderProducts.Product.Images").
 			Preload("XenditTransaction")
-	}, sortingColumn)
+	})
 
 	if err != nil {
 		c.Log.Warnf("failed to paginate orders : %+v", err)

@@ -45,6 +45,10 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	for _, address := range auth.Addresses {
 		if address.IsMain {
 			orderRequest.CompleteAddress = address.CompleteAddress
+			if (address.Delivery.ID == 0 && orderRequest.IsDelivery) {
+				c.Log.Warnf("delivery not found, please selected one!")
+				return fiber.NewError(fiber.StatusNotFound, "delivery not found, please selected one!")
+			}
 			orderRequest.DeliveryId = address.Delivery.ID
 		}
 	}

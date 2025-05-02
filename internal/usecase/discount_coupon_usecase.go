@@ -82,41 +82,56 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 	return converter.DiscountCouponToResponse(newDiscount), nil
 }
 
-func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.DiscountCouponResponse, int64, int, error) {
+func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, status bool) (*[]model.DiscountCouponResponse, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
 		page = 1
 	}
 
-	var result []map[string]any // entity kosong yang akan diisi
-	if err := c.DiscountCouponRepository.FindDiscountCouponsPagination(tx, &result, page, perPage, search, sortingColumn, sortBy); err != nil {
-		c.Log.Warnf("failed to find all discounts : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find all discounts : %+v", err))
+	if sortingColumn == "" {
+		sortingColumn = "discount_coupons.id"
 	}
 
-	newDiscountCoupons := new([]entity.DiscountCoupon)
-	err := MapDiscountCoupon(result, newDiscountCoupons)
-	if err != nil {
-		c.Log.Warnf("failed map discount coupons : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed map discount coupons : %+v", err))
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = perPage
+	newPagination.Column = sortingColumn
+	newPagination.SortBy = sortBy
+	allowedColumns := map[string]bool{
+		"discount_coupons.id":          true,
+		"discount_coupons.name":        true,
+		"discount_coupons.description": true,
+		"discount_coupons.created_at":  true,
+		"discount_coupons.updated_at":  true,
 	}
 
-	var totalPages int = 0
-	newDiscountCoupon := new(entity.DiscountCoupon)
-	totalDiscountCoupons, err := c.DiscountCouponRepository.CountDiscountCouponItems(tx, newDiscountCoupon, search)
+	if !allowedColumns[newPagination.Column] {
+		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
+		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+	}
+
+	discountCoupons, totalDiscountCoupon, err := repository.Paginate(tx, &entity.DiscountCoupon{}, newPagination, func(d *gorm.DB) *gorm.DB {
+		return d.Where(
+			d.Where("discount_coupons.name LIKE ?", "%"+search+"%").
+				Or("discount_coupons.code LIKE ?", "%"+search+"%").
+				Or("discount_coupons.value LIKE ?", "%"+search+"%"),
+		).Where("discount_coupons.status = ?", status)
+	})
+
 	if err != nil {
-		c.Log.Warnf("failed to count discount coupon : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count discount coupon : %+v", err))
+		c.Log.Warnf("failed to paginate discount coupons : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate discount coupons : %+v", err))
 	}
 
 	// Hitung total halaman
-	totalPages = int(totalDiscountCoupons / int64(perPage))
-	if totalDiscountCoupons%int64(perPage) > 0 {
+	var totalPages int = 0
+	totalPages = int(totalDiscountCoupon / int64(perPage))
+	if totalDiscountCoupon%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.DiscountCouponsToResponse(newDiscountCoupons), totalDiscountCoupons, totalPages, nil
+	return converter.DiscountCouponsToResponse(&discountCoupons), totalDiscountCoupon, totalPages, nil
 }
 
 func (c *DiscountCouponUseCase) GetById(ctx context.Context, request *model.GetDiscountCouponRequest) (*model.DiscountCouponResponse, error) {
