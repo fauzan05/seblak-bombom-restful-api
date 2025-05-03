@@ -113,7 +113,7 @@ func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 	newDelivery := new(entity.Delivery)
 	db.Model(entity.Delivery{}).First(newDelivery)
 	db.Delete(newDelivery)
-	
+
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
@@ -1125,6 +1125,76 @@ func TestGetAllOrderPagination(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestGetAllOrderPaginationSortingColumnDesc(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=5&page=2&column=orders.id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.OrderResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, int64(20), responseBody.TotalDatas)
+	assert.Equal(t, 4, responseBody.TotalPages)
+	assert.Equal(t, 2, responseBody.CurrentPages)
+	for _, order := range *responseBody.Data {
+		assert.NotNil(t, order.ChannelCode)
+		assert.NotNil(t, order.CompleteAddress)
+		assert.NotNil(t, order.ID)
+		for _, orderProduct := range order.OrderProducts {
+			assert.NotNil(t, orderProduct.ID)
+			assert.NotNil(t, orderProduct.OrderId)
+			assert.NotNil(t, orderProduct.ProductName)
+			for _, images := range orderProduct.Product.Images {
+				assert.NotNil(t, images.FileName)
+			}
+		}
+	}
+
+	orders := *responseBody.Data
+	for i := range len(orders) - 1 {
+		assert.Greater(t, orders[i].ID, orders[i+1].ID)
+	}
+}
+
+func TestGetAllOrderPaginationColumnNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=5&page=2&column=orders.mama", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid sort column : orders.mama", responseBody.Error)
 }
 
 func TestGetAllOrderPaginationSomeProductDeleted(t *testing.T) {
