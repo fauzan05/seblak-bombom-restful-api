@@ -7,7 +7,6 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
-	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -196,51 +195,4 @@ func (c *CategoryUseCase) Delete(ctx context.Context, request *model.DeleteCateg
 	}
 
 	return true, nil
-}
-
-func MapCategories(rows []map[string]any, results *[]entity.Category) error {
-
-	for _, row := range rows {
-		// Ambil dan validasi category_id
-		categoryIdStr, ok := row["category_id"].(string)
-		if !ok || categoryIdStr == "" {
-			return fmt.Errorf("missing or invalid category_id")
-		}
-
-		categoryId, err := strconv.ParseUint(categoryIdStr, 10, 64)
-		if err != nil {
-			return fmt.Errorf("failed to parse category_id: %v", err)
-		}
-
-		// Ambil field kategori
-		categoryName, _ := row["category_name"].(string)
-		categoryDesc, _ := row["category_desc"].(string)
-
-		// Parse created_at dan updated_at kategori
-		categoryCreatedAtStr, _ := row["category_created_at"].(string)
-		categoryCreatedAt, err := time.Parse(time.RFC3339, categoryCreatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse category_created_at: %v", err)
-		}
-
-		categoryUpdatedAtStr, _ := row["category_updated_at"].(string)
-		categoryUpdatedAt, err := time.Parse(time.RFC3339, categoryUpdatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse category_updated_at: %v", err)
-		}
-
-		// Buat objek kategori
-		newCategory := entity.Category{
-			ID:          categoryId,
-			Name:        categoryName,
-			Description: categoryDesc,
-			CreatedAt:   categoryCreatedAt,
-			UpdatedAt:   categoryUpdatedAt,
-		}
-
-		// Tambahkan ke hasil
-		*results = append(*results, newCategory)
-	}
-
-	return nil
 }

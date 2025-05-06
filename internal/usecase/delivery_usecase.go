@@ -7,8 +7,6 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
-	"strconv"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -189,61 +187,4 @@ func (c *DeliveryUseCase) Delete(ctx context.Context, request *model.DeleteDeliv
 	}
 
 	return true, nil
-}
-
-func MapDeliveries(rows []map[string]interface{}, results *[]entity.Delivery) error {
-
-	for _, row := range rows {
-		// Ambil dan validasi delivery_id
-		deliveryIdStr, ok := row["delivery_id"].(string)
-		if !ok || deliveryIdStr == "" {
-			return fmt.Errorf("missing or invalid delivery_id")
-		}
-
-		deliveryId, err := strconv.ParseUint(deliveryIdStr, 10, 64)
-		if err != nil {
-			return fmt.Errorf("failed to parse delivery_id: %v", err)
-		}
-
-		// Ambil field kategori
-		deliveryCity, _ := row["delivery_city"].(string)
-		deliveryDistrict, _ := row["delivery_district"].(string)
-		deliveryVillage, _ := row["delivery_village"].(string)
-		deliveryHamlet, _ := row["delivery_hamlet"].(string)
-		deliveryCostStr, _ := row["delivery_cost"].(string)
-		deliveryCost, err := strconv.ParseFloat(deliveryCostStr, 32)
-		if err != nil {
-			return fmt.Errorf("failed to parse delivery_cost : %v", err)
-		}
-
-		// Parse created_at dan updated_at kategori
-		deliveryCreatedAtStr, _ := row["delivery_created_at"].(string)
-		categoryCreatedAt, err := time.Parse(time.RFC3339, deliveryCreatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse delivery_created_at: %v", err)
-		}
-
-		deliveryUpdatedAtStr, _ := row["delivery_updated_at"].(string)
-		categoryUpdatedAt, err := time.Parse(time.RFC3339, deliveryUpdatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse delivery_updated_at: %v", err)
-		}
-
-		// Buat objek kategori
-		newDelivery := entity.Delivery{
-			ID:        deliveryId,
-			City:      deliveryCity,
-			District:  deliveryDistrict,
-			Village:   deliveryVillage,
-			Hamlet:    deliveryHamlet,
-			Cost:      float32(deliveryCost),
-			CreatedAt: categoryCreatedAt,
-			UpdatedAt: categoryUpdatedAt,
-		}
-
-		// Tambahkan ke hasil
-		*results = append(*results, newDelivery)
-	}
-
-	return nil
 }

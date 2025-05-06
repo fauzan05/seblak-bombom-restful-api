@@ -1241,3 +1241,92 @@ func TestGetAllOrderPaginationSomeProductDeleted(t *testing.T) {
 		}
 	}
 }
+
+func TestGetAllOrderPaginationSearchProduct(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=10&page=1&search=produk", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.OrderResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, int64(20), responseBody.TotalDatas)
+	assert.Equal(t, 2, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	for _, order := range *responseBody.Data {
+		assert.NotNil(t, order.ChannelCode)
+		assert.NotNil(t, order.CompleteAddress)
+		assert.NotNil(t, order.ID)
+		for _, orderProduct := range order.OrderProducts {
+			assert.NotNil(t, orderProduct.ID)
+			assert.NotNil(t, orderProduct.OrderId)
+			assert.NotNil(t, orderProduct.ProductName)
+			for _, images := range orderProduct.Product.Images {
+				assert.NotNil(t, images.FileName)
+			}
+		}
+	}
+}
+
+func TestGetAllOrderPaginationSearchProductNotFound(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=10&page=1&search=alala", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.OrderResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, int64(0), responseBody.TotalDatas)
+	assert.Equal(t, 0, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	for _, order := range *responseBody.Data {
+		assert.NotNil(t, order.ChannelCode)
+		assert.NotNil(t, order.CompleteAddress)
+		assert.NotNil(t, order.ID)
+		for _, orderProduct := range order.OrderProducts {
+			assert.NotNil(t, orderProduct.ID)
+			assert.NotNil(t, orderProduct.OrderId)
+			assert.NotNil(t, orderProduct.ProductName)
+			for _, images := range orderProduct.Product.Images {
+				assert.NotNil(t, images.FileName)
+			}
+		}
+	}
+}
+
+func TestEditStatusOrder(t *testing.T) {
+	ClearAll()
+	TestRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+
+	
+}

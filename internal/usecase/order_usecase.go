@@ -437,17 +437,20 @@ func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search
 		"orders.note":                true,
 		"orders.created_at":          true,
 		"orders.updated_at":          true,
+		"order_products.product_name": true,
+		"order_products.category": true,
 	}
 
 	if !allowedColumns[newPagination.Column] {
 		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
 		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
 	}
-	
+
 	orders, totalOrder, err := repository.Paginate(tx, &entity.Order{}, newPagination, func(d *gorm.DB) *gorm.DB {
-		return d.Preload("OrderProducts").
+		return d.Joins("JOIN order_products ON order_products.order_id = orders.id").
+			Preload("OrderProducts").
 			Preload("OrderProducts.Product.Images").
-			Preload("XenditTransaction")
+			Preload("XenditTransaction").Where("order_products.product_name LIKE ?", "%"+search+"%")
 	})
 
 	if err != nil {

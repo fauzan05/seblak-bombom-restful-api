@@ -4,12 +4,9 @@ import (
 	"context"
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
-	"strconv"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -239,75 +236,4 @@ func (c *DiscountCouponUseCase) Remove(ctx context.Context, request *model.Delet
 	}
 
 	return true, nil
-}
-
-func MapDiscountCoupon(rows []map[string]any, results *[]entity.DiscountCoupon) error {
-	for _, row := range rows {
-		discountCouponIdStr, ok := row["discount_coupon_id"].(string)
-		if !ok || discountCouponIdStr == "" {
-			return fmt.Errorf("missing or invalid discount_coupon_id")
-		}
-
-		discountCouponId, err := strconv.ParseUint(discountCouponIdStr, 10, 64)
-		if err != nil {
-			return fmt.Errorf("failed to parse category_id: %v", err)
-		}
-
-		discountCouponName, _ := row["discount_coupon_name"].(string)
-		discountCouponDesc, _ := row["discount_coupon_desc"].(string)
-		discountCouponCode, _ := row["discount_coupon_code"].(string)
-		discountCouponValue, _ := strconv.ParseFloat(row["discount_coupon_value"].(string), 32)
-
-		discountCouponType := row["discount_coupon_type"].(string)
-		discountCouponStartStr, _ := row["discount_coupon_start"].(string)
-		discountCouponStart, err := time.Parse(time.RFC3339, discountCouponStartStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse discount_coupon_start: %v", err)
-		}
-		discountCouponEndStr, _ := row["discount_coupon_end"].(string)
-		discountCouponEnd, err := time.Parse(time.RFC3339, discountCouponEndStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse discount_coupon_end: %v", err)
-		}
-		discountCouponTotalMaxUsage, _ := strconv.Atoi(row["discount_coupon_total_max_usage"].(string))
-		discountCouponMaxUsagePerUser, _ := strconv.Atoi(row["discount_coupon_max_usage_per_user"].(string))
-		discountCouponUsedCount, _ := strconv.Atoi(row["discount_coupon_used_count"].(string))
-		discountCouponMinOrderValue, _ := strconv.Atoi(row["discount_coupon_min_order_value"].(string))
-		discountCouponStatus, _ := strconv.ParseBool(row["discount_coupon_status"].(string))
-
-		discountCouponCreatedAtStr, _ := row["discount_coupon_created_at"].(string)
-		discountCouponCreatedAt, err := time.Parse(time.RFC3339, discountCouponCreatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse discount_coupon_created_at: %v", err)
-		}
-
-		discountCouponUpdatedAtStr, _ := row["discount_coupon_updated_at"].(string)
-		discountCouponUpdatedAt, err := time.Parse(time.RFC3339, discountCouponUpdatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse discount_coupon_updated_at: %v", err)
-		}
-
-		newDiscountCoupon := entity.DiscountCoupon{
-			ID:              discountCouponId,
-			Name:            discountCouponName,
-			Description:     discountCouponDesc,
-			Code:            discountCouponCode,
-			Value:           float32(discountCouponValue),
-			Type:            helper.DiscountType(discountCouponType),
-			Start:           discountCouponStart,
-			End:             discountCouponEnd,
-			TotalMaxUsage:   discountCouponTotalMaxUsage,
-			MaxUsagePerUser: discountCouponMaxUsagePerUser,
-			UsedCount:       discountCouponUsedCount,
-			MinOrderValue:   float32(discountCouponMinOrderValue),
-			Status:          discountCouponStatus,
-			CreatedAt:       discountCouponCreatedAt,
-			UpdatedAt:       discountCouponUpdatedAt,
-		}
-
-		// Tambahkan ke hasil
-		*results = append(*results, newDiscountCoupon)
-	}
-
-	return nil
 }
