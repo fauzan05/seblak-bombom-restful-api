@@ -85,6 +85,8 @@ func (c *OrderController) GetAllCurrent(ctx *fiber.Ctx) error {
 }
 
 func (c *OrderController) GetAll(ctx *fiber.Ctx) error {
+	auth := middleware.GetCurrentUser(ctx)
+
 	search := ctx.Query("search", "")
 	trimSearch := strings.TrimSpace(search)
 
@@ -106,7 +108,7 @@ func (c *OrderController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalOrders, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
+	response, totalOrders, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, auth)
 	if err != nil {
 		c.Log.Warnf("failed to get all orders by current user : %+v", err)
 		return err

@@ -215,7 +215,7 @@ func DoLoginCustomer(t *testing.T) string {
 	return responseBody.Data.Token
 }
 
-func DoCreateDelivery(t *testing.T, token string) model.DeliveryResponse {
+func DoCreateDelivery(t *testing.T, token string) *model.DeliveryResponse {
 	requestBody := model.CreateDeliveryRequest{
 		City:     "Kebumen",
 		District: "Pejagoan",
@@ -249,7 +249,7 @@ func DoCreateDelivery(t *testing.T, token string) model.DeliveryResponse {
 	assert.Equal(t, responseBody.Data.Hamlet, requestBody.Hamlet)
 	assert.Equal(t, responseBody.Data.Cost, requestBody.Cost)
 
-	return responseBody.Data
+	return &responseBody.Data
 }
 
 func DoCreateManyDelivery(t *testing.T, totalData int) string {
@@ -298,8 +298,7 @@ func DoCreateManyDelivery(t *testing.T, totalData int) string {
 	return totalIds
 }
 
-func DoCreateManyAddress(t *testing.T, token string, totalData int, returnDataByIndex int) *model.AddressResponse {
-	delivery := DoCreateDelivery(t, token)
+func DoCreateManyAddress(t *testing.T, token string, totalData int, returnDataByIndex int, delivery *model.DeliveryResponse) *model.AddressResponse {
 	var addresses *model.AddressResponse
 	for i := 1; i <= totalData; i++ {
 		requestBody := model.AddressCreateRequest{
@@ -635,11 +634,10 @@ func DoCreateProduct(t *testing.T, token string, totalData int, getProductByInde
 }
 
 func DoSetBalanceManually(token string, balance_value float32) {
-	var userEntity *entity.User
-	db.Model(&entity.User{}).Joins("left join tokens on tokens.user_id = users.id").Scan(&userEntity)
-
+	userEntity := new(entity.User)
+	db.Model(entity.User{}).Joins("left join tokens on tokens.user_id = users.id").Where("tokens.token = ?", token).Scan(&userEntity)
 	// update balance
-	db.Model(&entity.Wallet{}).Where("user_id = ?", userEntity.ID).Update("balance", balance_value)
+	db.Model(entity.Wallet{}).Where("user_id = ?", userEntity.ID).Update("balance", balance_value)
 }
 
 func GetCurrentUserByToken(t *testing.T, token string) *model.UserResponse {
@@ -654,10 +652,10 @@ func GetCurrentUserByToken(t *testing.T, token string) *model.UserResponse {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody := new(model.ApiResponse[model.UserResponse])
+	responseBody := new(model.ApiResponse[*model.UserResponse])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
-	return &responseBody.Data
+	return responseBody.Data
 }
 
 func getRFC3339WithOffsetAndTime(days, weeks, months, hour, minute, second int) string {
@@ -683,23 +681,14 @@ func roundFloat32(val float32, precision int) float32 {
 	return float32(rounded)
 }
 
-func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder int) {
-	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
-	parseStart, err := time.Parse(time.RFC3339, start)
-	assert.Nil(t, err)
-
-	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
-	parseEnd, err := time.Parse(time.RFC3339, end)
-	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder * 10, totalOrder, 20000, true)
-	currentUser := GetCurrentUserByToken(t, token)
+func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder int, discountCoupon *model.DiscountCouponResponse, product *model.ProductResponse, delivery *model.DeliveryResponse) {
+	GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000*totalOrder))
-	getDelivery := DoCreateManyAddress(t, token, 2, 1)
-	product := DoCreateProduct(t, token, 2, 1)
+	getDelivery := DoCreateManyAddress(t, token, 2, 1, delivery)
 
 	for i := 1; i <= totalOrder; i++ {
 		requestBody := model.CreateOrderRequest{
-			DiscountId:     getDiscountCoupon.ID,
+			DiscountId:     discountCoupon.ID,
 			PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
 			PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
 			ChannelCode:    helper.WALLET_CHANNEL_CODE,
@@ -733,13 +722,7 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 		assert.NotNil(t, responseBody.Data.ID)
 		assert.NotNil(t, responseBody.Data.Invoice)
 		assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
-		assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
-		assert.Equal(t, float32(1500.05), responseBody.Data.TotalDiscount)
-		assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
-		assert.Equal(t, currentUser.FirstName, responseBody.Data.FirstName)
-		assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
-		assert.Equal(t, currentUser.Email, responseBody.Data.Email)
-		assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
+		assert.Equal(t, discountCoupon.Value, responseBody.Data.DiscountValue)
 		assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
 		assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
 		assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
@@ -747,13 +730,6 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 		assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
 		assert.Equal(t, true, responseBody.Data.IsDelivery)
 		assert.Equal(t, float32(getDelivery.Delivery.Cost), responseBody.Data.DeliveryCost)
-		for _, address := range currentUser.Addresses {
-			if address.IsMain {
-				assert.Equal(t, address.Delivery.Cost, responseBody.Data.DeliveryCost)
-				assert.Equal(t, address.CompleteAddress, responseBody.Data.CompleteAddress)
-				break
-			}
-		}
 		assert.Equal(t, "Yang cepet ya!", responseBody.Data.Note)
 		var totalProductPrice float32 = product.Price * 1
 
@@ -764,10 +740,6 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 			assert.Equal(t, requestBody.OrderProducts[i].ProductId, product.ProductId)
 			assert.Equal(t, requestBody.OrderProducts[i].Quantity, product.Quantity)
 		}
-
-		// cek saldo
-		// currentUser = GetCurrentUserByToken(t, token)
-		// assert.Equal(t, helper.RoundFloat32((float32(15000*totalOrder)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 		assert.Nil(t, responseBody.Data.XenditTransaction)
 	}

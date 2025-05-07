@@ -397,7 +397,7 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	return converter.OrdersToResponse(newOrders), nil
 }
 
-func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.OrderResponse, int64, int, error) {
+func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, currentUser *model.UserResponse) (*[]model.OrderResponse, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -447,10 +447,14 @@ func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search
 	}
 
 	orders, totalOrder, err := repository.Paginate(tx, &entity.Order{}, newPagination, func(d *gorm.DB) *gorm.DB {
-		return d.Joins("JOIN order_products ON order_products.order_id = orders.id").
+		result := d.Joins("JOIN order_products ON order_products.order_id = orders.id").
 			Preload("OrderProducts").
 			Preload("OrderProducts.Product.Images").
 			Preload("XenditTransaction").Where("order_products.product_name LIKE ?", "%"+search+"%")
+		if currentUser.Role == helper.CUSTOMER {
+			result.Where("user_id = ?", currentUser.ID)
+		}
+		return result
 	})
 
 	if err != nil {

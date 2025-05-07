@@ -22,8 +22,8 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	token := DoLoginAdmin(t)
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
@@ -108,8 +108,8 @@ func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 	token := DoLoginAdmin(t)
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	newDelivery := new(entity.Delivery)
 	db.Model(entity.Delivery{}).First(newDelivery)
 	db.Delete(newDelivery)
@@ -198,8 +198,8 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	token := DoLoginAdmin(t)
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
-
-	getDelivery := DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	getDelivery := DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
@@ -225,7 +225,7 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
-
+	
 	response, err := app.Test(request)
 	assert.Nil(t, err)
 
@@ -285,8 +285,8 @@ func TestCreateOrderAsAdminWithDeliveryAndDeliveryDeleted(t *testing.T) {
 	token := DoLoginAdmin(t)
 	GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 
 	newDelivery := new(entity.Delivery)
 	db.Model(entity.Delivery{}).First(newDelivery)
@@ -348,8 +348,8 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
-
-	getDelivery := DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	getDelivery := DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -445,8 +445,8 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.
 
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(1500000))
-
-	getDelivery := DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	getDelivery := DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 
 	for i := 1; i <= 3; i++ {
@@ -536,8 +536,8 @@ func TestCreateOrderBalanceInsufficient(t *testing.T) {
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoSetBalanceManually(token, float32(50000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
@@ -587,8 +587,8 @@ func TestCreateOrderDiscountNotFound(t *testing.T) {
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     1,
@@ -647,8 +647,8 @@ func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -707,8 +707,8 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -766,8 +766,8 @@ func TestCreateOrderDiscountMinOrder(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -822,8 +822,8 @@ func TestCreateOrderPaymentMethodNotValid(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -878,8 +878,8 @@ func TestCreateOrderChannelCodeNotValid(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -934,8 +934,8 @@ func TestCreateOrderPaymentGatewayNotValid(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -990,8 +990,8 @@ func TestCreateOrderWalletWrongPaymentMethod(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -1046,8 +1046,8 @@ func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
 	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
-
-	DoCreateManyAddress(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyAddress(t, token, 2, 1, delivery)
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
@@ -1091,7 +1091,18 @@ func TestGetAllOrderPagination(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
-	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+	totalOrder := 20
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	product := DoCreateProduct(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=5&page=2", nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -1131,7 +1142,18 @@ func TestGetAllOrderPaginationSortingColumnDesc(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
-	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+	totalOrder := 20
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	product := DoCreateProduct(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=5&page=2&column=orders.id&sort_by=desc", nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -1176,7 +1198,18 @@ func TestGetAllOrderPaginationColumnNotFound(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
-	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+	totalOrder := 20
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	product := DoCreateProduct(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=5&page=2&column=orders.mama", nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -1202,7 +1235,18 @@ func TestGetAllOrderPaginationSomeProductDeleted(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
-	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+	totalOrder := 20
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	product := DoCreateProduct(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
 	newProduct := new(entity.Product)
 	db.Model(entity.Product{}).First(newProduct)
 
@@ -1246,7 +1290,18 @@ func TestGetAllOrderPaginationSearchProduct(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
-	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+	totalOrder := 20
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	product := DoCreateProduct(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=10&page=1&search=produk", nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -1286,7 +1341,18 @@ func TestGetAllOrderPaginationSearchProductNotFound(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
-	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+	totalOrder := 20
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	product := DoCreateProduct(t, token, 2, 1)
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=10&page=1&search=alala", nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -1322,11 +1388,58 @@ func TestGetAllOrderPaginationSearchProductNotFound(t *testing.T) {
 	}
 }
 
-func TestEditStatusOrder(t *testing.T) {
+func TestGetAllCurrentUserOrderPagination(t *testing.T) {
 	ClearAll()
 	TestRegisterAdmin(t)
 	token := DoLoginAdmin(t)
-	DoCreateManyOrderUsingWalletPayment(t, token, 20)
+	totalOrder := 20
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
 
-	
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(10), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder, totalOrder, 20000, true)
+	product := DoCreateProduct(t, token, 2, 1)
+
+	delivery := DoCreateDelivery(t, token)
+	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
+
+	TestRegisterCustomer(t)
+	token = DoLoginCustomer(t)
+	DoCreateManyOrderUsingWalletPayment(t, token, 5, getDiscountCoupon, product, delivery)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/orders?per_page=10&page=1", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.OrderResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, int64(5), responseBody.TotalDatas)
+	assert.Equal(t, 1, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	for _, order := range *responseBody.Data {
+		assert.NotNil(t, order.ChannelCode)
+		assert.NotNil(t, order.CompleteAddress)
+		assert.NotNil(t, order.ID)
+		for _, orderProduct := range order.OrderProducts {
+			assert.NotNil(t, orderProduct.ID)
+			assert.NotNil(t, orderProduct.OrderId)
+			assert.NotNil(t, orderProduct.ProductName)
+			for _, images := range orderProduct.Product.Images {
+				assert.NotNil(t, images.FileName)
+			}
+		}
+	}
 }
