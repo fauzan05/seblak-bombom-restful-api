@@ -1444,3 +1444,34 @@ func TestGetAllCurrentUserOrderPagination(t *testing.T) {
 	}
 }
 
+func TestUpdateOrderReceivedAsCustomerError(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	tokenAdmin := DoLoginAdmin(t)
+	DoRegisterCustomer(t)
+	tokenCust := DoLoginCustomer(t)
+	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
+	
+	requestBodyUpdate := new(model.UpdateOrderRequest)
+	requestBodyUpdate.OrderStatus = helper.ORDER_RECEIVED
+
+	bodyJson, err := json.Marshal(requestBodyUpdate)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/orders/%d/status", order.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", tokenCust)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.Equal(t, "admin access only!", responseBody.Error)
+}

@@ -674,13 +674,6 @@ func getRFC3339WithOffsetAndTime(days, weeks, months, hour, minute, second int) 
 	return final.Format(time.RFC3339)
 }
 
-func roundFloat32(val float32, precision int) float32 {
-	f64 := float64(val)
-	multiplier := math.Pow(10, float64(precision))
-	rounded := math.Round(f64*multiplier) / multiplier
-	return float32(rounded)
-}
-
 func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder int, discountCoupon *model.DiscountCouponResponse, product *model.ProductResponse, delivery *model.DeliveryResponse) {
 	GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000*totalOrder))
@@ -815,4 +808,99 @@ func DoRegisterCustomer(t *testing.T) {
 	assert.Equal(t, requestBody.Role, responseBody.Data.Role)
 	assert.NotNil(t, responseBody.Data.CreatedAt)
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
+}
+
+func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin string, tokenCust string) *model.OrderResponse  {
+	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
+	parseStart, err := time.Parse(time.RFC3339, start)
+	assert.Nil(t, err)
+
+	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
+	parseEnd, err := time.Parse(time.RFC3339, end)
+	assert.Nil(t, err)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, tokenAdmin, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+
+	delivery := DoCreateDelivery(t, tokenAdmin)
+	currentUser := GetCurrentUserByToken(t, tokenCust)
+	DoSetBalanceManually(tokenCust, float32(150000))
+	getDelivery := DoCreateManyAddress(t, tokenCust, 2, 1, delivery)
+	product := DoCreateProduct(t, tokenAdmin, 2, 1)
+	requestBody := model.CreateOrderRequest{
+		DiscountId:     getDiscountCoupon.ID,
+		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		IsDelivery:     true,
+		Note:           "Yang cepet ya!",
+		OrderProducts: []model.CreateOrderProductRequest{
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+			{
+				ProductId: product.ID,
+				Quantity:  2,
+			},
+		},
+	}
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", tokenCust)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.OrderResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.Invoice)
+	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
+	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
+	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
+	assert.Equal(t, currentUser.FirstName, responseBody.Data.FirstName)
+	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
+	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
+	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
+	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+	assert.Equal(t, true, responseBody.Data.IsDelivery)
+	assert.Equal(t, float32(getDelivery.Delivery.Cost), responseBody.Data.DeliveryCost)
+	for _, address := range currentUser.Addresses {
+		if address.IsMain {
+			assert.Equal(t, address.Delivery.Cost, responseBody.Data.DeliveryCost)
+			assert.Equal(t, address.CompleteAddress, responseBody.Data.CompleteAddress)
+			break
+		}
+	}
+	assert.Equal(t, "Yang cepet ya!", responseBody.Data.Note)
+	var totalProductPrice float32 = product.Price * 4
+
+	assert.Equal(t, totalProductPrice, responseBody.Data.TotalProductPrice)
+	assert.Equal(t, totalProductPrice+getDelivery.Delivery.Cost-responseBody.Data.TotalDiscount, responseBody.Data.TotalFinalPrice)
+	assert.Equal(t, len(requestBody.OrderProducts), len(responseBody.Data.OrderProducts))
+	for i, product := range responseBody.Data.OrderProducts {
+		assert.Equal(t, requestBody.OrderProducts[i].ProductId, product.ProductId)
+		assert.Equal(t, requestBody.OrderProducts[i].Quantity, product.Quantity)
+	}
+
+	// cek saldo
+	currentUser = GetCurrentUserByToken(t, tokenCust)
+	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+
+	assert.Nil(t, responseBody.Data.XenditTransaction)
+
+	return &responseBody.Data
 }

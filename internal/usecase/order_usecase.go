@@ -472,7 +472,7 @@ func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int
 	return converter.OrdersToResponse(&orders), totalOrder, totalPages, nil
 }
 
-func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.UpdateOrderRequest) (*model.OrderResponse, error) {
+func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.UpdateOrderRequest, currentUser *model.UserResponse) (*model.OrderResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -549,7 +549,15 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that has been delivered!")
 		}
 
-	} else if request.OrderStatus == helper.ORDER_REJECTED {
+	} 
+	
+	if request.OrderStatus == helper.ORDER_REJECTED {
+		// Admin access only for reject
+		if currentUser.Role == helper.CUSTOMER {
+			c.Log.Warn("admin access only!")
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
+		}
+
 		if newOrder.OrderStatus == helper.ORDER_REJECTED {
 			c.Log.Warnf("can't reject an order that has been rejected!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that has been rejected!")
@@ -601,7 +609,15 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
-	} else if request.OrderStatus == helper.ORDER_RECEIVED {
+	}
+	
+	if request.OrderStatus == helper.ORDER_RECEIVED {
+		// Admin access only for received
+		if currentUser.Role == helper.CUSTOMER {
+			c.Log.Warn("admin access only!")
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
+		}
+
 		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
 			c.Log.Warnf("can't accept an order that has not been paid yet!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has not been paid yet!")
@@ -633,7 +649,15 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
-	} else if request.OrderStatus == helper.READY_FOR_PICKUP {
+	}
+	
+	if request.OrderStatus == helper.READY_FOR_PICKUP {
+		// Admin access only for pick up
+		if currentUser.Role == helper.CUSTOMER {
+			c.Log.Warn("admin access only!")
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
+		}
+
 		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
 			c.Log.Warnf("can't pick up an order that has not been paid yet!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has not been paid yet!")
@@ -660,7 +684,9 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
-	} else if request.OrderStatus == helper.ORDER_DELIVERED {
+	}
+	
+	if request.OrderStatus == helper.ORDER_DELIVERED {
 		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
 			c.Log.Warnf("can't complete an order that has not been paid yet!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has not been paid yet!")

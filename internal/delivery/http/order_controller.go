@@ -139,8 +139,9 @@ func (c *OrderController) UpdateOrderStatus(ctx *fiber.Ctx) error {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
-	
-	response, err := c.UseCase.EditOrderStatus(ctx.Context(), orderRequest)
+
+	auth := middleware.GetCurrentUser(ctx)
+	response, err := c.UseCase.EditOrderStatus(ctx.Context(), orderRequest, auth)
 	if err != nil {
 		c.Log.Warnf("failed to update order status by selected order : %+v", err)
 		return err
