@@ -397,7 +397,7 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	return converter.OrdersToResponse(newOrders), nil
 }
 
-func (c *OrderUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, currentUser *model.UserResponse) (*[]model.OrderResponse, int64, int, error) {
+func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, currentUser *model.UserResponse) (*[]model.OrderResponse, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
