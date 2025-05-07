@@ -17,7 +17,7 @@ import (
 
 func TestAddApplicationSetting(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	// Simulasi multipart body
@@ -91,7 +91,7 @@ func TestAddApplicationSetting(t *testing.T) {
 
 func TestAddApplicationSettingBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	// Simulasi multipart body
@@ -149,7 +149,7 @@ func TestAddApplicationSettingBadRequest(t *testing.T) {
 
 func TestUpdateApplicationSetting(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	// Simulasi multipart body
@@ -291,7 +291,7 @@ func TestUpdateApplicationSetting(t *testing.T) {
 
 func TestAddApplicationSettingFileLogoExceededThan1Mb(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	// Simulasi multipart body

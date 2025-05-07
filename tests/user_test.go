@@ -52,7 +52,7 @@ func TestRegisterAdmin(t *testing.T) {
 }
 
 func TestRegisterCustomer(t *testing.T) {
-	// ClearAll()
+	ClearAll()
 	requestBody := model.RegisterUserRequest{
 		FirstName: "Customer",
 		LastName:  "1",
@@ -120,7 +120,7 @@ func TestRegisterError(t *testing.T) {
 
 func TestRegisterEmailDuplicate(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
@@ -152,7 +152,7 @@ func TestRegisterEmailDuplicate(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 
 	requestBody := model.LoginUserRequest{
 		Email:    "johndoe@email.com",
@@ -182,7 +182,7 @@ func TestLogin(t *testing.T) {
 
 func TestLoginFailed(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 
 	requestBody := model.LoginUserRequest{
 		Email:    "johndoe123@email.com",
@@ -201,11 +201,12 @@ func TestLoginFailed(t *testing.T) {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody := new(model.ApiResponse[model.UserResponse])
+	responseBody := new(model.ErrorResponse[string])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.Equal(t, "user not found : record not found", responseBody.Error)
 }
 
 func TestLogout(t *testing.T) {
@@ -251,16 +252,17 @@ func TestLogoutWrongAuthorization(t *testing.T) {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody := new(model.ApiResponse[bool])
+	responseBody := new(model.ErrorResponse[string])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.Equal(t, "token isn't valid : token is expired!", responseBody.Error)
 }
 
 func TestGetCurrentUser(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/users/current", nil)
@@ -290,7 +292,7 @@ func TestGetCurrentUser(t *testing.T) {
 
 func TestGetCurrentUserFailed(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/users/current", nil)
@@ -304,16 +306,17 @@ func TestGetCurrentUserFailed(t *testing.T) {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody := new(model.ApiResponse[model.UserResponse])
+	responseBody := new(model.ErrorResponse[string])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.Equal(t, "token isn't valid : token is expired!", responseBody.Error)
 }
 
 func TestChangePasswordFailedConfirmation(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserPasswordRequest{
@@ -346,7 +349,7 @@ func TestChangePasswordFailedConfirmation(t *testing.T) {
 
 func TestChangePassword(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserPasswordRequest{
@@ -379,7 +382,7 @@ func TestChangePassword(t *testing.T) {
 
 func TestChangePasswordOldPasswordIsWrong(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserPasswordRequest{
@@ -412,7 +415,7 @@ func TestChangePasswordOldPasswordIsWrong(t *testing.T) {
 
 func TestChangeProfile(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserRequest{
@@ -445,8 +448,8 @@ func TestChangeProfile(t *testing.T) {
 
 func TestChangeProfileEmailDuplicate(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
-	TestRegisterCustomer(t)
+	DoRegisterAdmin(t)
+	DoRegisterCustomer(t)
 	token := DoLoginCustomer(t)
 
 	requestBody := model.UpdateUserRequest{
@@ -470,9 +473,10 @@ func TestChangeProfileEmailDuplicate(t *testing.T) {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody := new(model.ApiResponse[model.UserResponse])
+	responseBody := new(model.ErrorResponse[string])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusConflict, response.StatusCode)
+	assert.Equal(t, "email has already exists!", responseBody.Error)
 }

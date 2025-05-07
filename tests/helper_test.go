@@ -744,3 +744,75 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 		assert.Nil(t, responseBody.Data.XenditTransaction)
 	}
 }
+
+func DoRegisterAdmin(t *testing.T) {
+	requestBody := model.RegisterUserRequest{
+		FirstName: "John",
+		LastName:  "Doe",
+		Email:     "johndoe@email.com",
+		Phone:     "08123456789",
+		Password:  "johndoe123",
+		Role:      helper.ADMIN,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.UserResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, requestBody.FirstName, responseBody.Data.FirstName)
+	assert.Equal(t, requestBody.LastName, responseBody.Data.LastName)
+	assert.Equal(t, requestBody.Email, responseBody.Data.Email)
+	assert.Equal(t, requestBody.Phone, responseBody.Data.Phone)
+	assert.Equal(t, requestBody.Role, responseBody.Data.Role)
+	assert.NotNil(t, responseBody.Data.CreatedAt)
+	assert.NotNil(t, responseBody.Data.UpdatedAt)
+}
+
+func DoRegisterCustomer(t *testing.T) {
+	requestBody := model.RegisterUserRequest{
+		FirstName: "Customer",
+		LastName:  "1",
+		Email:     "customer1@email.com",
+		Phone:     "0982131244",
+		Password:  "customer1",
+		Role:      helper.CUSTOMER,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.UserResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, requestBody.FirstName, responseBody.Data.FirstName)
+	assert.Equal(t, requestBody.LastName, responseBody.Data.LastName)
+	assert.Equal(t, requestBody.Email, responseBody.Data.Email)
+	assert.Equal(t, requestBody.Phone, responseBody.Data.Phone)
+	assert.Equal(t, requestBody.Role, responseBody.Data.Role)
+	assert.NotNil(t, responseBody.Data.CreatedAt)
+	assert.NotNil(t, responseBody.Data.UpdatedAt)
+}

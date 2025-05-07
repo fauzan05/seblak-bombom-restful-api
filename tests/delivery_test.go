@@ -15,7 +15,7 @@ import (
 
 func TestCreateDelivery(t *testing.T) {
 	// ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateDeliveryRequest{
@@ -55,7 +55,7 @@ func TestCreateDelivery(t *testing.T) {
 
 func TestCreateDeliveryFailed(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateDeliveryRequest{
@@ -88,7 +88,7 @@ func TestCreateDeliveryFailed(t *testing.T) {
 
 func TestUpdateDeliveriesBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	deliveryResponse := DoCreateDelivery(t, token)
 
@@ -122,7 +122,7 @@ func TestUpdateDeliveriesBadRequest(t *testing.T) {
 
 func TestUpdateDeliveries(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	deliveryResponse := DoCreateDelivery(t, token)
 
@@ -163,7 +163,7 @@ func TestUpdateDeliveries(t *testing.T) {
 
 func TestUpdateDeliveriesNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateDeliveryRequest{
@@ -196,7 +196,7 @@ func TestUpdateDeliveriesNotFound(t *testing.T) {
 
 func TestGetAllDeliveryPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	DoCreateManyDelivery(t, 27)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.id&sort_by=asc&per_page=5&page=3", nil)
@@ -222,7 +222,7 @@ func TestGetAllDeliveryPagination(t *testing.T) {
 
 func TestGetAllDeliveryPaginationSortingColumnDesc(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	DoCreateManyDelivery(t, 27)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.id&sort_by=desc&per_page=5&page=3", nil)
@@ -253,7 +253,7 @@ func TestGetAllDeliveryPaginationSortingColumnDesc(t *testing.T) {
 
 func TestGetAllDeliveryPaginationSortingColumnAsc(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	DoCreateManyDelivery(t, 27)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.id&sort_by=asc&per_page=5&page=3", nil)
@@ -284,7 +284,7 @@ func TestGetAllDeliveryPaginationSortingColumnAsc(t *testing.T) {
 
 func TestGetAllDeliveryPaginationSortingColumnNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	DoCreateManyDelivery(t, 27)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.mama&sort_by=desc&per_page=5&page=3", nil)
@@ -307,7 +307,7 @@ func TestGetAllDeliveryPaginationSortingColumnNotFound(t *testing.T) {
 
 func TestDeleteDeliveries(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	requestBody := DoCreateManyDelivery(t, 5)
 	token := DoLoginAdmin(t)
 
@@ -331,7 +331,7 @@ func TestDeleteDeliveries(t *testing.T) {
 
 func TestDeleteDeliveriesFailed(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	requestBody := "e,b,s,s"
 	token := DoLoginAdmin(t)
 

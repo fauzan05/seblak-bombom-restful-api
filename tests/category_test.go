@@ -15,7 +15,7 @@ import (
 
 func TestCreateCategory(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateCategoryRequest{
@@ -50,7 +50,7 @@ func TestCreateCategory(t *testing.T) {
 
 func TestCreateCategoryBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateCategoryRequest{
@@ -108,7 +108,7 @@ func TestCreateCategoryBadRequest(t *testing.T) {
 
 func TestUpdateCategory(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBodyCreate := model.CreateCategoryRequest{
@@ -174,7 +174,7 @@ func TestUpdateCategory(t *testing.T) {
 
 func TestUpdateCategoryBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBodyCreate := model.CreateCategoryRequest{
@@ -234,7 +234,7 @@ func TestUpdateCategoryBadRequest(t *testing.T) {
 
 func TestUpdateCategoryNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBodyUpdate := model.UpdateCategoryRequest{
@@ -264,7 +264,7 @@ func TestUpdateCategoryNotFound(t *testing.T) {
 
 func TestGetCategoryById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateCategoryRequest{
@@ -320,7 +320,7 @@ func TestGetCategoryById(t *testing.T) {
 
 func TestGetAllCategoryPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	for i := 1; i <= 25; i++ {
@@ -354,7 +354,7 @@ func TestGetAllCategoryPagination(t *testing.T) {
 		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
 	}
 
-	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=2&search=makanan&column=id&sort_by=desc", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=2&search=makanan&column=categories.id&sort_by=desc", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
@@ -378,7 +378,7 @@ func TestGetAllCategoryPagination(t *testing.T) {
 
 func TestGetAllCategoryPaginationSearchNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	for i := 1; i <= 25; i++ {
@@ -412,7 +412,7 @@ func TestGetAllCategoryPaginationSearchNotFound(t *testing.T) {
 		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
 	}
 
-	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=zzz&column=id&sort_by=desc", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=zzz&column=categories.id&sort_by=desc", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
@@ -436,7 +436,7 @@ func TestGetAllCategoryPaginationSearchNotFound(t *testing.T) {
 
 func TestGetAllCategoryPaginationSortingColumnDesc(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	for i := 1; i <= 25; i++ {
@@ -498,7 +498,7 @@ func TestGetAllCategoryPaginationSortingColumnDesc(t *testing.T) {
 
 func TestGetAllCategoryPaginationSortingColumnAsc(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	for i := 1; i <= 25; i++ {
@@ -560,7 +560,7 @@ func TestGetAllCategoryPaginationSortingColumnAsc(t *testing.T) {
 
 func TestGetAllCategoryPaginationSortingColumnNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	for i := 1; i <= 25; i++ {
@@ -614,7 +614,7 @@ func TestGetAllCategoryPaginationSortingColumnNotFound(t *testing.T) {
 
 func TestDeleteCategoryById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	var getAllIds string
@@ -670,7 +670,7 @@ func TestDeleteCategoryById(t *testing.T) {
 
 func TestDeleteCategoriesIdNotValid(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	getAllIds := "3,s,r,t,"

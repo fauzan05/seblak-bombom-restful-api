@@ -17,7 +17,7 @@ import (
 
 func TestCreateAddress(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createDeliveryResponse := DoCreateDelivery(t, token)
@@ -58,7 +58,7 @@ func TestCreateAddress(t *testing.T) {
 
 func TestCreateAddressDeliveryIdNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.AddressCreateRequest{
@@ -90,7 +90,7 @@ func TestCreateAddressDeliveryIdNotFound(t *testing.T) {
 
 func TestCreateAddressBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.AddressCreateRequest{
@@ -122,7 +122,7 @@ func TestCreateAddressBadRequest(t *testing.T) {
 
 func TestUpdateAddress(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	var firstAddress model.AddressResponse
@@ -201,7 +201,7 @@ func TestUpdateAddress(t *testing.T) {
 
 func TestUpdateAddressDeliveryIdNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	var firstAddress model.AddressResponse
@@ -273,7 +273,7 @@ func TestUpdateAddressDeliveryIdNotFound(t *testing.T) {
 
 func TestUpdateAddressBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	var firstAddress model.AddressResponse
@@ -345,7 +345,7 @@ func TestUpdateAddressBadRequest(t *testing.T) {
 
 func TestUpdateAddressIdNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createDeliveryResponse := DoCreateDelivery(t, token)
@@ -378,7 +378,7 @@ func TestUpdateAddressIdNotFound(t *testing.T) {
 
 func TestGetAllAddressByCurrentUser(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createDeliveryResponse := DoCreateDelivery(t, token)
@@ -447,7 +447,7 @@ func TestGetAllAddressByCurrentUser(t *testing.T) {
 
 func TestGetAddressById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createDeliveryResponse := DoCreateDelivery(t, token)
@@ -516,7 +516,7 @@ func TestGetAddressById(t *testing.T) {
 
 func TestGetAddressButDeliveryDeleted(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createDeliveryResponse := DoCreateDelivery(t, token)
@@ -594,7 +594,7 @@ func TestGetAddressButDeliveryDeleted(t *testing.T) {
 
 func TestDeleteAddressByIds(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createDeliveryResponse := DoCreateDelivery(t, token)
@@ -666,7 +666,7 @@ func TestDeleteAddressByIds(t *testing.T) {
 
 func TestFailedDeleteAddressByIds(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createDeliveryResponse := DoCreateDelivery(t, token)

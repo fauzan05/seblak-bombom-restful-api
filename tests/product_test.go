@@ -17,7 +17,7 @@ import (
 
 func TestCreateProduct(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -88,7 +88,7 @@ func TestCreateProduct(t *testing.T) {
 
 func TestCreateProductImageSizeExceedsLimit(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -145,7 +145,7 @@ func TestCreateProductImageSizeExceedsLimit(t *testing.T) {
 // position is not equal to number of images
 func TestCreateProductImagePositionBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -201,7 +201,7 @@ func TestCreateProductImagePositionBadRequest(t *testing.T) {
 
 func TestCreateProductFileNotImage(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -257,7 +257,7 @@ func TestCreateProductFileNotImage(t *testing.T) {
 
 func TestCreateProductImagesMoreThanFive(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -313,7 +313,7 @@ func TestCreateProductImagesMoreThanFive(t *testing.T) {
 
 func TestCreateProductImagesPositionNotIncluded(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -365,7 +365,7 @@ func TestCreateProductImagesPositionNotIncluded(t *testing.T) {
 
 func TestCreateProductStockNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -421,7 +421,7 @@ func TestCreateProductStockNegativeNumber(t *testing.T) {
 
 func TestCreateProductPriceNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -477,7 +477,7 @@ func TestCreateProductPriceNegativeNumber(t *testing.T) {
 
 func TestCreateProductImagesNotUploaded(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -517,7 +517,7 @@ func TestCreateProductImagesNotUploaded(t *testing.T) {
 
 func TestCreateProductCategoryNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	// Simulasi multipart body
 	var b bytes.Buffer
@@ -572,7 +572,7 @@ func TestCreateProductCategoryNotFound(t *testing.T) {
 
 func TestCreateProductDataBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	// Simulasi multipart body
 	var b bytes.Buffer
@@ -607,7 +607,7 @@ func TestCreateProductDataBadRequest(t *testing.T) {
 
 func TestUpdateProduct(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -742,7 +742,7 @@ func TestUpdateProduct(t *testing.T) {
 
 func TestUpdateProductCategoryNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -868,7 +868,7 @@ func TestUpdateProductCategoryNotFound(t *testing.T) {
 
 func TestUpdateProductStockNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -963,7 +963,7 @@ func TestUpdateProductStockNegativeNumber(t *testing.T) {
 
 func TestUpdateProductPriceNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1058,7 +1058,7 @@ func TestUpdateProductPriceNegativeNumber(t *testing.T) {
 
 func TestUpdateProductDataBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1153,7 +1153,7 @@ func TestUpdateProductDataBadRequest(t *testing.T) {
 
 func TestUpdateProductNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1280,7 +1280,7 @@ func TestUpdateProductNotFound(t *testing.T) {
 
 func TestUpdateProductNewImagesIsNotSameWithNewImagePositions(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1407,7 +1407,7 @@ func TestUpdateProductNewImagesIsNotSameWithNewImagePositions(t *testing.T) {
 
 func TestUpdateProductImageMoreThanFive(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1534,7 +1534,7 @@ func TestUpdateProductImageMoreThanFive(t *testing.T) {
 
 func TestUpdateProductNewImageSizeExceedsLimit(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1661,7 +1661,7 @@ func TestUpdateProductNewImageSizeExceedsLimit(t *testing.T) {
 
 func TestGetProductPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateProduct(t, token, 27, 0)
 
@@ -1689,7 +1689,7 @@ func TestGetProductPagination(t *testing.T) {
 
 func TestGetProductPaginationSortingDesc(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateProduct(t, token, 27, 0)
 
@@ -1727,7 +1727,7 @@ func TestGetProductPaginationSortingDesc(t *testing.T) {
 
 func TestGetProductPaginationSortingDescColumnNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateProduct(t, token, 27, 0)
 
@@ -1751,7 +1751,7 @@ func TestGetProductPaginationSortingDescColumnNotFound(t *testing.T) {
 
 func TestGetProductPaginationSortingAsc(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateProduct(t, token, 27, 0)
 
@@ -1789,7 +1789,7 @@ func TestGetProductPaginationSortingAsc(t *testing.T) {
 
 func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateProduct(t, token, 27, 0)
 
@@ -1817,7 +1817,7 @@ func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 
 func TestGetProductById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	getProduct := DoCreateProduct(t, token, 5, 1)
 
@@ -1860,7 +1860,7 @@ func TestGetProductById(t *testing.T) {
 
 func TestGetProductByIdNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 
 	request := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/products/%d", 1), nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -1881,7 +1881,7 @@ func TestGetProductByIdNotFound(t *testing.T) {
 
 func TestDeleteProduct(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
@@ -1988,15 +1988,15 @@ func TestDeleteProduct(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 0, len(*responseBodyPagination.Data))
-	assert.Equal(t, int64(0), responseBodyPagination.TotalDatas)
-	assert.Equal(t, 0, responseBodyPagination.TotalPages)
+	assert.Equal(t, int64(5), responseBodyPagination.TotalDatas)
+	assert.Equal(t, 1, responseBodyPagination.TotalPages)
 	assert.Equal(t, 2, responseBodyPagination.CurrentPages)
 	assert.Equal(t, 5, responseBodyPagination.DataPerPages)
 }
 
 func TestDeleteProductIdNotValid(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	var getAllIds string = "b,3,#,m"

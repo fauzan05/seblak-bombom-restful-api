@@ -18,7 +18,7 @@ import (
 
 func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
@@ -104,7 +104,7 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 
 func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
@@ -194,7 +194,7 @@ func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 
 func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
@@ -281,7 +281,7 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 
 func TestCreateOrderAsAdminWithDeliveryAndDeliveryDeleted(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
@@ -334,7 +334,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDeliveryDeleted(t *testing.T) {
 
 func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -431,7 +431,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 
 func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -533,7 +533,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.
 
 func TestCreateOrderBalanceInsufficient(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoSetBalanceManually(token, float32(50000))
 	delivery := DoCreateDelivery(t, token)
@@ -584,7 +584,7 @@ func TestCreateOrderBalanceInsufficient(t *testing.T) {
 
 func TestCreateOrderDiscountNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -634,7 +634,7 @@ func TestCreateOrderDiscountNotFound(t *testing.T) {
 
 func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(1, 0, 0, 0, 0, 1)
@@ -694,7 +694,7 @@ func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 
 func TestCreateOrderDiscountExpired(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, -1, 0, 0, 0, 1)
@@ -753,7 +753,7 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 
 func TestCreateOrderDiscountMinOrder(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
@@ -809,7 +809,7 @@ func TestCreateOrderDiscountMinOrder(t *testing.T) {
 
 func TestCreateOrderPaymentMethodNotValid(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
@@ -865,7 +865,7 @@ func TestCreateOrderPaymentMethodNotValid(t *testing.T) {
 
 func TestCreateOrderChannelCodeNotValid(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
@@ -921,7 +921,7 @@ func TestCreateOrderChannelCodeNotValid(t *testing.T) {
 
 func TestCreateOrderPaymentGatewayNotValid(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
@@ -977,7 +977,7 @@ func TestCreateOrderPaymentGatewayNotValid(t *testing.T) {
 
 func TestCreateOrderWalletWrongPaymentMethod(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
@@ -1033,7 +1033,7 @@ func TestCreateOrderWalletWrongPaymentMethod(t *testing.T) {
 
 func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 0, 1)
@@ -1089,7 +1089,7 @@ func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
 
 func TestGetAllOrderPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	totalOrder := 20
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -1140,7 +1140,7 @@ func TestGetAllOrderPagination(t *testing.T) {
 
 func TestGetAllOrderPaginationSortingColumnDesc(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	totalOrder := 20
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -1196,7 +1196,7 @@ func TestGetAllOrderPaginationSortingColumnDesc(t *testing.T) {
 
 func TestGetAllOrderPaginationColumnNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	totalOrder := 20
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -1233,7 +1233,7 @@ func TestGetAllOrderPaginationColumnNotFound(t *testing.T) {
 func TestGetAllOrderPaginationSomeProductDeleted(t *testing.T) {
 	// product harus tetap berelasi meskipun produk sudah dihapus
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	totalOrder := 20
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -1288,7 +1288,7 @@ func TestGetAllOrderPaginationSomeProductDeleted(t *testing.T) {
 
 func TestGetAllOrderPaginationSearchProduct(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	totalOrder := 20
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -1339,7 +1339,7 @@ func TestGetAllOrderPaginationSearchProduct(t *testing.T) {
 
 func TestGetAllOrderPaginationSearchProductNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	totalOrder := 20
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -1390,7 +1390,7 @@ func TestGetAllOrderPaginationSearchProductNotFound(t *testing.T) {
 
 func TestGetAllCurrentUserOrderPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	totalOrder := 20
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
@@ -1406,7 +1406,7 @@ func TestGetAllCurrentUserOrderPagination(t *testing.T) {
 	delivery := DoCreateDelivery(t, token)
 	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
 
-	TestRegisterCustomer(t)
+	DoRegisterCustomer(t)
 	token = DoLoginCustomer(t)
 	DoCreateManyOrderUsingWalletPayment(t, token, 5, getDiscountCoupon, product, delivery)
 
