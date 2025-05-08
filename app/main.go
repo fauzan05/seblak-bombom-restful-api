@@ -16,6 +16,7 @@ func main() {
 	// coreAPIClient := config.NewMidtransSanboxCoreAPIClient(viperConfig, log)
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
+	email := config.NewSMTPMailerTest(viperConfig)
 	app := config.NewFiber(viperConfig)
 
 	// cors setting
@@ -35,6 +36,7 @@ func main() {
 		// SnapClient:    snapClient,
 		// CoreAPIClient: coreAPIClient,
 		XenditClient: xenditClient,
+		Email: email,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

@@ -79,5 +79,15 @@
             "business_id": ""
         },
         "live": {}
+    },
+    "email": {
+        "test": {
+            "host": "smtp.gmail.com",
+            "port": 587,
+            "sender_name": "PT Example",
+            "email": "example@email.com",
+            "password": "your-app-generate-password"
+        },
+        "prod": {}
     }
 }

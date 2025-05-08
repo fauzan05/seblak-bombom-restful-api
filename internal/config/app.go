@@ -5,6 +5,7 @@ import (
 	xenditController "seblak-bombom-restful-api/internal/delivery/http/xendit"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/delivery/route"
+	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/repository"
 	"seblak-bombom-restful-api/internal/usecase"
 	xenditUseCase "seblak-bombom-restful-api/internal/usecase/xendit"
@@ -28,6 +29,7 @@ type BootstrapConfig struct {
 	SnapClient    *snap.Client
 	CoreAPIClient *coreapi.Client
 	XenditClient  *xendit.APIClient
+	Email         *mailer.SMTPMailer
 }
 
 func Bootstrap(config *BootstrapConfig) {
