@@ -57,7 +57,7 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 	newProduct.ID = request.ProductID
 	if err := c.ProductRepository.FindById(tx, newProduct); err != nil {
 		c.Log.Warnf("failed to find product by id into product table : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product by id into product table : %+v", err))
+		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to find product by id into product table : %+v", err))
 	}
 
 	// cek apakah produk tersedia atau tidak
@@ -67,11 +67,12 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 	}
 
 	// cek apakah permintaan melebihi stok yang tersedia
+	currentProductStock := newProduct.Stock
 	newProduct.Stock -= request.Quantity
 	if newProduct.Stock < 0 {
 		// jika jumlah kuantitasnya melebihi stok yang tersedia
-		c.Log.Warnf("quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, newProduct.Stock)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, newProduct.Stock))
+		c.Log.Warnf("quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, currentProductStock)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("quantity request exceeds available stock for product: Requested (%+v), Available (%+v)", request.Quantity, currentProductStock))
 	}
 
 	// dicek terlebih dahulu apakah ada cart dengan user yang sama dan produk yang sama.
@@ -156,7 +157,10 @@ func (c *CartUseCase) Add(ctx context.Context, request *model.CreateCartRequest)
 		}
 	}
 
-	newCart.CartItems = nil
+	if err := c.CartRepository.FindWithPreloads(tx, newCart, "CartItems"); err != nil {
+		c.Log.Warnf("failed to find newly cart items : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly cart items  : %+v", err))
+	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("failed to commit transaction : %+v", err)
