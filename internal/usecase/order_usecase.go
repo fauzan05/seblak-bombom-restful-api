@@ -414,31 +414,31 @@ func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int
 	newPagination.Column = sortingColumn
 	newPagination.SortBy = sortBy
 	allowedColumns := map[string]bool{
-		"orders.id":                  true,
-		"orders.invoice":             true,
-		"orders.total_final_price":   true,
-		"orders.total_product_price": true,
-		"orders.discount_value":      true,
-		"orders.discount_type":       true,
-		"orders.total_discount":      true,
-		"orders.user_id":             true,
-		"orders.first_name":          true,
-		"orders.last_name":           true,
-		"orders.email":               true,
-		"orders.phone":               true,
-		"orders.payment_gateway":     true,
-		"orders.payment_method":      true,
-		"orders.channel_code":        true,
-		"orders.payment_status":      true,
-		"orders.order_status":        true,
-		"orders.is_delivery":         true,
-		"orders.delivery_cost":       true,
-		"orders.complete_address":    true,
-		"orders.note":                true,
-		"orders.created_at":          true,
-		"orders.updated_at":          true,
+		"orders.id":                   true,
+		"orders.invoice":              true,
+		"orders.total_final_price":    true,
+		"orders.total_product_price":  true,
+		"orders.discount_value":       true,
+		"orders.discount_type":        true,
+		"orders.total_discount":       true,
+		"orders.user_id":              true,
+		"orders.first_name":           true,
+		"orders.last_name":            true,
+		"orders.email":                true,
+		"orders.phone":                true,
+		"orders.payment_gateway":      true,
+		"orders.payment_method":       true,
+		"orders.channel_code":         true,
+		"orders.payment_status":       true,
+		"orders.order_status":         true,
+		"orders.is_delivery":          true,
+		"orders.delivery_cost":        true,
+		"orders.complete_address":     true,
+		"orders.note":                 true,
+		"orders.created_at":           true,
+		"orders.updated_at":           true,
 		"order_products.product_name": true,
-		"order_products.category": true,
+		"order_products.category":     true,
 	}
 
 	if !allowedColumns[newPagination.Column] {
@@ -549,8 +549,8 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that has been delivered!")
 		}
 
-	} 
-	
+	}
+
 	if request.OrderStatus == helper.ORDER_REJECTED {
 		// Admin access only for reject
 		if currentUser.Role == helper.CUSTOMER {
@@ -610,7 +610,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 
 		newOrder.OrderStatus = request.OrderStatus
 	}
-	
+
 	if request.OrderStatus == helper.ORDER_RECEIVED {
 		// Admin access only for received
 		if currentUser.Role == helper.CUSTOMER {
@@ -650,7 +650,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 
 		newOrder.OrderStatus = request.OrderStatus
 	}
-	
+
 	if request.OrderStatus == helper.READY_FOR_PICKUP {
 		// Admin access only for pick up
 		if currentUser.Role == helper.CUSTOMER {
@@ -678,6 +678,11 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has a cancellation request!")
 		}
 
+		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
+			c.Log.Warnf("can't pick up an order that has being delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has being delivered!")
+		}
+
 		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
 			c.Log.Warnf("can't pick up an order that has been delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has been delivered!")
@@ -685,7 +690,42 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 
 		newOrder.OrderStatus = request.OrderStatus
 	}
-	
+
+	if request.OrderStatus == helper.ORDER_BEING_DELIVERED {
+		// Admin access only for being delivered
+		if currentUser.Role == helper.CUSTOMER {
+			c.Log.Warn("admin access only!")
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
+		}
+
+		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+			c.Log.Warnf("can't being delivered an order that has not been paid yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has not been paid yet!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+			c.Log.Warnf("can't being delivered an order that is ready for pickup!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that is ready for pickup!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+			c.Log.Warnf("can't being delivered an order that has been cancelled/rejected!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has been cancelled/rejected!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+			c.Log.Warnf("can't being delivered an order that has a cancellation request!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has a cancellation request!")
+		}
+
+		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+			c.Log.Warnf("can't being delivered an order that has been delivered!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has been delivered!")
+		}
+
+		newOrder.OrderStatus = request.OrderStatus
+	}
+
 	if request.OrderStatus == helper.ORDER_DELIVERED {
 		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
 			c.Log.Warnf("can't complete an order that has not been paid yet!")
@@ -713,6 +753,11 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to update status order by id : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update status order by id : %+v", err))
+	}
+
+	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
+		c.Log.Warnf("failed to find newly created order : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly created order : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
