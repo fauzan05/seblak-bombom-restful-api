@@ -188,7 +188,7 @@ func (c *CartUseCase) GetAllByCurrentUser(ctx context.Context, request *model.Ge
 	return converter.CartToResponse(newCart), nil
 }
 
-func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateCartRequest) (*model.CartItemResponse, error) {
+func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateCartRequest) (*model.CartResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -255,12 +255,20 @@ func (c *CartUseCase) UpdateQuantity(ctx context.Context, request *model.UpdateC
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update stock of product in database : %+v", err))
 	}
 
+	newCart := new(entity.Cart)
+	newCart.ID = newCartItem.CartId
+
+	if err := c.CartRepository.FindWithPreloads(tx, newCart, "CartItems"); err != nil {
+		c.Log.Warnf("failed to find newly cart items : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly cart items  : %+v", err))
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("failed to commit transaction : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
-	return converter.CartItemToResponse(newCartItem), nil
+	return converter.CartToResponse(newCart), nil
 }
 
 func (c *CartUseCase) DeleteItem(ctx context.Context, request *model.DeleteCartRequest) (*model.CartItemResponse, error) {

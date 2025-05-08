@@ -66,7 +66,7 @@ func (c *CartController) Update(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.CartItemResponse]{
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.CartResponse]{
 		Code:   200,
 		Status: "cart item updated successfully",
 		Data:   response,
@@ -95,8 +95,8 @@ func (c *CartController) Delete(ctx *fiber.Ctx) error {
 	getId := ctx.Params("cartItemId")
 	cartItemId, err := strconv.Atoi(getId)
 	if err != nil {
-		c.Log.Warnf("failed to convert order_id to integer : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert order_id to integer : %+v", err))
+		c.Log.Warnf("failed to convert cart_item_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert cart_item_id to integer : %+v", err))
 	}
 
 	request := new(model.DeleteCartRequest)
