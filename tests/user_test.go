@@ -485,3 +485,63 @@ func TestChangeProfileEmailDuplicate(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, response.StatusCode)
 	assert.Equal(t, "email has already exists!", responseBody.Error)
 }
+
+func TestForgotPasswordEmailNotFound(t *testing.T) {
+	ClearAll()
+
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
+	assert.Equal(t, "failed to find email address: record not found", responseBody.Error)
+}
+
+func TestForgotPasswordEmailFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+	
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+}

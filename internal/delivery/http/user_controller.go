@@ -161,3 +161,23 @@ func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 		Data:   response,
 	})
 }
+
+func (c *UserController) CreateForgotPassword(ctx *fiber.Ctx) error {
+	request := new(model.CreateForgotPassword)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("cannot parse data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
+	}
+
+	response, err := c.UseCase.AddForgotPassword(ctx, request)
+	if err != nil {
+		c.Log.Warnf("failed to create an forgot password request : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.PasswordResetResponse]{
+		Code:   201,
+		Status: "success to create an forgot password request",
+		Data:   response,
+	})
+}

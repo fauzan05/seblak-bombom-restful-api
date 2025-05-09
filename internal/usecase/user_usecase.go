@@ -3,12 +3,14 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -33,13 +35,15 @@ type UserUseCase struct {
 	NotificationRepository *repository.NotificationRepository
 	Email                  *mailer.SMTPMailer
 	ApplicationRepository  *repository.ApplicationRepository
+	PasswordReset          *repository.PasswordResetRepository
 }
 
 func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository,
 	addressRepository *repository.AddressRepository, walletRepository *repository.WalletRepository,
 	cartRepository *repository.CartRepository, notificationRepository *repository.NotificationRepository,
-	email *mailer.SMTPMailer, applicationRepository *repository.ApplicationRepository) *UserUseCase {
+	email *mailer.SMTPMailer, applicationRepository *repository.ApplicationRepository,
+	passwordReset *repository.PasswordResetRepository) *UserUseCase {
 	return &UserUseCase{
 		DB:                     db,
 		Log:                    log,
@@ -52,6 +56,7 @@ func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 		NotificationRepository: notificationRepository,
 		Email:                  email,
 		ApplicationRepository:  applicationRepository,
+		PasswordReset:          passwordReset,
 	}
 }
 
@@ -133,7 +138,6 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		"CompanyName": newApp.AppName,
 		"LogoImage":   logoImagePath,
 	})
-
 	if err != nil {
 		c.Log.Warnf("failed to execute template file html : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
@@ -172,7 +176,6 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		"CompanyName": newApp.AppName,
 		"LogoImage":   logoImagePath,
 	})
-
 	if err != nil {
 		c.Log.Warnf("failed to execute template file html : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
@@ -403,4 +406,78 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 	}
 
 	return true, nil
+}
+
+func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateForgotPassword) (*model.PasswordResetResponse, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
+	}
+
+	newUser := new(entity.User)
+	if err := c.UserRepository.FindByEmail(tx, newUser, request.Email); err != nil {
+		c.Log.Warnf("failed to find email address : %+v", err)
+		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to find email address: %+v", err))
+	}
+
+	newPasswordReset := new(entity.PasswordReset)
+	newPasswordReset.UserId = newUser.ID
+	code := rand.Intn(900000) + 100000
+	newPasswordReset.VerificationCode = code
+	newPasswordReset.ExpiresAt = time.Now().Add(time.Minute * 5)
+	if err := c.PasswordReset.Create(tx, newPasswordReset); err != nil {
+		c.Log.Warnf("failed to create category into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed create category into database : %+v", err))
+	}
+
+	// kirim email
+	newMail := new(model.Mail)
+	newMail.To = []string{newUser.Email}
+	newMail.Cc = []string{}
+	newMail.Subject = "Forgot Password"
+	newApp := new(entity.Application)
+	if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
+		c.Log.Warnf("failed to find application from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
+	}
+
+	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
+	templatePath := "../internal/helper/templates/email/forgot_password.html"
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		c.Log.Warnf("failed to parse template file html : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
+	}
+
+	bodyBuilder := new(strings.Builder)
+	err = tmpl.Execute(bodyBuilder, map[string]string{
+		"Name":               newUser.Name.FirstName,
+		"Year":               time.Now().Format("2006"),
+		"CompanyName":        newApp.AppName,
+		"LogoImage":          logoImagePath,
+		"VerificationCode":   strconv.Itoa(code),
+		"TotalMinuteExpired": "5",
+	})
+	if err != nil {
+		c.Log.Warnf("failed to execute template file html : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
+	}
+
+	newMail.Template = *bodyBuilder
+	err = c.Email.Send(*newMail)
+	if err != nil {
+		c.Log.Warnf("failed to send email forgot password : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to send email forgot password : %+v", err))
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
+	}
+
+	return converter.PasswordResetToResponse(newPasswordReset), nil
 }

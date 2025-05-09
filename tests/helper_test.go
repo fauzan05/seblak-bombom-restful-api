@@ -27,6 +27,7 @@ import (
 )
 
 func ClearAll() {
+	ClearPasswordResets()
 	ClearDiscountCouponUsages()
 	ClearXenditTransactions()
 	DeleteAllApplicationImages()
@@ -45,6 +46,13 @@ func ClearAll() {
 	ClearDeliveries()
 	ClearCarts()
 	ClearUsers()
+}
+
+func ClearPasswordResets() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.PasswordReset{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear password resets data : %+v", err)
+	}
 }
 
 func ClearDiscountCouponUsages() {
@@ -171,7 +179,7 @@ func DoLoginAdmin(t *testing.T) string {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -199,7 +207,7 @@ func DoLoginCustomer(t *testing.T) string {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -232,7 +240,7 @@ func DoCreateDelivery(t *testing.T, token string) *model.DeliveryResponse {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -274,7 +282,7 @@ func DoCreateManyDelivery(t *testing.T, totalData int) string {
 		request.Header.Set("Accept", "application/json")
 		request.Header.Set("Authorization", token)
 
-		response, err := app.Test(request, int(time.Second) * 5)
+		response, err := app.Test(request, int(time.Second)*5)
 		assert.Nil(t, err)
 
 		bytes, err := io.ReadAll(response.Body)
@@ -315,7 +323,7 @@ func DoCreateManyAddress(t *testing.T, token string, totalData int, returnDataBy
 		request.Header.Set("Accept", "application/json")
 		request.Header.Set("Authorization", token)
 
-		response, err := app.Test(request, int(time.Second) * 5)
+		response, err := app.Test(request, int(time.Second)*5)
 		assert.Nil(t, err)
 
 		bytes, err := io.ReadAll(response.Body)
@@ -377,7 +385,7 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 		request.Header.Set("Accept", "application/json")
 		request.Header.Set("Authorization", token)
 
-		response, err := app.Test(request, int(time.Second) * 5)
+		response, err := app.Test(request, int(time.Second)*5)
 		assert.Nil(t, err)
 
 		bytes, err := io.ReadAll(response.Body)
@@ -434,7 +442,7 @@ func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc 
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -476,7 +484,7 @@ func DoCreateCategory(t *testing.T, token string, categoryName string, categoryD
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -602,7 +610,7 @@ func DoCreateProduct(t *testing.T, token string, totalData int, getProductByInde
 		request.Header.Set("Content-Type", writer.FormDataContentType())
 		request.Header.Set("Authorization", token)
 
-		response, err := app.Test(request, int(time.Second) * 5)
+		response, err := app.Test(request, int(time.Second)*5)
 		assert.Nil(t, err)
 
 		bytes, err := io.ReadAll(response.Body)
@@ -646,7 +654,7 @@ func GetCurrentUserByToken(t *testing.T, token string) *model.UserResponse {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -701,7 +709,7 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 		request.Header.Set("Accept", "application/json")
 		request.Header.Set("Authorization", token)
 
-		response, err := app.Test(request, int(time.Second) * 5)
+		response, err := app.Test(request, int(time.Second)*5)
 		assert.Nil(t, err)
 
 		bytes, err := io.ReadAll(response.Body)
@@ -754,7 +762,7 @@ func DoRegisterAdmin(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -778,7 +786,7 @@ func DoRegisterCustomer(t *testing.T) {
 	requestBody := model.RegisterUserRequest{
 		FirstName: "Customer",
 		LastName:  "1",
-		Email:     "customer1@email.com",
+		Email:     "F3196813@gmail.com",
 		Phone:     "0982131244",
 		Password:  "customer1",
 		Role:      helper.CUSTOMER,
@@ -790,7 +798,7 @@ func DoRegisterCustomer(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -810,7 +818,7 @@ func DoRegisterCustomer(t *testing.T) {
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
 }
 
-func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin string, tokenCust string) *model.OrderResponse  {
+func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin string, tokenCust string) *model.OrderResponse {
 	start := getRFC3339WithOffsetAndTime(0, 0, 0, 0, 1, 0)
 	parseStart, err := time.Parse(time.RFC3339, start)
 	assert.Nil(t, err)
@@ -850,7 +858,7 @@ func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin str
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", tokenCust)
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -945,7 +953,7 @@ func DoCreateApplicationSetting(t *testing.T, tokenAdmin string) {
 	request.Header.Set("Content-Type", writer.FormDataContentType())
 	request.Header.Set("Authorization", tokenAdmin)
 
-	response, err := app.Test(request, int(time.Second) * 5)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)

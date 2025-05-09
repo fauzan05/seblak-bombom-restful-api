@@ -64,3 +64,15 @@ type GetUserByTokenRequest struct {
 type DeleteCurrentUserRequest struct {
 	OldPassword string `json:"old_password" validate:"required"`
 }
+
+type CreateForgotPassword struct {
+	Email string `json:"email" validate:"required"`
+}
+
+type PasswordResetResponse struct {
+	ID               uint64             `json:"id"`
+	UserId           uint64             `json:"user_id"`
+	VerificationCode int                `json:"verification_code"`
+	ExpiresAt        helper.TimeRFC3339 `json:"expires_at"`
+	CreatedAt        helper.TimeRFC3339 `json:"created_at"`
+}

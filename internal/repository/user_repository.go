@@ -8,7 +8,7 @@ import (
 
 type UserRepository struct {
 	Repository[entity.User]
-	Log       *logrus.Logger
+	Log *logrus.Logger
 }
 
 func NewUserRepository(log *logrus.Logger) *UserRepository {

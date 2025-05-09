@@ -54,6 +54,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// User
 	api.Post("/users", c.UserController.Register)
 	api.Post("/users/login", c.UserController.Login)
+	api.Post("/users/forgot-password", c.UserController.CreateForgotPassword)
 
 	// Discount Coupon
 	api.Get("/discount-coupons", c.DiscountCouponController.GetAll)
