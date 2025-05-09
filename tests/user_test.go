@@ -10,6 +10,7 @@ import (
 	"seblak-bombom-restful-api/internal/model"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,7 @@ func TestRegisterAdmin(t *testing.T) {
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
 		LastName:  "Doe",
-		Email:     "johndoe@email.com",
+		Email:     "F3196813@gmail.com",
 		Phone:     "08123456789",
 		Password:  "johndoe123",
 		Role:      helper.ADMIN,
@@ -31,7 +32,7 @@ func TestRegisterAdmin(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -53,10 +54,13 @@ func TestRegisterAdmin(t *testing.T) {
 
 func TestRegisterCustomer(t *testing.T) {
 	ClearAll()
+	DoRegisterAdmin(t)
+	tokenAdmin := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, tokenAdmin)
 	requestBody := model.RegisterUserRequest{
 		FirstName: "Customer",
 		LastName:  "1",
-		Email:     "customer1@email.com",
+		Email:     "fauzan.hidayat@binus.ac.id",
 		Phone:     "0982131244",
 		Password:  "customer1",
 		Role:      helper.CUSTOMER,
@@ -67,8 +71,9 @@ func TestRegisterCustomer(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -105,7 +110,7 @@ func TestRegisterError(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -137,7 +142,7 @@ func TestRegisterEmailDuplicate(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -165,7 +170,7 @@ func TestLogin(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -195,7 +200,7 @@ func TestLoginFailed(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -223,7 +228,7 @@ func TestLogout(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", user.Token.Token)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -246,7 +251,7 @@ func TestLogoutWrongAuthorization(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", fakeToken)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -270,7 +275,7 @@ func TestGetCurrentUser(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -298,9 +303,9 @@ func TestGetCurrentUserFailed(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/api/users/current", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
-	request.Header.Set("Authorization", token + "adasd")
+	request.Header.Set("Authorization", token+"adasd")
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -320,8 +325,8 @@ func TestChangePasswordFailedConfirmation(t *testing.T) {
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserPasswordRequest{
-		OldPassword: "johndoe123",
-		NewPassword: "lala123",
+		OldPassword:        "johndoe123",
+		NewPassword:        "lala123",
 		NewPasswordConfirm: "lala456",
 	}
 
@@ -333,7 +338,7 @@ func TestChangePasswordFailedConfirmation(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -353,8 +358,8 @@ func TestChangePassword(t *testing.T) {
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserPasswordRequest{
-		OldPassword: "johndoe123",
-		NewPassword: "testing123",
+		OldPassword:        "johndoe123",
+		NewPassword:        "testing123",
 		NewPasswordConfirm: "testing123",
 	}
 
@@ -366,7 +371,7 @@ func TestChangePassword(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -386,8 +391,8 @@ func TestChangePasswordOldPasswordIsWrong(t *testing.T) {
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateUserPasswordRequest{
-		OldPassword: "lala123",
-		NewPassword: "testing123",
+		OldPassword:        "lala123",
+		NewPassword:        "testing123",
 		NewPasswordConfirm: "testing123",
 	}
 
@@ -399,7 +404,7 @@ func TestChangePasswordOldPasswordIsWrong(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -420,9 +425,9 @@ func TestChangeProfile(t *testing.T) {
 
 	requestBody := model.UpdateUserRequest{
 		FirstName: "john-test",
-		LastName: "doe-test",
-		Email: "johndoe-test@mail.com",
-		Phone: "99999999999",
+		LastName:  "doe-test",
+		Email:     "johndoe-test@mail.com",
+		Phone:     "99999999999",
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -433,7 +438,7 @@ func TestChangeProfile(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -454,9 +459,9 @@ func TestChangeProfileEmailDuplicate(t *testing.T) {
 
 	requestBody := model.UpdateUserRequest{
 		FirstName: "john-test",
-		LastName: "doe-test",
-		Email: "johndoe@email.com",
-		Phone: "99999999999",
+		LastName:  "doe-test",
+		Email:     "johndoe@email.com",
+		Phone:     "99999999999",
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -467,7 +472,7 @@ func TestChangeProfileEmailDuplicate(t *testing.T) {
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)

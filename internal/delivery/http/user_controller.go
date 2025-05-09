@@ -29,7 +29,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	response, err := c.UseCase.Create(ctx.UserContext(), request)
+	response, err := c.UseCase.Create(ctx , request)
 	if err != nil {
 		c.Log.Warnf("failed to register an user : %+v", err)
 		return err
@@ -50,7 +50,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	response, err := c.UseCase.Login(ctx.Context(), request)
+	response, err := c.UseCase.Authenticate(ctx.Context(), request)
 	if err != nil {
 		c.Log.Warnf("failed to login : %+v", err)
 		return err

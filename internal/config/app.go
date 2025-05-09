@@ -55,9 +55,10 @@ func Bootstrap(config *BootstrapConfig) {
 	walletRepository := repository.NewWalletRepository(config.Log)
 	xenditPayoutRepository := repository.NewXenditPayoutRepository(config.Log)
 	payoutRepository := repository.NewPayoutRepository(config.Log)
+	notificationRepository := repository.NewNotificationRepository(config.Log)
 
 	// setup use case
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository, cartRepository)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository, cartRepository, notificationRepository, config.Email, applicationRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, deliveryRepository, userUseCase)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository, imageRepository)

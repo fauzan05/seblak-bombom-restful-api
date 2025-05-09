@@ -48,19 +48,27 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 		request.Logo = nil
 	}
 
-	request.OpeningHours = form.Value["opening_hours"][0]
-	request.ClosingHours = form.Value["closing_hours"][0]
-	request.Address = strings.TrimSpace(form.Value["address"][0])
-	request.GoogleMapsLink = strings.TrimSpace(form.Value["google_maps_link"][0])
-	request.Description = strings.TrimSpace(form.Value["description"][0])
-	request.PhoneNumber = strings.TrimSpace(form.Value["phone_number"][0])
-	request.Email = strings.TrimSpace(form.Value["email"][0])
-	request.InstagramName = strings.TrimSpace(form.Value["instagram_name"][0])
-	request.InstagramLink = strings.TrimSpace(form.Value["instagram_link"][0])
-	request.TwitterName = strings.TrimSpace(form.Value["twitter_name"][0])
-	request.TwitterLink = strings.TrimSpace(form.Value["twitter_link"][0])
-	request.FacebookName = strings.TrimSpace(form.Value["facebook_name"][0])
-	request.FacebookLink = strings.TrimSpace(form.Value["facebook_link"][0])
+	getFirst := func(key string) string {
+		values, ok := form.Value[key]
+		if !ok || len(values) == 0 {
+			return "" // atau kamu bisa return default value, atau error
+		}
+		return strings.TrimSpace(values[0])
+	}
+
+	request.OpeningHours = getFirst("opening_hours")
+	request.ClosingHours = getFirst("closing_hours")
+	request.Address = getFirst("address")
+	request.GoogleMapsLink = getFirst("google_maps_link")
+	request.Description = getFirst("description")
+	request.PhoneNumber = getFirst("phone_number")
+	request.Email = getFirst("email")
+	request.InstagramName = getFirst("instagram_name")
+	request.InstagramLink = getFirst("instagram_link")
+	request.TwitterName = getFirst("twitter_name")
+	request.TwitterLink = getFirst("twitter_link")
+	request.FacebookName = getFirst("facebook_name")
+	request.FacebookLink = getFirst("facebook_link")
 
 	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {

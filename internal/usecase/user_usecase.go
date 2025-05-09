@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
+	"strings"
+	"text/template"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -19,34 +22,41 @@ import (
 )
 
 type UserUseCase struct {
-	DB                *gorm.DB
-	Log               *logrus.Logger
-	Validate          *validator.Validate
-	UserRepository    *repository.UserRepository
-	TokenRepository   *repository.TokenRepository
-	AddressRepository *repository.AddressRepository
-	WalletRepository  *repository.WalletRepository
-	CartRepository    *repository.CartRepository
+	DB                     *gorm.DB
+	Log                    *logrus.Logger
+	Validate               *validator.Validate
+	UserRepository         *repository.UserRepository
+	TokenRepository        *repository.TokenRepository
+	AddressRepository      *repository.AddressRepository
+	WalletRepository       *repository.WalletRepository
+	CartRepository         *repository.CartRepository
+	NotificationRepository *repository.NotificationRepository
+	Email                  *mailer.SMTPMailer
+	ApplicationRepository  *repository.ApplicationRepository
 }
 
 func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository,
 	addressRepository *repository.AddressRepository, walletRepository *repository.WalletRepository,
-	cartRepository *repository.CartRepository) *UserUseCase {
+	cartRepository *repository.CartRepository, notificationRepository *repository.NotificationRepository,
+	email *mailer.SMTPMailer, applicationRepository *repository.ApplicationRepository) *UserUseCase {
 	return &UserUseCase{
-		DB:                db,
-		Log:               log,
-		Validate:          validate,
-		UserRepository:    userRepository,
-		TokenRepository:   tokenRepository,
-		AddressRepository: addressRepository,
-		WalletRepository:  walletRepository,
-		CartRepository:    cartRepository,
+		DB:                     db,
+		Log:                    log,
+		Validate:               validate,
+		UserRepository:         userRepository,
+		TokenRepository:        tokenRepository,
+		AddressRepository:      addressRepository,
+		WalletRepository:       walletRepository,
+		CartRepository:         cartRepository,
+		NotificationRepository: notificationRepository,
+		Email:                  email,
+		ApplicationRepository:  applicationRepository,
 	}
 }
 
-func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserRequest) (*model.UserResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
 
 	err := c.Validate.Struct(request)
@@ -102,6 +112,79 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create a new cart into database : %+v", err))
 	}
 
+	newApp := new(entity.Application)
+	if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
+		c.Log.Warnf("failed to find application from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
+	}
+
+	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
+	templatePath := "../internal/helper/templates/notification/registration_success.html"
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		c.Log.Warnf("failed to parse template file html : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
+	}
+
+	bodyBuilder := new(strings.Builder)
+	err = tmpl.Execute(bodyBuilder, map[string]string{
+		"Name":        user.Name.FirstName,
+		"Year":        time.Now().Format("2006"),
+		"CompanyName": newApp.AppName,
+		"LogoImage":   logoImagePath,
+	})
+
+	if err != nil {
+		c.Log.Warnf("failed to execute template file html : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
+	}
+
+	// setelah semuanya berhasil maka kirim notifikasi email
+	newNotification := new(entity.Notification)
+	newNotification.UserID = user.ID
+	newNotification.Title = "Registration Successful 🎉"
+	newNotification.Message = fmt.Sprintf("Hi %s, your account at Warung Seblak is now active. Welcome!", user.Name.FirstName)
+	newNotification.IsRead = false
+	newNotification.Type = helper.AUTHENTICATION
+	newNotification.Link = "http://localhost:8000"
+	newNotification.BodyContent = bodyBuilder.String()
+	if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
+		c.Log.Warnf("failed to create notification into database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create notification into database : %+v", err))
+	}
+
+	newMail := new(model.Mail)
+	newMail.To = []string{user.Email}
+	newMail.Cc = []string{}
+	newMail.Subject = "Registration Successful"
+	templatePath = "../internal/helper/templates/email/registration_success.html"
+	tmpl, err = template.ParseFiles(templatePath)
+	if err != nil {
+		c.Log.Warnf("failed to parse template file html : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
+	}
+
+	bodyBuilder = new(strings.Builder)
+	err = tmpl.Execute(bodyBuilder, map[string]string{
+		"Name":        user.Name.FirstName,
+		"LoginURL":    "http://localhost:8000/login",
+		"Year":        time.Now().Format("2006"),
+		"CompanyName": newApp.AppName,
+		"LogoImage":   logoImagePath,
+	})
+
+	if err != nil {
+		c.Log.Warnf("failed to execute template file html : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
+	}
+
+	newMail.Template = *bodyBuilder
+	err = c.Email.Send(*newMail)
+	if err != nil {
+		c.Log.Warnf("failed to send email registration : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to send email registration : %+v", err))
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("failed to commit transaction : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
@@ -110,7 +193,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	return converter.UserToResponse(user), nil
 }
 
-func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserTokenResponse, error) {
+func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUserRequest) (*model.UserTokenResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

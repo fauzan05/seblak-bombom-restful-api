@@ -7,7 +7,7 @@ import (
 )
 
 type NotificationRepository struct {
-	Repository[entity.Category]
+	Repository[entity.Notification]
 	Log *logrus.Logger
 }
 
