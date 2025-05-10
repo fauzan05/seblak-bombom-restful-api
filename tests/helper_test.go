@@ -169,8 +169,8 @@ func ClearUsers() {
 
 func DoLoginAdmin(t *testing.T) string {
 	requestBody := model.LoginUserRequest{
-		Email:    "johndoe@email.com",
-		Password: "johndoe123",
+		Email:    "fauzan.hidayat@binus.ac.id",
+		Password: "Johndoe123#",
 	}
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
@@ -197,8 +197,8 @@ func DoLoginAdmin(t *testing.T) string {
 
 func DoLoginCustomer(t *testing.T) string {
 	requestBody := model.LoginUserRequest{
-		Email:    "customer1@email.com",
-		Password: "customer1",
+		Email:    "F3196813@gmail.com",
+		Password: "Customer1#",
 	}
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
@@ -750,9 +750,9 @@ func DoRegisterAdmin(t *testing.T) {
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
 		LastName:  "Doe",
-		Email:     "johndoe@email.com",
+		Email:     "fauzan.hidayat@binus.ac.id",
 		Phone:     "08123456789",
-		Password:  "johndoe123",
+		Password:  "Johndoe123#",
 		Role:      helper.ADMIN,
 	}
 
@@ -788,7 +788,7 @@ func DoRegisterCustomer(t *testing.T) {
 		LastName:  "1",
 		Email:     "F3196813@gmail.com",
 		Phone:     "0982131244",
-		Password:  "customer1",
+		Password:  "Customer1#",
 		Role:      helper.CUSTOMER,
 	}
 

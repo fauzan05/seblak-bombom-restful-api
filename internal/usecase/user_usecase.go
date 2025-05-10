@@ -82,6 +82,11 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		return nil, fiber.NewError(fiber.StatusConflict, "email user has already exists!")
 	}
 
+	if errs := helper.ValidatePassword(request.Password); len(errs) > 0 {
+		c.Log.Warnf(errs)
+		return nil, fiber.NewError(fiber.StatusBadRequest, errs)
+	}
+
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.Log.Warnf("failed to generate bcrypt on password hash : %+v", err)
@@ -327,8 +332,8 @@ func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateU
 
 	newUser.Password = string(newPasswordRequest)
 	if err := c.UserRepository.Update(tx, newUser); err != nil {
-		c.Log.Warnf("failed to update data user : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update data user : %+v", err))
+		c.Log.Warnf("failed to update password user : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update password user : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -421,11 +426,25 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	newUser := new(entity.User)
 	if err := c.UserRepository.FindByEmail(tx, newUser, request.Email); err != nil {
 		c.Log.Warnf("failed to find email address : %+v", err)
-		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to find email address: %+v", err))
+		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to find email address : %+v", err))
 	}
 
 	newPasswordReset := new(entity.PasswordReset)
 	newPasswordReset.UserId = newUser.ID
+	count, err := c.PasswordReset.FindAndCountEntityByUserId(tx, newPasswordReset, newUser.ID)
+	if err != nil {
+		c.Log.Warnf("failed to find password reset from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find password reset from database : %+v", err))
+	}
+
+	if count > 0 {
+		// maka delete dulu
+		if err := c.PasswordReset.Delete(tx, newPasswordReset); err != nil {
+			c.Log.Warnf("failed to delete password reset into database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete password reset into database : %+v", err))
+		}
+	}
+
 	code := rand.Intn(900000) + 100000
 	newPasswordReset.VerificationCode = code
 	newPasswordReset.ExpiresAt = time.Now().Add(time.Minute * 5)
@@ -480,4 +499,113 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	}
 
 	return converter.PasswordResetToResponse(newPasswordReset), nil
+}
+
+func (c *UserUseCase) ValidateForgotPassword(ctx *fiber.Ctx, request *model.ValidateForgotPassword) (bool, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("invalid request body : %+v", err)
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
+	}
+
+	newPasswordReset := new(entity.PasswordReset)
+	newPasswordReset.ID = request.ID
+	count, err := c.PasswordReset.FindAndCountById(tx, newPasswordReset)
+	if err != nil {
+		c.Log.Warnf("failed to find password reset from database : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find password reset from database : %+v", err))
+	}
+
+	if count < 1 {
+		c.Log.Warnf("password reset not found!")
+		return false, fiber.NewError(fiber.StatusNotFound, "password reset not found!")
+	}
+
+	// cek apakah valid dan tanggal belum expired
+	if newPasswordReset.ExpiresAt.Before(time.Now()) {
+		// maka return error bahwa verification code expired
+		c.Log.Warnf("password reset was expired!")
+		return false, fiber.NewError(fiber.StatusBadRequest, "password reset was expired!")
+	}
+
+	if newPasswordReset.VerificationCode != request.VerificationCode {
+		c.Log.Warnf("verification code is not match!")
+		return false, fiber.NewError(fiber.StatusBadRequest, "verification code is not match!")
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
+	}
+
+	return true, nil
+}
+
+func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest) (bool, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("invalid request body : %+v", err)
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
+	}
+
+	newPasswordReset := new(entity.PasswordReset)
+	newPasswordReset.ID = request.ID
+	count, err := c.PasswordReset.FindAndCountById(tx, newPasswordReset)
+	if err != nil {
+		c.Log.Warnf("failed to find password reset from database : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find password reset from database : %+v", err))
+	}
+
+	if count < 1 {
+		c.Log.Warnf("password reset not found!")
+		return false, fiber.NewError(fiber.StatusNotFound, "password reset not found!")
+	}
+
+	// cek apakah valid dan tanggal belum expired
+	if newPasswordReset.ExpiresAt.Before(time.Now()) {
+		// maka return error bahwa verification code expired
+		c.Log.Warnf("password reset was expired!")
+		return false, fiber.NewError(fiber.StatusBadRequest, "password reset was expired!")
+	}
+
+	if newPasswordReset.VerificationCode != request.VerificationCode {
+		c.Log.Warnf("verification code is not match!")
+		return false, fiber.NewError(fiber.StatusBadRequest, "verification code is not match!")
+	}
+
+	if errs := helper.ValidatePassword(request.NewPassword); len(errs) > 0 {
+		c.Log.Warnf(errs)
+		return false, fiber.NewError(fiber.StatusBadRequest, errs)
+	}
+
+	newUser := new(entity.User)
+	newUser.ID = newPasswordReset.UserId
+	if err := c.UserRepository.FindFirst(tx, newUser); err != nil {
+		c.Log.Warnf("failed to find user : %+v", err)
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to find user : %+v", err))
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.Log.Warnf("failed to generate bcrypt on password hash : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to generate bcrypt on password hash : %+v", err))
+	}
+	newUser.Password = string(password)
+	if err := c.UserRepository.Update(tx, newUser); err != nil {
+		c.Log.Warnf("failed to update password user : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update password user : %+v", err))
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
+	}
+
+	return true, nil
 }

@@ -5,6 +5,7 @@ import (
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -29,7 +30,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	response, err := c.UseCase.Create(ctx , request)
+	response, err := c.UseCase.Create(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to register an user : %+v", err)
 		return err
@@ -63,7 +64,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	})
 }
 
-func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {	
+func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {
 	response := middleware.GetCurrentUser(ctx)
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
@@ -154,7 +155,7 @@ func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 		c.Log.Warnf("failed to delete current user : %+v", err)
 		return err
 	}
-	
+
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,
 		Status: "success to delete current user",
@@ -175,9 +176,65 @@ func (c *UserController) CreateForgotPassword(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.PasswordResetResponse]{
-		Code:   201,
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.PasswordResetResponse]{
+		Code:   200,
 		Status: "success to create an forgot password request",
+		Data:   response,
+	})
+}
+
+func (c *UserController) ValidateForgotPassword(ctx *fiber.Ctx) error {
+	getId := ctx.Params("passwordResetId")
+	passwordResetId, err := strconv.Atoi(getId)
+	if err != nil {
+		c.Log.Warnf("failed to convert password_reset_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert password_reset_id to integer : %+v", err))
+	}
+
+	request := new(model.ValidateForgotPassword)
+	request.ID = uint64(passwordResetId)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("cannot parse data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
+	}
+
+	response, err := c.UseCase.ValidateForgotPassword(ctx, request)
+	if err != nil {
+		c.Log.Warnf("failed to validate an forgot password request : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
+		Code:   200,
+		Status: "success to validate an forgot password request",
+		Data:   response,
+	})
+}
+
+func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
+	getId := ctx.Params("passwordResetId")
+	passwordResetId, err := strconv.Atoi(getId)
+	if err != nil {
+		c.Log.Warnf("failed to convert password_reset_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert password_reset_id to integer : %+v", err))
+	}
+
+	request := new(model.PasswordResetRequest)
+	request.ID = uint64(passwordResetId)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("cannot parse data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
+	}
+
+	response, err := c.UseCase.Reset(ctx, request)
+	if err != nil {
+		c.Log.Warnf("failed to validate an forgot password request : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
+		Code:   200,
+		Status: "success to validate an forgot password request",
 		Data:   response,
 	})
 }

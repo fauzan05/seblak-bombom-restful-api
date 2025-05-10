@@ -50,11 +50,13 @@ func (c *RouteConfig) SetupXenditCallbacksRoute() {
 // GUEST
 func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api")
-	
+
 	// User
 	api.Post("/users", c.UserController.Register)
 	api.Post("/users/login", c.UserController.Login)
 	api.Post("/users/forgot-password", c.UserController.CreateForgotPassword)
+	api.Post("/users/forgot-password/:passwordResetId/validate", c.UserController.ValidateForgotPassword)
+	api.Post("/users/forgot-password/:passwordResetId/reset-password", c.UserController.ResetPassword)
 
 	// Discount Coupon
 	api.Get("/discount-coupons", c.DiscountCouponController.GetAll)

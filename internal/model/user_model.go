@@ -24,7 +24,7 @@ type RegisterUserRequest struct {
 	LastName  string      `json:"last_name" validate:"required,max=100"`
 	Email     string      `json:"email" validate:"required,max=100"`
 	Phone     string      `json:"phone" validate:"required,max=50"`
-	Password  string      `json:"password" validate:"required,max=100"`
+	Password  string      `json:"password" validate:"required,min=8,max=100"`
 	Role      helper.Role `json:"role" validate:"required"`
 }
 
@@ -41,8 +41,8 @@ type UpdateUserRequest struct {
 
 type UpdateUserPasswordRequest struct {
 	OldPassword        string `json:"old_password" validate:"required,max=100"`
-	NewPassword        string `json:"new_password" validate:"required,max=100"`
-	NewPasswordConfirm string `json:"new_password_confirm" validate:"required,max=100,eqfield=NewPassword"`
+	NewPassword        string `json:"new_password" validate:"required,min=8,max=100"`
+	NewPasswordConfirm string `json:"new_password_confirm" validate:"required,eqfield=NewPassword"`
 }
 
 type LoginUserRequest struct {
@@ -67,6 +67,18 @@ type DeleteCurrentUserRequest struct {
 
 type CreateForgotPassword struct {
 	Email string `json:"email" validate:"required"`
+}
+
+type ValidateForgotPassword struct {
+	ID               uint64 `json:"-" validate:"required"`
+	VerificationCode int    `json:"verification_code" validate:"required"`
+}
+
+type PasswordResetRequest struct {
+	ID                 uint64 `json:"-" validate:"required"`
+	VerificationCode   int    `json:"verification_code" validate:"required"`
+	NewPassword        string `json:"new_password" validate:"required,min=8,max=100"`
+	NewPasswordConfirm string `json:"new_password_confirm" validate:"required,eqfield=NewPassword"`
 }
 
 type PasswordResetResponse struct {
