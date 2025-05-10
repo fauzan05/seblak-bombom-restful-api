@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"regexp"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -102,4 +103,26 @@ func GenerateBoundary() string {
 		return "BOUNDARY_DEFAULT"
 	}
 	return "BOUNDARY_" + hex.EncodeToString(bytes)
+}
+
+func ValidatePassword(password string) string {
+	var errs string
+
+	if len(password) < 8 {
+		errs += "Password must be at least 8 characters long;"
+	}
+	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+		errs += "Password must contain at least one uppercase letter;"
+	}
+	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+		errs += "Password must contain at least one lowercase letter;"
+	}
+	if !regexp.MustCompile(`[0-9]`).MatchString(password) {
+		errs += "Password must contain at least one number;"
+	}
+	if !regexp.MustCompile(`[!@#~$%^&*()+|_]`).MatchString(password) {
+		errs += "Password must contain at least one symbol (!@#~$%^&*()+|_);"
+	}
+ 	
+	return errs
 }

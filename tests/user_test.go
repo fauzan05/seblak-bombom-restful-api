@@ -2,6 +2,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -518,7 +519,7 @@ func TestForgotPasswordEmailFound(t *testing.T) {
 	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateApplicationSetting(t, token)
-	
+
 	DoRegisterCustomer(t)
 	requestBody := model.CreateForgotPassword{
 		Email: "F3196813@gmail.com",
@@ -541,7 +542,481 @@ func TestForgotPasswordEmailFound(t *testing.T) {
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
-	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.VerificationCode)
+}
+
+func TestForgotPasswordResend(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	request = httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody = new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+}
+
+func TestForgotPasswordValidate(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	// validate
+	requestBodyValidate := model.ValidateForgotPassword{
+		VerificationCode: responseBody.Data.VerificationCode,
+	}
+
+	bodyJson, err = json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/validate", responseBody.Data.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.True(t, responseBodyValidate.Data)
+}
+
+func TestForgotPasswordValidateExpired(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	// update tanggalnya ke 5 menit sebelum
+	newPasswordReset := new(entity.PasswordReset)
+	newPasswordReset.ID = responseBody.Data.ID
+	db.Model(newPasswordReset).First(newPasswordReset)
+
+	newPasswordReset.ExpiresAt = time.Now().Add((time.Minute * -5) + (time.Second * -1))
+	db.Save(newPasswordReset)
+
+	// validate
+	requestBodyValidate := model.ValidateForgotPassword{
+		VerificationCode: responseBody.Data.VerificationCode,
+	}
+
+	bodyJson, err = json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/validate", responseBody.Data.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "password reset was expired!", responseBodyValidate.Error)
+}
+
+func TestForgotPasswordValidateNotFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+
+	// validate
+	requestBodyValidate := model.ValidateForgotPassword{
+		VerificationCode: 457236,
+	}
+
+	bodyJson, err := json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/validate", 1), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
+	assert.Equal(t, "password reset not found!", responseBodyValidate.Error)
+}
+
+func TestForgotPasswordValidateVerificationCodeNotMatch(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	// validate
+	requestBodyValidate := model.ValidateForgotPassword{
+		VerificationCode: 111111,
+	}
+
+	bodyJson, err = json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/validate", responseBody.Data.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "verification code is not match!", responseBodyValidate.Error)
+}
+
+func TestForgotPasswordResetPasswordSuccess(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	// validate
+	requestBodyValidate := model.PasswordResetRequest{
+		VerificationCode:   responseBody.Data.VerificationCode,
+		NewPassword:        "Rahasia123#!",
+		NewPasswordConfirm: "Rahasia123#!",
+	}
+
+	bodyJson, err = json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/reset-password", responseBody.Data.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.True(t, responseBodyValidate.Data)
+
+	// coba login apakah bisa
+	requestLogin := new(model.LoginUserRequest)
+	requestLogin.Email = "F3196813@gmail.com"
+	requestLogin.Password = "Rahasia123#!"
+
+	bodyJson, err = json.Marshal(requestLogin)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, "/api/users/login", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyLogin := new(model.ApiResponse[model.UserTokenResponse])
+	err = json.Unmarshal(bytes, responseBodyLogin)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBodyLogin.Data.Token)
+	assert.True(t, responseBodyLogin.Data.ExpiryDate.After(time.Now()))
+}
+
+func TestForgotPasswordResetPasswordPasswordConfirmNotSame(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	// validate
+	requestBodyValidate := model.PasswordResetRequest{
+		VerificationCode:   responseBody.Data.VerificationCode,
+		NewPassword:        "Rahasia123#!",
+		NewPasswordConfirm: "asdasdasd#!",
+	}
+
+	bodyJson, err = json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/reset-password", responseBody.Data.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid request body : Key: 'PasswordResetRequest.NewPasswordConfirm' Error:Field validation for 'NewPasswordConfirm' failed on the 'eqfield' tag", responseBodyValidate.Error)
+}
+
+func TestForgotPasswordResetPasswordPasswordNotValid(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	// validate
+	requestBodyValidate := model.PasswordResetRequest{
+		VerificationCode:   responseBody.Data.VerificationCode,
+		NewPassword:        "rahasia123",
+		NewPasswordConfirm: "rahasia123",
+	}
+
+	bodyJson, err = json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/reset-password", responseBody.Data.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "Password must contain at least one uppercase letter;Password must contain at least one symbol (!@#~$%^&*()+|_);", responseBodyValidate.Error)
 }
