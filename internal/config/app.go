@@ -5,6 +5,7 @@ import (
 	xenditController "seblak-bombom-restful-api/internal/delivery/http/xendit"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/delivery/route"
+	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/repository"
 	"seblak-bombom-restful-api/internal/usecase"
 	xenditUseCase "seblak-bombom-restful-api/internal/usecase/xendit"
@@ -28,6 +29,7 @@ type BootstrapConfig struct {
 	SnapClient    *snap.Client
 	CoreAPIClient *coreapi.Client
 	XenditClient  *xendit.APIClient
+	Email         *mailer.SMTPMailer
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -40,6 +42,7 @@ func Bootstrap(config *BootstrapConfig) {
 	imageRepository := repository.NewImageRepository(config.Log)
 	orderRepository := repository.NewOrderRepository(config.Log)
 	discountCouponRepository := repository.NewDiscountRepository(config.Log)
+	discountUsageRepository := repository.NewDiscountUsageRepository(config.Log)
 	deliveryRepository := repository.NewDeliveryRepository(config.Log)
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
@@ -52,9 +55,11 @@ func Bootstrap(config *BootstrapConfig) {
 	walletRepository := repository.NewWalletRepository(config.Log)
 	xenditPayoutRepository := repository.NewXenditPayoutRepository(config.Log)
 	payoutRepository := repository.NewPayoutRepository(config.Log)
+	notificationRepository := repository.NewNotificationRepository(config.Log)
+	passwordResetRepository := repository.NewPasswordResetRepository(config.Log)
 
 	// setup use case
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository, cartRepository)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository, cartRepository, notificationRepository, config.Email, applicationRepository, passwordResetRepository)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, userRepository, addressRepository, deliveryRepository, userUseCase)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validate, categoryRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validate, categoryRepository, productRepository, imageRepository)
@@ -64,7 +69,7 @@ func Bootstrap(config *BootstrapConfig) {
 	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository, productRepository)
 	midtransCoreApiOrderUseCase := usecase.NewMidtransCoreAPIOrderUseCase(config.Log, config.Validate, orderRepository, config.CoreAPIClient, config.DB, midtransCoreAPIOrderRepository, productRepository)
 	xenditTransactionQRCodeUseCase := xenditUseCase.NewXenditTransactionQRCodeUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountCouponRepository, deliveryRepository, orderProductRepository, walletRepository, xenditTransactionRepository, xenditTransactionQRCodeUseCase, config.XenditClient)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountCouponRepository, discountUsageRepository, deliveryRepository, orderProductRepository, walletRepository, xenditTransactionRepository, xenditTransactionQRCodeUseCase, config.XenditClient)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
 	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository, cartItemRepository)
 	xenditCallbackUseCase := xenditUseCase.NewXenditCallbackUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient, xenditPayoutRepository, userRepository, walletRepository, payoutRepository)

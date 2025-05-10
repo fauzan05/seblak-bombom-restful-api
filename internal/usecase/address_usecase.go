@@ -44,14 +44,14 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	currentUser, err := c.UserUseCase.GetUserByToken(ctx, token)
 	if err != nil {
-		c.Log.Warnf("Token isn't valid : %+v", err)
-		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Token isn't valid : %+v", err))
+		c.Log.Warnf("token isn't valid : %+v", err)
+		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("token isn't valid : %+v", err))
 	}
 
 	newDelivery := new(entity.Delivery)
@@ -59,26 +59,26 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 	// cek apakah delivery id ada
 	count, err := c.DeliveryRepository.FindAndCountById(tx, newDelivery)
 	if err != nil {
-		c.Log.Warnf("Failed to find delivery by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find delivery by id : %+v", err))
+		c.Log.Warnf("failed to find delivery by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find delivery by id : %+v", err))
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Delivery not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "Delivery not found!")
+		c.Log.Warnf("delivery not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "delivery not found!")
 	}
 
 	if newDelivery.City == "" {
-		c.Log.Warnf("Delivery data is not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "Delivery data is not found!")
+		c.Log.Warnf("delivery data is not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "delivery data is not found!")
 	}
 
 	address := new(entity.Address)
 	// update yang tadinya is_main = 1 menjadi 0
 	if request.IsMain {
 		if err := c.AddressRepository.FindAndUpdateAddressToNonPrimary(tx, address); err != nil {
-			c.Log.Warnf("Failed to update address is main to non-primary : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update address is main to non-primary : %+v", err))
+			c.Log.Warnf("failed to update address is main to non-primary : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update address is main to non-primary : %+v", err))
 		}
 	}
 
@@ -88,18 +88,18 @@ func (c *AddressUseCase) Create(ctx context.Context, request *model.AddressCreat
 	address.GoogleMapsLink = request.GoogleMapsLink
 	address.IsMain = request.IsMain
 	if err := c.AddressRepository.Create(tx, address); err != nil {
-		c.Log.Warnf("Failed to create new address : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed create new address : %+v", err))
+		c.Log.Warnf("failed to create new address : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed create new address : %+v", err))
 	}
 
 	if err := c.AddressRepository.FindAddressById(tx, address); err != nil {
-		c.Log.Warnf("Failed to find updated address by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("Failed find updated address by id : %+v", err))
+		c.Log.Warnf("failed to find updated address by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed find updated address by id : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.AddressToResponse(address), nil
@@ -113,15 +113,15 @@ func (c *AddressUseCase) GetById(ctx context.Context, request *model.GetAddressR
 	tx := c.DB.WithContext(ctx)
 
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request query params : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request query params : %+v", err))
+		c.Log.Warnf("invalid request query params : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request query params : %+v", err))
 	}
 
 	newAddress := new(entity.Address)
 	newAddress.ID = request.ID
 	if err := c.AddressRepository.FindWithPreloads(tx, newAddress, "Delivery"); err != nil {
-		c.Log.Warnf("Failed to find address by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed find address by id : %+v", err))
+		c.Log.Warnf("failed to find address by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed find address by id : %+v", err))
 	}
 
 	return converter.AddressToResponse(newAddress), nil
@@ -132,21 +132,21 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	defer tx.Rollback()
 
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newAddress := new(entity.Address)
 	newAddress.ID = request.ID
 	count, err := c.AddressRepository.FindAndCountById(tx, newAddress)
 	if err != nil {
-		c.Log.Warnf("Failed to find address by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find address by id : %+v", err))
+		c.Log.Warnf("failed to find address by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find address by id : %+v", err))
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Address Not Found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "Address Not Found!")
+		c.Log.Warnf("address Not Found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "address Not Found!")
 	}
 
 	newDelivery := new(entity.Delivery)
@@ -154,19 +154,19 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	// cek apakah delivery id ada
 	count, err = c.DeliveryRepository.FindAndCountById(tx, newDelivery)
 	if err != nil {
-		c.Log.Warnf("Failed to find delivery by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find delivery by id : %+v", err))
+		c.Log.Warnf("failed to find delivery by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find delivery by id : %+v", err))
 	}
 
 	if count == 0 {
-		c.Log.Warnf("Delivery not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "Delivery not found!")
+		c.Log.Warnf("delivery not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "delivery not found!")
 	}
 
 	if request.IsMain {
 		if err := c.AddressRepository.FindAndUpdateAddressToNonPrimary(tx, newAddress); err != nil {
-			c.Log.Warnf("Failed to update address is main to non-primary : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update address is main to non-primary : %+v", err))
+			c.Log.Warnf("failed to update address is main to non-primary : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update address is main to non-primary : %+v", err))
 		}
 	}
 
@@ -177,18 +177,18 @@ func (c *AddressUseCase) Edit(ctx context.Context, request *model.UpdateAddressR
 	newAddress.IsMain = request.IsMain
 
 	if err := c.AddressRepository.Update(tx, newAddress); err != nil {
-		c.Log.Warnf("Failed to edit address by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed edit address by id : %+v", err))
+		c.Log.Warnf("failed to edit address by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed edit address by id : %+v", err))
 	}
 
-	if err := c.AddressRepository.FindWithPreloads(tx, newAddress, "Delivery"); err != nil {
-		c.Log.Warnf("Failed to find updated address by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed find updated address by id : %+v", err))
+	if err := c.AddressRepository.FindWithPreloads(tx, newAddress, "delivery"); err != nil {
+		c.Log.Warnf("failed to find updated address by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed find updated address by id : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.AddressToResponse(newAddress), nil
@@ -199,8 +199,8 @@ func (c *AddressUseCase) Delete(ctx context.Context, request *model.DeleteAddres
 	defer tx.Rollback()
 
 	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return false, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newAddresses := []entity.Address{}
@@ -212,13 +212,13 @@ func (c *AddressUseCase) Delete(ctx context.Context, request *model.DeleteAddres
 	}
 
 	if err := c.AddressRepository.DeleteInBatch(tx, &newAddresses); err != nil {
-		c.Log.Warnf("Can't delete address by id : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Can't delete address by id : %+v", err))
+		c.Log.Warnf("can't delete address by id : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("can't delete address by id : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return true, nil

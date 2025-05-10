@@ -9,7 +9,7 @@ CREATE TABLE discount_coupons (
     total_max_usage INT DEFAULT 1,
     max_usage_per_user INT DEFAULT 1,
     used_count INT DEFAULT 0,
-    min_order_value INT DEFAULT 0,
+    min_order_value DECIMAL(15, 2) DEFAULT 0,
     description TEXT NOT NULL,
     status BOOLEAN NOT NULL DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

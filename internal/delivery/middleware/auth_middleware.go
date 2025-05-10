@@ -17,8 +17,8 @@ func NewAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 
 		auth, err := userUseCase.GetUserByToken(c.Context(), request)
 		if err != nil {
-			userUseCase.Log.Warnf("Token isn't valid : %+v", err)
-			return fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("Token isn't valid : %+v", err))
+			userUseCase.Log.Warnf("token isn't valid : %+v", err)
+			return fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("token isn't valid : %+v", err))
 		}
 
 		userUseCase.Log.Debugf("User : %+v", auth.Email)

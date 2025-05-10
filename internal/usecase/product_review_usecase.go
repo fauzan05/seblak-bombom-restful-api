@@ -37,8 +37,8 @@ func (c *ProductReviewUseCase) Add(ctx context.Context, request *model.CreatePro
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newProductReview := new(entity.ProductReview)
@@ -47,13 +47,13 @@ func (c *ProductReviewUseCase) Add(ctx context.Context, request *model.CreatePro
 	newProductReview.Rate = request.Rate
 	newProductReview.Comment = request.Comment
 	if err := c.ProductReview.Create(tx, newProductReview); err != nil {
-		c.Log.Warnf("Failed to create product review from database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to create product review from database : %+v", err))
+		c.Log.Warnf("failed to create product review from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create product review from database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.ProductReviewToResponse(newProductReview), nil

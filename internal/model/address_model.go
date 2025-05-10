@@ -1,8 +1,6 @@
 package model
 
-import (
-	"seblak-bombom-restful-api/internal/helper"
-)
+import "seblak-bombom-restful-api/internal/helper"
 
 type AddressResponse struct {
 	ID              uint64             `json:"id"`

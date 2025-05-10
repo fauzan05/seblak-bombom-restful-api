@@ -15,6 +15,7 @@ type OrderProduct struct {
 	CreatedAt   time.Time `gorm:"column:created_at;autoCreateTime;<-:create"`
 	UpdatedAt   time.Time `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	Order       *Order    `gorm:"foreignKey:order_id;references:id"`
+	Product     *Product  `gorm:"foreignKey:product_id;references:id"`
 }
 
 func (u *OrderProduct) TableName() string {

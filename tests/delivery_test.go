@@ -15,7 +15,7 @@ import (
 
 func TestCreateDelivery(t *testing.T) {
 	// ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateDeliveryRequest{
@@ -55,7 +55,7 @@ func TestCreateDelivery(t *testing.T) {
 
 func TestCreateDeliveryFailed(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateDeliveryRequest{
@@ -88,7 +88,7 @@ func TestCreateDeliveryFailed(t *testing.T) {
 
 func TestUpdateDeliveriesBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	deliveryResponse := DoCreateDelivery(t, token)
 
@@ -122,7 +122,7 @@ func TestUpdateDeliveriesBadRequest(t *testing.T) {
 
 func TestUpdateDeliveries(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	deliveryResponse := DoCreateDelivery(t, token)
 
@@ -163,7 +163,7 @@ func TestUpdateDeliveries(t *testing.T) {
 
 func TestUpdateDeliveriesNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.UpdateDeliveryRequest{
@@ -196,10 +196,10 @@ func TestUpdateDeliveriesNotFound(t *testing.T) {
 
 func TestGetAllDeliveryPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	DoCreateManyDelivery(t, 27)
 
-	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=id&sort_by=asc&per_page=5&page=3", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.id&sort_by=asc&per_page=5&page=3", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
@@ -220,13 +220,98 @@ func TestGetAllDeliveryPagination(t *testing.T) {
 	assert.Equal(t, 6, responseBody.TotalPages)
 }
 
+func TestGetAllDeliveryPaginationSortingColumnDesc(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	DoCreateManyDelivery(t, 27)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.id&sort_by=desc&per_page=5&page=3", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.DeliveryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 5, len(*responseBody.Data))
+	assert.Equal(t, 3, responseBody.CurrentPages)
+	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, 6, responseBody.TotalPages)
+
+	deliveries := *responseBody.Data
+	for i := range len(deliveries) - 1 {
+		assert.Greater(t, deliveries[i].ID, deliveries[i+1].ID)
+	}
+}
+
+func TestGetAllDeliveryPaginationSortingColumnAsc(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	DoCreateManyDelivery(t, 27)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.id&sort_by=asc&per_page=5&page=3", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.DeliveryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 5, len(*responseBody.Data))
+	assert.Equal(t, 3, responseBody.CurrentPages)
+	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, 6, responseBody.TotalPages)
+
+	deliveries := *responseBody.Data
+	for i := range len(deliveries) - 1 {
+		assert.Less(t, deliveries[i].ID, deliveries[i+1].ID)
+	}
+}
+
+func TestGetAllDeliveryPaginationSortingColumnNotFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	DoCreateManyDelivery(t, 27)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/deliveries?search=kebumen&column=deliveries.mama&sort_by=desc&per_page=5&page=3", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid sort column : deliveries.mama", responseBody.Error)
+}
+
 func TestDeleteDeliveries(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	requestBody := DoCreateManyDelivery(t, 5)
 	token := DoLoginAdmin(t)
 
-	request := httptest.NewRequest(http.MethodDelete, "/api/deliveries?ids=" + requestBody, nil)
+	request := httptest.NewRequest(http.MethodDelete, "/api/deliveries?ids="+requestBody, nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)
@@ -246,11 +331,11 @@ func TestDeleteDeliveries(t *testing.T) {
 
 func TestDeleteDeliveriesFailed(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	requestBody := "e,b,s,s"
 	token := DoLoginAdmin(t)
 
-	request := httptest.NewRequest(http.MethodDelete, "/api/deliveries?ids=" + requestBody, nil)
+	request := httptest.NewRequest(http.MethodDelete, "/api/deliveries?ids="+requestBody, nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", token)

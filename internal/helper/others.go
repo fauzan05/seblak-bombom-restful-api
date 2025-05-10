@@ -1,8 +1,11 @@
 package helper
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
+	"math"
 	"reflect"
 	"time"
 
@@ -81,4 +84,22 @@ func (t *TimeRFC3339) UnmarshalJSON(b []byte) error {
 
 func (t TimeRFC3339) ToTime() time.Time {
 	return time.Time(t)
+}
+
+func RoundFloat32(val float32, precision int) float32 {
+	f64 := float64(val)
+	multiplier := math.Pow(10, float64(precision))
+	rounded := math.Round(f64*multiplier) / multiplier
+	return float32(rounded)
+}
+
+// GenerateBoundary membuat boundary unik untuk multipart email
+func GenerateBoundary() string {
+	bytes := make([]byte, 8)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		// fallback kalau gagal
+		return "BOUNDARY_DEFAULT"
+	}
+	return "BOUNDARY_" + hex.EncodeToString(bytes)
 }

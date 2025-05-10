@@ -12,6 +12,7 @@ func OrderProductToResponse(orderProduct *entity.OrderProduct) *model.OrderProdu
 		OrderId:     orderProduct.OrderId,
 		ProductId:   orderProduct.ProductId,
 		ProductName: orderProduct.ProductName,
+		Category:    orderProduct.Category,
 		Price:       orderProduct.Price,
 		Quantity:    orderProduct.Quantity,
 		CreatedAt:   helper.TimeRFC3339(orderProduct.CreatedAt),

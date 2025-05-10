@@ -45,16 +45,16 @@ func NewXenditTransactionQRCodeUseCase(db *gorm.DB, log *logrus.Logger, validate
 func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.CreateXenditTransaction, tx *gorm.DB) (*model.XenditTransactionResponse, error) {
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	// get order id
 	selectedOrder := new(entity.Order)
 	selectedOrder.ID = request.OrderId
 	if err := c.OrderRepository.FindWithPreloads(tx, selectedOrder, "OrderProducts"); err != nil {
-		c.Log.Warnf("Failed to find order by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find order by id : %+v", err))
+		c.Log.Warnf("failed to find order by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find order by id : %+v", err))
 	}
 
 	paymentRequestBasketItems := new([]payment_request.PaymentRequestBasketItem)
@@ -141,8 +141,8 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		Execute()
 
 	if resErr != nil {
-		c.Log.Warnf("Failed to create new xendit transaction : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to create new xendit transaction : %+v", resErr.FullError()))
+		c.Log.Warnf("failed to create new xendit transaction : %+v", resErr.FullError())
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to create new xendit transaction : %+v", resErr.FullError()))
 	}
 
 	// setelah itu tangkap semua response
@@ -162,8 +162,8 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	if getMetadata != nil {
 		jsonMetadata, err := json.Marshal(metadata)
 		if err != nil {
-			c.Log.Warnf("Failed to parse to json metadata : %+v", resErr.FullError())
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse to json metadata : %+v", resErr.FullError()))
+			c.Log.Warnf("failed to parse to json metadata : %+v", resErr.FullError())
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse to json metadata : %+v", resErr.FullError()))
 		}
 		newXenditTransaction.Metadata = jsonMetadata
 	}
@@ -173,20 +173,20 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	newXenditTransaction.ExpiresAt = *expiresAt
 	parseCreatedAt, err := ParseToRFC3339(resp.Created)
 	if err != nil {
-		c.Log.Warnf("Failed to parse created_at into UTC : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse created_at into UTC : %+v", err))
+		c.Log.Warnf("failed to parse created_at into UTC : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse created_at into UTC : %+v", err))
 	}
 
 	newXenditTransaction.CreatedAt = *parseCreatedAt
 	parseUpdatedAt, err := ParseToRFC3339(resp.Updated)
 	if err != nil {
-		c.Log.Warnf("Failed to parse updated_at into UTC : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse updated_at into UTC : %+v", err))
+		c.Log.Warnf("failed to parse updated_at into UTC : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse updated_at into UTC : %+v", err))
 	}
 
 	newXenditTransaction.UpdatedAt = *parseUpdatedAt
 	if err := c.XenditTransactionRepository.Create(tx, newXenditTransaction); err != nil {
-		c.Log.Warnf("Failed to insert xendit transaction into database : %+v", err)
+		c.Log.Warnf("failed to insert xendit transaction into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "An error occurred on the server. Please try again later!")
 	}
 
@@ -208,22 +208,22 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newXenditTransaction := new(entity.XenditTransactions)
 	if err := c.XenditTransactionRepository.FirstXenditTransactionByOrderId(tx, newXenditTransaction, request.OrderId, "Order", "Order.OrderProducts"); err != nil {
-		c.Log.Warnf("Failed to find order by id : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to find order by id : %+v", err))
+		c.Log.Warnf("failed to find order by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find order by id : %+v", err))
 	}
 
 	resp, _, resErr := c.XenditClient.PaymentRequestApi.GetPaymentRequestByID(ctx.Context(), newXenditTransaction.ID).
 		Execute()
 
 	if resErr != nil {
-		c.Log.Warnf("Failed to find xendit transaction : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("Failed to find xendit transaction : %+v", resErr.FullError()))
+		c.Log.Warnf("failed to find xendit transaction : %+v", resErr.FullError())
+		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to find xendit transaction : %+v", resErr.FullError()))
 	}
 
 	if newXenditTransaction.Status != string(resp.Status) && newXenditTransaction.Status != string(payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED) {
@@ -232,8 +232,8 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 		newXenditTransaction.Status = string(resp.Status)
 		parseUpdatedAt, err := time.Parse(time.RFC3339Nano, resp.Updated)
 		if err != nil {
-			c.Log.Warnf("Failed to parse updated_at into UTC : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to parse updated_at into UTC : %+v", err))
+			c.Log.Warnf("failed to parse updated_at into UTC : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse updated_at into UTC : %+v", err))
 		}
 
 		order_status := ""
@@ -245,8 +245,8 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 		}
 
 		if err := c.XenditTransactionRepository.UpdateCustomColumns(tx, newXenditTransaction, updatePaymentStatus); err != nil {
-			c.Log.Warnf("Failed to update xendit transaction : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit transaction : %+v", err))
+			c.Log.Warnf("failed to update xendit transaction : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update xendit transaction : %+v", err))
 		}
 
 		// update juga di orders
@@ -290,15 +290,15 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 			orderObj := new(entity.Order)
 			orderObj.ID = newXenditTransaction.Order.ID
 			if err := c.OrderRepository.UpdateCustomColumns(tx, orderObj, updatePaymentStatus); err != nil {
-				c.Log.Warnf("Failed to update order payment status : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update order payment status : %+v", err))
+				c.Log.Warnf("failed to update order payment status : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update order payment status : %+v", err))
 			}
 		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return converter.XenditTransactionToResponse(*newXenditTransaction), nil

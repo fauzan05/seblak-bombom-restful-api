@@ -15,8 +15,8 @@ func NewAuthXenditCallback(config viper.Viper, log *logrus.Logger) fiber.Handler
 		// log.Debugf("X-Callback-Token : %s", requestToken)
 		if requestToken != "NOT_FOUND" {
 			if requestToken != xenditCallbackToken {
-				log.Warnf("Xendit callback token isn't valid!")
-				return fiber.NewError(fiber.StatusUnauthorized, "Xendit callback token isn't valid!")
+				log.Warnf("xendit callback token isn't valid!")
+				return fiber.NewError(fiber.StatusUnauthorized, "xendit callback token isn't valid!")
 			}
 			c.Locals("xendit_callback_token", xenditCallbackToken)
 		}

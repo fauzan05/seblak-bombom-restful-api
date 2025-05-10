@@ -15,7 +15,7 @@ import (
 
 func TestCreateCategory(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateCategoryRequest{
@@ -50,7 +50,7 @@ func TestCreateCategory(t *testing.T) {
 
 func TestCreateCategoryBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateCategoryRequest{
@@ -108,7 +108,7 @@ func TestCreateCategoryBadRequest(t *testing.T) {
 
 func TestUpdateCategory(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBodyCreate := model.CreateCategoryRequest{
@@ -174,7 +174,7 @@ func TestUpdateCategory(t *testing.T) {
 
 func TestUpdateCategoryBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBodyCreate := model.CreateCategoryRequest{
@@ -234,7 +234,7 @@ func TestUpdateCategoryBadRequest(t *testing.T) {
 
 func TestUpdateCategoryNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBodyUpdate := model.UpdateCategoryRequest{
@@ -264,7 +264,7 @@ func TestUpdateCategoryNotFound(t *testing.T) {
 
 func TestGetCategoryById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	requestBody := model.CreateCategoryRequest{
@@ -320,7 +320,7 @@ func TestGetCategoryById(t *testing.T) {
 
 func TestGetAllCategoryPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	for i := 1; i <= 25; i++ {
@@ -354,7 +354,7 @@ func TestGetAllCategoryPagination(t *testing.T) {
 		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
 	}
 
-	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=2&search=makanan&column=id&sort_by=desc", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=2&search=makanan&column=categories.id&sort_by=desc", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
@@ -376,9 +376,245 @@ func TestGetAllCategoryPagination(t *testing.T) {
 	assert.Equal(t, 10, responseBody.DataPerPages)
 }
 
+func TestGetAllCategoryPaginationSearchNotFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	for i := 1; i <= 25; i++ {
+		requestBody := model.CreateCategoryRequest{
+			Name:        fmt.Sprintf("Makanan %+v", i),
+			Description: fmt.Sprintf("Ini adalah makanan %+v", i),
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/categories", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBodyCreate := new(model.ApiResponse[model.CategoryResponse])
+		err = json.Unmarshal(bytes, responseBodyCreate)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBodyCreate.Data.ID)
+		assert.Equal(t, requestBody.Name, responseBodyCreate.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBodyCreate.Data.Description)
+		assert.NotNil(t, responseBodyCreate.Data.CreatedAt)
+		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=zzz&column=categories.id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.CategoryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 0, len(*responseBody.Data))
+	assert.Equal(t, int64(0), responseBody.TotalDatas)
+	assert.Equal(t, 0, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	assert.Equal(t, 10, responseBody.DataPerPages)
+}
+
+func TestGetAllCategoryPaginationSortingColumnDesc(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	for i := 1; i <= 25; i++ {
+		requestBody := model.CreateCategoryRequest{
+			Name:        fmt.Sprintf("Makanan %+v", i),
+			Description: fmt.Sprintf("Ini adalah makanan %+v", i),
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/categories", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBodyCreate := new(model.ApiResponse[model.CategoryResponse])
+		err = json.Unmarshal(bytes, responseBodyCreate)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBodyCreate.Data.ID)
+		assert.Equal(t, requestBody.Name, responseBodyCreate.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBodyCreate.Data.Description)
+		assert.NotNil(t, responseBodyCreate.Data.CreatedAt)
+		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=makanan&column=categories.id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.CategoryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 10, len(*responseBody.Data))
+	assert.Equal(t, int64(25), responseBody.TotalDatas)
+	assert.Equal(t, 3, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	assert.Equal(t, 10, responseBody.DataPerPages)
+	categories := *responseBody.Data
+	for i := range len(categories) - 1 {
+		assert.Greater(t, categories[i].ID, categories[i+1].ID)
+	}
+}
+
+func TestGetAllCategoryPaginationSortingColumnAsc(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	for i := 1; i <= 25; i++ {
+		requestBody := model.CreateCategoryRequest{
+			Name:        fmt.Sprintf("Makanan %+v", i),
+			Description: fmt.Sprintf("Ini adalah makanan %+v", i),
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/categories", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBodyCreate := new(model.ApiResponse[model.CategoryResponse])
+		err = json.Unmarshal(bytes, responseBodyCreate)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBodyCreate.Data.ID)
+		assert.Equal(t, requestBody.Name, responseBodyCreate.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBodyCreate.Data.Description)
+		assert.NotNil(t, responseBodyCreate.Data.CreatedAt)
+		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=makanan&column=categories.id&sort_by=asc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.CategoryResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 10, len(*responseBody.Data))
+	assert.Equal(t, int64(25), responseBody.TotalDatas)
+	assert.Equal(t, 3, responseBody.TotalPages)
+	assert.Equal(t, 1, responseBody.CurrentPages)
+	assert.Equal(t, 10, responseBody.DataPerPages)
+	categories := *responseBody.Data
+	for i := range len(categories) - 1 {
+		assert.Less(t, categories[i].ID, categories[i+1].ID)
+	}
+}
+
+func TestGetAllCategoryPaginationSortingColumnNotFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	for i := 1; i <= 25; i++ {
+		requestBody := model.CreateCategoryRequest{
+			Name:        fmt.Sprintf("Makanan %+v", i),
+			Description: fmt.Sprintf("Ini adalah makanan %+v", i),
+		}
+
+		bodyJson, err := json.Marshal(requestBody)
+		assert.Nil(t, err)
+		request := httptest.NewRequest(http.MethodPost, "/api/categories", strings.NewReader(string(bodyJson)))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBodyCreate := new(model.ApiResponse[model.CategoryResponse])
+		err = json.Unmarshal(bytes, responseBodyCreate)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBodyCreate.Data.ID)
+		assert.Equal(t, requestBody.Name, responseBodyCreate.Data.Name)
+		assert.Equal(t, requestBody.Description, responseBodyCreate.Data.Description)
+		assert.NotNil(t, responseBodyCreate.Data.CreatedAt)
+		assert.NotNil(t, responseBodyCreate.Data.UpdatedAt)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/categories?per_page=10&page=1&search=makanan&column=categories.mama&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid sort column : categories.mama", responseBody.Error)
+}
+
 func TestDeleteCategoryById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	var getAllIds string
@@ -432,9 +668,9 @@ func TestDeleteCategoryById(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
 
-func TestDeleteCategories(t *testing.T) {
+func TestDeleteCategoriesIdNotValid(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	getAllIds := "3,s,r,t,"

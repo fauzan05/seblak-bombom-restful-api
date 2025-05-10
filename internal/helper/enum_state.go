@@ -41,8 +41,9 @@ const (
 	NOMINAL DiscountType = "nominal"
 	PERCENT DiscountType = "percent"
 	// notification type
-	TRANSACTION NotificationType = "transaction"
-	PROMOTION   NotificationType = "promotion"
+	AUTHENTICATION NotificationType = "authentication"
+	TRANSACTION    NotificationType = "transaction"
+	PROMOTION      NotificationType = "promotion"
 	// wallet status
 	ACTIVE_WALLET  WalletStatus = "active"
 	INACIVE_WALLET WalletStatus = "inactive"

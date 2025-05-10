@@ -17,7 +17,7 @@ import (
 
 func TestCreateProduct(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -68,18 +68,27 @@ func TestCreateProduct(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
 	assert.Equal(t, createCategory.ID, responseBody.Data.Category.ID)
 	assert.Equal(t, "Produk 1", responseBody.Data.Name)
 	assert.Equal(t, "Ini adalah produk 1", responseBody.Data.Description)
 	assert.Equal(t, float32(25000), responseBody.Data.Price)
 	assert.Equal(t, 1000, responseBody.Data.Stock)
+	assert.Equal(t, 3, len(responseBody.Data.Images))
+	for _, image := range responseBody.Data.Images {
+		assert.NotNil(t, image.ID)
+		assert.NotNil(t, image.FileName)
+		assert.NotNil(t, image.Type)
+		assert.NotNil(t, image.CreatedAt)
+		assert.NotNil(t, image.UpdatedAt)
+	}
 	assert.NotNil(t, responseBody.Data.CreatedAt)
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
 }
 
 func TestCreateProductImageSizeExceedsLimit(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -136,7 +145,7 @@ func TestCreateProductImageSizeExceedsLimit(t *testing.T) {
 // position is not equal to number of images
 func TestCreateProductImagePositionBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -192,7 +201,7 @@ func TestCreateProductImagePositionBadRequest(t *testing.T) {
 
 func TestCreateProductFileNotImage(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -248,7 +257,7 @@ func TestCreateProductFileNotImage(t *testing.T) {
 
 func TestCreateProductImagesMoreThanFive(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -304,7 +313,7 @@ func TestCreateProductImagesMoreThanFive(t *testing.T) {
 
 func TestCreateProductImagesPositionNotIncluded(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -356,7 +365,7 @@ func TestCreateProductImagesPositionNotIncluded(t *testing.T) {
 
 func TestCreateProductStockNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -412,7 +421,7 @@ func TestCreateProductStockNegativeNumber(t *testing.T) {
 
 func TestCreateProductPriceNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -468,7 +477,7 @@ func TestCreateProductPriceNegativeNumber(t *testing.T) {
 
 func TestCreateProductImagesNotUploaded(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -508,7 +517,7 @@ func TestCreateProductImagesNotUploaded(t *testing.T) {
 
 func TestCreateProductCategoryNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	// Simulasi multipart body
 	var b bytes.Buffer
@@ -563,7 +572,7 @@ func TestCreateProductCategoryNotFound(t *testing.T) {
 
 func TestCreateProductDataBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	// Simulasi multipart body
 	var b bytes.Buffer
@@ -598,7 +607,7 @@ func TestCreateProductDataBadRequest(t *testing.T) {
 
 func TestUpdateProduct(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -733,7 +742,7 @@ func TestUpdateProduct(t *testing.T) {
 
 func TestUpdateProductCategoryNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -859,7 +868,7 @@ func TestUpdateProductCategoryNotFound(t *testing.T) {
 
 func TestUpdateProductStockNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -954,7 +963,7 @@ func TestUpdateProductStockNegativeNumber(t *testing.T) {
 
 func TestUpdateProductPriceNegativeNumber(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1049,7 +1058,7 @@ func TestUpdateProductPriceNegativeNumber(t *testing.T) {
 
 func TestUpdateProductDataBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1144,7 +1153,7 @@ func TestUpdateProductDataBadRequest(t *testing.T) {
 
 func TestUpdateProductNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1271,7 +1280,7 @@ func TestUpdateProductNotFound(t *testing.T) {
 
 func TestUpdateProductNewImagesIsNotSameWithNewImagePositions(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1398,7 +1407,7 @@ func TestUpdateProductNewImagesIsNotSameWithNewImagePositions(t *testing.T) {
 
 func TestUpdateProductImageMoreThanFive(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1525,7 +1534,7 @@ func TestUpdateProductImageMoreThanFive(t *testing.T) {
 
 func TestUpdateProductNewImageSizeExceedsLimit(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
 	// Simulasi multipart body
@@ -1652,7 +1661,7 @@ func TestUpdateProductNewImageSizeExceedsLimit(t *testing.T) {
 
 func TestGetProductPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateProduct(t, token, 27, 0)
 
@@ -1678,9 +1687,109 @@ func TestGetProductPagination(t *testing.T) {
 	assert.Equal(t, 5, responseBody.DataPerPages)
 }
 
+func TestGetProductPaginationSortingDesc(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateProduct(t, token, 27, 0)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&search=produk&column=products.id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.ProductResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 5, len(*responseBody.Data))
+	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, 6, responseBody.TotalPages)
+	assert.Equal(t, 2, responseBody.CurrentPages)
+	assert.Equal(t, 5, responseBody.DataPerPages)
+
+	for _, product := range *responseBody.Data {
+		assert.NotEmpty(t, product.Images)
+		assert.NotEmpty(t, product.Category)
+	}
+
+	products := *responseBody.Data
+	for i := range len(products) - 1 {
+		assert.Greater(t, products[i].ID, products[i+1].ID)
+	}
+}
+
+func TestGetProductPaginationSortingDescColumnNotFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateProduct(t, token, 27, 0)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&search=produk&column=products.lala&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid sort column : products.lala", responseBody.Error)
+}
+
+func TestGetProductPaginationSortingAsc(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateProduct(t, token, 27, 0)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&search=produk&column=products.id&sort_by=asc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponsePagination[*[]model.ProductResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 5, len(*responseBody.Data))
+	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, 6, responseBody.TotalPages)
+	assert.Equal(t, 2, responseBody.CurrentPages)
+	assert.Equal(t, 5, responseBody.DataPerPages)
+
+	for _, product := range *responseBody.Data {
+		assert.NotEmpty(t, product.Images)
+		assert.NotEmpty(t, product.Category)
+	}
+
+	products := *responseBody.Data
+	for i := range len(products) - 1 {
+		assert.Less(t, products[i].ID, products[i+1].ID)
+	}
+}
+
 func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateProduct(t, token, 27, 0)
 
@@ -1694,7 +1803,7 @@ func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 	bytes, err := io.ReadAll(response.Body)
 	assert.Nil(t, err)
 
-	responseBody := new(model.ApiResponsePagination[*[]model.CategoryResponse])
+	responseBody := new(model.ApiResponsePagination[*[]model.ProductResponse])
 	err = json.Unmarshal(bytes, responseBody)
 	assert.Nil(t, err)
 
@@ -1708,7 +1817,7 @@ func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 
 func TestGetProductById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	getProduct := DoCreateProduct(t, token, 5, 1)
 
@@ -1747,4 +1856,165 @@ func TestGetProductById(t *testing.T) {
 		assert.Equal(t, getProduct.Images[i].CreatedAt, image.CreatedAt)
 		assert.Equal(t, getProduct.Images[i].UpdatedAt, image.UpdatedAt)
 	}
+}
+
+func TestGetProductByIdNotFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+
+	request := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/products/%d", 1), nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, response.StatusCode)
+}
+
+func TestDeleteProduct(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	createCategory := DoCreateCategory(t, token, "Makanan", "Ini adalah makanan")
+	var getAllIds string
+	for i := 1; i <= 5; i++ {
+		// Simulasi multipart body
+		var b bytes.Buffer
+		writer := multipart.NewWriter(&b)
+
+		// Tambahkan field JSON sebagai string field biasa
+		_ = writer.WriteField("category_id", fmt.Sprintf("%d", createCategory.ID))
+		_ = writer.WriteField("name", "Produk 1")
+		_ = writer.WriteField("description", "Ini adalah produk 1")
+		_ = writer.WriteField("price", "25000")
+		_ = writer.WriteField("stock", "1000")
+		positions := []int{1, 2, 3}
+		for _, pos := range positions {
+			_ = writer.WriteField("positions", fmt.Sprintf("%d", pos))
+		}
+
+		// Buat file image dummy
+		for i := 1; i <= 3; i++ {
+			filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
+			assert.Nil(t, err)
+
+			partHeader := textproto.MIMEHeader{}
+			partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="images"; filename="%s"`, filename))
+			partHeader.Set("Content-Type", "image/jpeg")
+
+			fileWriter, err := writer.CreatePart(partHeader)
+			assert.Nil(t, err)
+
+			_, err = fileWriter.Write(content)
+			assert.Nil(t, err)
+		}
+
+		writer.Close()
+
+		request := httptest.NewRequest(http.MethodPost, "/api/products", &b)
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		request.Header.Set("Authorization", token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		bytes, err := io.ReadAll(response.Body)
+		assert.Nil(t, err)
+
+		responseBody := new(model.ApiResponse[model.ProductResponse])
+		err = json.Unmarshal(bytes, responseBody)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusCreated, response.StatusCode)
+		assert.NotNil(t, responseBody.Data.ID)
+		assert.Equal(t, createCategory.ID, responseBody.Data.Category.ID)
+		assert.Equal(t, "Produk 1", responseBody.Data.Name)
+		assert.Equal(t, "Ini adalah produk 1", responseBody.Data.Description)
+		assert.Equal(t, float32(25000), responseBody.Data.Price)
+		assert.Equal(t, 1000, responseBody.Data.Stock)
+		assert.Equal(t, 3, len(responseBody.Data.Images))
+		for _, image := range responseBody.Data.Images {
+			assert.NotNil(t, image.ID)
+			assert.NotNil(t, image.FileName)
+			assert.NotNil(t, image.Type)
+			assert.NotNil(t, image.CreatedAt)
+			assert.NotNil(t, image.UpdatedAt)
+		}
+		assert.NotNil(t, responseBody.Data.CreatedAt)
+		assert.NotNil(t, responseBody.Data.UpdatedAt)
+		getAllIds += fmt.Sprintf("%d,", responseBody.Data.ID)
+	}
+
+	request := httptest.NewRequest(http.MethodDelete, "/api/products?ids="+getAllIds, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[bool])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	// cek apakah produk masih ada
+	request = httptest.NewRequest(http.MethodGet, "/api/products?per_page=5&page=2&column=products.id&sort_by=desc", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err = app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyPagination := new(model.ApiResponsePagination[*[]model.ProductResponse])
+	err = json.Unmarshal(bytes, responseBodyPagination)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, 0, len(*responseBodyPagination.Data))
+	assert.Equal(t, int64(5), responseBodyPagination.TotalDatas)
+	assert.Equal(t, 1, responseBodyPagination.TotalPages)
+	assert.Equal(t, 2, responseBodyPagination.CurrentPages)
+	assert.Equal(t, 5, responseBodyPagination.DataPerPages)
+}
+
+func TestDeleteProductIdNotValid(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+
+	var getAllIds string = "b,3,#,m"
+	request := httptest.NewRequest(http.MethodDelete, "/api/products?ids="+getAllIds, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", token)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Contains(t, responseBody.Error, "invalid product ID :")
 }

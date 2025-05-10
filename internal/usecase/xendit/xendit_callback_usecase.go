@@ -53,15 +53,15 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newXenditTransaction := new(entity.XenditTransactions)
 	count, err := c.XenditTransactionRepository.FindXenditTransaction(tx, newXenditTransaction, request.Data.PaymentMethod.ID)
 	if err != nil {
-		c.Log.Warnf("Failed to get xendit transaction from database : %+v", err)
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit transaction from database : %+v", err))
+		c.Log.Warnf("failed to get xendit transaction from database : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get xendit transaction from database : %+v", err))
 	}
 
 	if count > 0 {
@@ -81,8 +81,8 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 			}
 
 			if err := c.XenditTransactionRepository.UpdateCustomColumns(tx, newXenditTransaction, updateXenditTransaction); err != nil {
-				c.Log.Warnf("Failed to update xendit transaction status into database : %+v", err)
-				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit transaction status into database : %+v", err))
+				c.Log.Warnf("failed to update xendit transaction status into database : %+v", err)
+				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update xendit transaction status into database : %+v", err))
 			}
 
 			var payment_status helper.PaymentStatus
@@ -114,15 +114,15 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 			newOrder := new(entity.Order)
 			newOrder.ID = orderId
 			if err := c.OrderRepository.UpdateCustomColumns(tx, newOrder, updateOrderStatus); err != nil {
-				c.Log.Warnf("Failed to update order status into database : %+v", err)
-				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update order status into database : %+v", err))
+				c.Log.Warnf("failed to update order status into database : %+v", err)
+				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update order status into database : %+v", err))
 			}
 		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return nil
@@ -134,16 +134,16 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 
 	err := c.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid request body : %+v", err))
+		c.Log.Warnf("invalid request body : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newXenditPayout := new(entity.XenditPayout)
 	newXenditPayout.ID = request.Data.PayoutId
 	count, err := c.XenditPayoutRepository.FindFirstAndCount(tx, newXenditPayout)
 	if err != nil {
-		c.Log.Warnf("Failed to get xendit transaction from database : %+v", err)
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get xendit transaction from database : %+v", err))
+		c.Log.Warnf("failed to get xendit transaction from database : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get xendit transaction from database : %+v", err))
 	}
 
 	if count > 0 {
@@ -162,21 +162,21 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 			}
 
 			if err := c.XenditPayoutRepository.UpdateCustomColumns(tx, newXenditPayout, updateXenditPayout); err != nil {
-				c.Log.Warnf("Failed to update xendit payout status into database : %+v", err)
-				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update xendit payout status into database : %+v", err))
+				c.Log.Warnf("failed to update xendit payout status into database : %+v", err)
+				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update xendit payout status into database : %+v", err))
 			}
 
 			if request.Data.Status == "SUCCEEDED" {
 				// update tb_payout
 				newPayout := new(entity.Payout)
 				if err := c.PayoutRepository.FindFirstPayoutByXenditPayoutId(tx, newPayout, newXenditPayout.ID); err != nil {
-					c.Log.Warnf("Failed to get payout by xendit payout id from database : %+v", err)
-					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get payout by xendit payout id from database : %+v", err))
+					c.Log.Warnf("failed to get payout by xendit payout id from database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get payout by xendit payout id from database : %+v", err))
 				}
 
 				if newPayout.ID < 1 {
-					c.Log.Warnf("Payout not found!")
-					return fiber.NewError(fiber.StatusNotFound, "Payout not found!")
+					c.Log.Warnf("payout not found!")
+					return fiber.NewError(fiber.StatusNotFound, "payout not found!")
 				} else {
 					// update payout
 					updateStatus := map[string]any{
@@ -184,18 +184,18 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 					}
 
 					if err := c.PayoutRepository.UpdateCustomColumns(tx, newPayout, updateStatus); err != nil {
-						c.Log.Warnf("Failed to update payout status in the database : %+v", err)
-						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update payout status in the database : %+v", err))
+						c.Log.Warnf("failed to update payout status in the database : %+v", err)
+						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update payout status in the database : %+v", err))
 					}
 				}
 			}
 
-			if request.Data.Status == "CANCELLED" || request.Data.Status == "FAILED" || request.Data.Status == "EXPIRED" || request.Data.Status == "REFUNDED" {
+			if request.Data.Status == "CANCELLED" || request.Data.Status == "failed" || request.Data.Status == "EXPIRED" || request.Data.Status == "REFUNDED" {
 				// kembalikan saldonya
 				newUser := new(entity.User)
 				newUser.ID = newXenditPayout.UserID
 				if err := c.UserRepository.FindWithPreloads(tx, newUser, "Wallet"); err != nil {
-					c.Log.Warnf("Failed to find user wallet from database : %+v", err)
+					c.Log.Warnf("failed to find user wallet from database : %+v", err)
 					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("ailed to find user wallet from database : %+v", err))
 				}
 
@@ -208,23 +208,23 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 				newWallet := new(entity.Wallet)
 				newWallet.ID = newUser.Wallet.ID
 				if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
-					c.Log.Warnf("Failed to update wallet balance in the database : %+v", err)
-					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update wallet balance in the database : %+v", err))
+					c.Log.Warnf("failed to update wallet balance in the database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance in the database : %+v", err))
 				}
 
 				// update tb_payout
 				newPayout := new(entity.Payout)
 				if err := c.PayoutRepository.FindFirstPayoutByXenditPayoutId(tx, newPayout, newXenditPayout.ID); err != nil {
-					c.Log.Warnf("Failed to get payout by xendit payout id from database : %+v", err)
-					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to get payout by xendit payout id from database : %+v", err))
+					c.Log.Warnf("failed to get payout by xendit payout id from database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get payout by xendit payout id from database : %+v", err))
 				}
 
 				if newPayout.ID < 1 {
-					c.Log.Warnf("Payout not found!")
-					return fiber.NewError(fiber.StatusNotFound, "Payout not found!")
+					c.Log.Warnf("payout not found!")
+					return fiber.NewError(fiber.StatusNotFound, "payout not found!")
 				} else {
 					status := helper.PAYOUT_CANCELLED
-					if request.Data.Status == "FAILED" {
+					if request.Data.Status == "failed" {
 						status = helper.PAYOUT_FAILED
 					} else if request.Data.Status == "EXPIRED" {
 						status = helper.PAYOUT_EXPIRED
@@ -238,8 +238,8 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 					}
 
 					if err := c.PayoutRepository.UpdateCustomColumns(tx, newPayout, updateStatus); err != nil {
-						c.Log.Warnf("Failed to update payout status in the database : %+v", err)
-						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to update payout status in the database : %+v", err))
+						c.Log.Warnf("failed to update payout status in the database : %+v", err)
+						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update payout status in the database : %+v", err))
 					}
 				}
 			}
@@ -247,8 +247,8 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed to commit transaction : %+v", err)
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to commit transaction : %+v", err))
+		c.Log.Warnf("failed to commit transaction : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
 	return nil

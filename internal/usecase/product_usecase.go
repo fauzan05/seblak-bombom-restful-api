@@ -163,11 +163,21 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ID
+	count, err := c.ProductRepository.FindAndCountById(tx, newProduct)
+	if err != nil {
+		c.Log.Warnf("failed to find product from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product from database : %+v", err))
+	}
+
+	if count == 0 {
+		c.Log.Warnf("product is not found!")
+		return nil, fiber.NewError(fiber.StatusNotFound, "product is not found!")
+	}
 
 	// Mengambil data produk
 	if err := c.ProductRepository.FindWith2Preloads(tx, newProduct, "Category", "Images"); err != nil {
@@ -186,34 +196,48 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 		page = 1
 	}
 
-	var result []map[string]any // entity kosong yang akan diisi
-	if err := c.ProductRepository.GetProductsWithPagination(tx, &result, page, perPage, search, sortingColumn, sortBy, categoryId); err != nil {
-		c.Log.Warnf("failed to get all products from database : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get all products from database : %+v", err))
+	if sortingColumn == "" {
+		sortingColumn = "products.id"
 	}
 
-	newProducts := new([]entity.Product)
-	err := MapProducts(result, newProducts)
-	if err != nil {
-		c.Log.Warnf("failed map products : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed map products : %+v", err))
+	newPagination := new(repository.Pagination)
+	newPagination.Page = page
+	newPagination.PageSize = perPage
+	newPagination.Column = sortingColumn
+	newPagination.SortBy = sortBy
+	allowedColumns := map[string]bool{
+		"products.id":          true,
+		"products.name":        true,
+		"categories.name":      true,
+		"products.description": true,
+		"products.created_at":  true,
+		"products.updated_at":  true,
 	}
 
-	var totalPages int = 0
-	getAllProducts := new(entity.Product)
-	totalProducts, err := c.ProductRepository.CountProductItems(tx, getAllProducts, search, categoryId)
+	if !allowedColumns[newPagination.Column] {
+		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
+		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+	}
+	
+	products, totalProduct, err := repository.Paginate(tx, &entity.Product{}, newPagination, func(d *gorm.DB) *gorm.DB {
+		return d.Joins("JOIN categories ON categories.id = products.category_id").
+			Preload("Category").
+			Preload("Images").Where("products.name LIKE ?", "%"+search+"%")
+	})
+
 	if err != nil {
-		c.Log.Warnf("failed to count products: %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to count products: %+v", err))
+		c.Log.Warnf("failed to paginate category : %+v", err)
+		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate category : %+v", err))
 	}
 
 	// Hitung total halaman
-	totalPages = int(totalProducts / int64(perPage))
-	if totalProducts%int64(perPage) > 0 {
+	var totalPages int = 0
+	totalPages = int(totalProduct / int64(perPage))
+	if totalProduct%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.ProductsToResponse(newProducts), totalProducts, totalPages, nil
+	return converter.ProductsToResponse(&products), totalProduct, totalPages, nil
 }
 
 func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, request *model.UpdateProductRequest, newImageFiles []*multipart.FileHeader, newImagePositions []string, updateCurrentImages model.UpdateImagesRequest, deletedImages model.DeleteImagesRequest) (*model.ProductResponse, error) {
@@ -295,7 +319,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 				c.Log.Warnf(err.Error())
 				return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 			}
-			 
+
 			// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
 			hashedFilename := hashFileName(file.Filename)
 			var position, _ = strconv.Atoi(newImagePositions[i])
@@ -408,10 +432,12 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 
 		// Hapus file gambar
 		for _, currentImage := range *currentImages {
-			err = os.Remove(filePath + currentImage.FileName)
-			if err != nil {
-				fmt.Printf("failed to delete image file : %v\n", err)
-				return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete image file : %v\n", err))
+			if currentImage.FileName != "" {
+				err = os.Remove(filePath + currentImage.FileName)
+				if err != nil {
+					fmt.Printf("failed to delete image file : %v\n", err)
+					return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete image file : %v\n", err))
+				}
 			}
 		}
 	}
@@ -446,148 +472,4 @@ func hashFileName(originalName string) string {
 	timestamp := time.Now().UnixNano()
 	hash := sha256.Sum256(fmt.Appendf(nil, "%d-%s", timestamp, originalName))
 	return fmt.Sprintf("%x", hash[:8]) + filepath.Ext(originalName) // Menggunakan 8 karakter pertama hash
-}
-
-func MapProducts(rows []map[string]any, results *[]entity.Product) error {
-
-	for _, row := range rows {
-		// fmt.Printf("Produk Id : %s | DATANYA : %d\n", row["product_id"], len(row["images"].([]map[string]interface{})))
-		imagesConvertToInterface, ok := row["images"].([]map[string]any)
-		if !ok {
-			return fmt.Errorf("failed to parse images field, expected []map[string]any but got %T", row["images"])
-		}
-
-		newImages := make([]entity.Image, 0)
-		for _, image := range imagesConvertToInterface {
-			// Ambil dan validasi image_id
-			imageIdStr, ok := image["image_id"].(string)
-			if !ok || imageIdStr == "" {
-				return fmt.Errorf("missing or invalid image_id")
-			}
-			imageId, err := strconv.ParseUint(imageIdStr, 10, 64)
-			if err != nil {
-				return fmt.Errorf("failed to parse image_id : %v", err)
-			}
-
-			imageFilename, _ := image["image_filename"].(string)
-			imagePosition, _ := strconv.Atoi(image["image_position"].(string))
-			imageType, _ := image["image_type"].(string)
-
-			imageCreatedAtStr, _ := image["image_created_at"].(string)
-			imageCreatedAt, err := time.Parse(time.RFC3339, imageCreatedAtStr)
-			if err != nil {
-				return fmt.Errorf("failed to parse image_created_at: %v", err)
-			}
-
-			imageUpdatedAtStr, _ := image["image_created_at"].(string)
-			imageUpdatedAt, err := time.Parse(time.RFC3339, imageUpdatedAtStr)
-			if err != nil {
-				return fmt.Errorf("failed to parse image_created_at: %v", err)
-			}
-
-			newImage := entity.Image{
-				ID:        imageId,
-				FileName:  imageFilename,
-				Position:  imagePosition,
-				Type:      imageType,
-				CreatedAt: imageCreatedAt,
-				UpdatedAt: imageUpdatedAt,
-			}
-
-			newImages = append(newImages, newImage)
-		}
-
-		// Ambil dan validasi category_id
-		categoryIdStr, ok := row["category_id"].(string)
-		if !ok || categoryIdStr == "" {
-			return fmt.Errorf("missing or invalid category_id")
-		}
-
-		categoryId, err := strconv.ParseUint(categoryIdStr, 10, 64)
-		if err != nil {
-			return fmt.Errorf("failed to parse category_id: %v", err)
-		}
-
-		// Ambil field kategori
-		categoryName, _ := row["category_name"].(string)
-		categoryDesc, _ := row["category_desc"].(string)
-
-		// Parse created_at dan updated_at kategori
-		categoryCreatedAtStr, _ := row["category_created_at"].(string)
-		categoryCreatedAt, err := time.Parse(time.RFC3339, categoryCreatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse category_created_at: %v", err)
-		}
-
-		categoryUpdatedAtStr, _ := row["category_updated_at"].(string)
-		categoryUpdatedAt, err := time.Parse(time.RFC3339, categoryUpdatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse category_updated_at: %v", err)
-		}
-
-		// Buat objek kategori
-		newCategory := entity.Category{
-			ID:          categoryId,
-			Name:        categoryName,
-			Description: categoryDesc,
-			CreatedAt:   categoryCreatedAt,
-			UpdatedAt:   categoryUpdatedAt,
-		}
-
-		// Ambil dan validasi product_id
-		productIdStr, ok := row["product_id"].(string)
-		if !ok || productIdStr == "" {
-			return fmt.Errorf("missing or invalid product_id")
-		}
-		productId, err := strconv.ParseUint(productIdStr, 10, 64)
-		if err != nil {
-			return fmt.Errorf("failed to parse product_id: %v", err)
-		}
-
-		// Ambil field produk
-		productName, _ := row["product_name"].(string)
-		productDesc, _ := row["product_desc"].(string)
-
-		// Parse harga dan stok produk
-		productPriceStr, _ := row["product_price"].(string)
-		productPrice, err := strconv.ParseFloat(productPriceStr, 32)
-		if err != nil {
-			return fmt.Errorf("failed to parse product_price: %v", err)
-		}
-		productStockStr, _ := row["product_stock"].(string)
-		productStock, err := strconv.Atoi(productStockStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse product_stock: %v", err)
-		}
-
-		// Parse created_at dan updated_at produk
-		productCreatedAtStr, _ := row["product_created_at"].(string)
-		productCreatedAt, err := time.Parse(time.RFC3339, productCreatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse product_created_at: %v", err)
-		}
-		productUpdatedAtStr, _ := row["product_updated_at"].(string)
-		productUpdatedAt, err := time.Parse(time.RFC3339, productUpdatedAtStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse product_updated_at: %v", err)
-		}
-
-		// Buat objek produk
-		newProduct := entity.Product{
-			ID:          productId,
-			Name:        productName,
-			Description: productDesc,
-			Price:       float32(productPrice),
-			Stock:       productStock,
-			CreatedAt:   productCreatedAt,
-			UpdatedAt:   productUpdatedAt,
-			Category:    &newCategory,
-			Images:      newImages,
-		}
-
-		// Tambahkan ke hasil
-		*results = append(*results, newProduct)
-	}
-
-	return nil
 }

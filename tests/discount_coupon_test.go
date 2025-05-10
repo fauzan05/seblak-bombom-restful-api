@@ -17,7 +17,7 @@ import (
 
 func TestCreateDiscountCoupon(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := "2025-01-01T00:00:01Z"
@@ -81,7 +81,7 @@ func TestCreateDiscountCoupon(t *testing.T) {
 
 func TestCreateDiscountCouponFailed(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := "2025-01-01T00:00:01Z"
@@ -131,11 +131,11 @@ func TestCreateDiscountCouponFailed(t *testing.T) {
 
 func TestGetDiscountCouponPagination(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	DoCreateManyDiscountCoupon(t, token, 27, 1)
 
-	request := httptest.NewRequest(http.MethodGet, "/api/discount-coupons?search=diskon&column=id&sort_by=asc&per_page=5&page=3", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/discount-coupons?search=diskon&column=discount_coupons.id&sort_by=asc&per_page=5&page=3", nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
@@ -157,9 +157,33 @@ func TestGetDiscountCouponPagination(t *testing.T) {
 	assert.Equal(t, 6, responseBody.TotalPages)
 }
 
+func TestGetDiscountCouponPaginationSortingColumnNotFound(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateManyDiscountCoupon(t, token, 27, 1)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/discount-coupons?search=diskon&column=discount_coupons.mama&sort_by=asc&per_page=5&page=3", nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "invalid sort column : discount_coupons.mama", responseBody.Error)
+}
+
 func TestGetDiscountCouponById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 	getDiscountCoupon := DoCreateManyDiscountCoupon(t, token, 27, 1)
 
@@ -215,7 +239,7 @@ func TestGetDiscountCouponByIdFailed(t *testing.T) {
 
 func TestUpdateDiscountCouponById(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := "2025-01-01T00:00:01Z"
@@ -324,7 +348,7 @@ func TestUpdateDiscountCouponById(t *testing.T) {
 
 func TestUpdateDiscountCouponByIdBadRequest(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := "2025-01-01T00:00:01Z"
@@ -421,7 +445,7 @@ func TestUpdateDiscountCouponByIdBadRequest(t *testing.T) {
 
 func TestUpdateDiscountCouponByIdNotFound(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := "2025-01-01T00:00:01Z"
@@ -470,7 +494,7 @@ func TestUpdateDiscountCouponByIdNotFound(t *testing.T) {
 
 func TestDeleteDiscountCoupon(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	start := "2025-01-01T00:00:01Z"
@@ -554,7 +578,7 @@ func TestDeleteDiscountCoupon(t *testing.T) {
 
 func TestDeleteDiscountCouponIdsNotValid(t *testing.T) {
 	ClearAll()
-	TestRegisterAdmin(t)
+	DoRegisterAdmin(t)
 	token := DoLoginAdmin(t)
 
 	var getAllIds string = "b,s[];.,asd"

@@ -54,6 +54,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// User
 	api.Post("/users", c.UserController.Register)
 	api.Post("/users/login", c.UserController.Login)
+	api.Post("/users/forgot-password", c.UserController.CreateForgotPassword)
 
 	// Discount Coupon
 	api.Get("/discount-coupons", c.DiscountCouponController.GetAll)
@@ -119,8 +120,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Order
 	auth.Post("/orders", c.OrderController.Create)
-	auth.Get("/orders/users/current", c.OrderController.GetAllCurrent)
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
+	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
+	auth.Get("/orders", c.OrderController.GetAll)
 
 	// Product review
 	auth.Post("/reviews", c.ProductReviewController.Create)
@@ -141,9 +143,6 @@ func (c *RouteConfig) SetupAuthRoute() {
 	api.Get("/carts", c.CartController.GetAllCurrent)
 	api.Patch("/carts/cart-items/:cartItemId", c.CartController.Update)
 	api.Delete("/carts/cart-items/:cartItemId", c.CartController.Delete)
-
-	// Order
-	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
 
 	// Xendit payout
 	auth.Post("/xendit/payouts/:userId", c.XenditPayoutController.Create)

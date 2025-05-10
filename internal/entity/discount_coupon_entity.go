@@ -17,7 +17,7 @@ type DiscountCoupon struct {
 	TotalMaxUsage   int                 `gorm:"column:total_max_usage"`
 	MaxUsagePerUser int                 `gorm:"column:max_usage_per_user"`
 	UsedCount       int                 `gorm:"column:used_count"`
-	MinOrderValue   int                 `gorm:"column:min_order_value"`
+	MinOrderValue   float32             `gorm:"column:min_order_value"`
 	Status          bool                `gorm:"column:status"` // enable/disable = true/false
 	CreatedAt       time.Time           `gorm:"column:created_at;autoCreateTime;<-:create"`
 	UpdatedAt       time.Time           `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
