@@ -568,7 +568,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	}
 
 	// cek apakah valid dan tanggal belum expired
-	if newPasswordReset.ExpiresAt.Before(time.Now()) {
+	if newPasswordReset.ExpiresAt.Add(time.Minute * 15).Before(time.Now()) {
 		// maka return error bahwa verification code expired
 		c.Log.Warnf("password reset was expired!")
 		return false, fiber.NewError(fiber.StatusBadRequest, "password reset was expired!")
