@@ -901,6 +901,70 @@ func TestForgotPasswordResetPasswordSuccess(t *testing.T) {
 	assert.True(t, responseBodyLogin.Data.ExpiryDate.After(time.Now()))
 }
 
+func TestForgotPasswordResetPasswordExpired(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	token := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, token)
+
+	DoRegisterCustomer(t)
+	requestBody := model.CreateForgotPassword{
+		Email: "F3196813@gmail.com",
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+	request := httptest.NewRequest(http.MethodPost, "/api/users/forgot-password", strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.PasswordResetResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.NotNil(t, responseBody.Data.VerificationCode)
+
+	// ubah expired-nya ke -15 menit
+	newPasswordReset := new(entity.PasswordReset)
+	newPasswordReset.ID = responseBody.Data.ID
+	db.Model(newPasswordReset).Update("expires_at", responseBody.Data.ExpiresAt.ToTime().Add((-20 * time.Minute) + (-1 * time.Second)))
+	// validate
+	requestBodyValidate := model.PasswordResetRequest{
+		VerificationCode:   responseBody.Data.VerificationCode,
+		NewPassword:        "Rahasia123#!",
+		NewPasswordConfirm: "Rahasia123#!",
+	}
+
+	bodyJson, err = json.Marshal(requestBodyValidate)
+	assert.Nil(t, err)
+	request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/users/forgot-password/%d/reset-password", responseBody.Data.ID), strings.NewReader(string(bodyJson)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
+
+	response, err = app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err = io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBodyValidate := new(model.ErrorResponse[string])
+	err = json.Unmarshal(bytes, responseBodyValidate)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+	assert.Equal(t, "password reset was expired!", responseBodyValidate.Error)
+}
+
 func TestForgotPasswordResetPasswordPasswordConfirmNotSame(t *testing.T) {
 	ClearAll()
 	DoRegisterAdmin(t)
