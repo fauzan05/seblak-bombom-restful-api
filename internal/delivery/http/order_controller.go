@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"html/template"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -175,4 +176,50 @@ func (c *OrderController) GetAllByUserId(ctx *fiber.Ctx) error {
 		Status: "success to get all orders by user id",
 		Data:   response,
 	})
+}
+
+func (c *OrderController) ShowInvoiceById(ctx *fiber.Ctx) error {
+	templatePath := "../internal/templates/pdf/orders/invoice.html"
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	items := []map[string]string{
+		{
+			"Name":       "Item A",
+			"Quantity":   "1",
+			"UnitPrice":  "Rp10.000",
+			"TotalPrice": "Rp10.000",
+		},
+		{
+			"Name":       "Item B",
+			"Quantity":   "2",
+			"UnitPrice":  "Rp20.000",
+			"TotalPrice": "Rp40.000",
+		},
+	}
+
+	bodyBuilder := new(strings.Builder)
+	err = tmpl.Execute(bodyBuilder, map[string]any{
+		"InvoiceNumber":   "INV/20250324/MPL/4506563387",
+		"PurchaseDate":    "24 Maret 2025",
+		"SellerName":      "Three Acc",
+		"BuyerName":       "Fauzan Nur hidayat",
+		"ShippingAddress": "Fauzan Nur hidayat (628133...)",
+		"Items":           items,
+		"Subtotal":        "259.000",
+		"Discount":        "5.180",
+		"ShippingCost":    "37.000",
+		"TotalShopping":   "292.329",
+		"TotalBilling":    "293.329",
+		"ServiceFee":      "1.000",
+		"PaymentMethod":   "Mandiri Virtual Account",
+	})
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	ctx.Type("html", "utf-8")
+	return ctx.SendString(bodyBuilder.String())
 }

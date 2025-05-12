@@ -15,6 +15,8 @@ type PaymentGateway string
 type ItemType string
 type PayoutStatus string
 type PayoutMethod string
+type PDFPageSize string
+type PDFOrientation string
 
 const (
 	// role
@@ -105,6 +107,12 @@ const (
 
 	PAYOUT_METHOD_ONLINE  PayoutMethod = "online"
 	PAYOUT_METHOD_OFFLINE PayoutMethod = "offline"
+
+	A4     PDFPageSize = "A4"
+	LETTER PDFPageSize = "Letter"
+
+	PORTRAIT  PDFOrientation = "Portrait"
+	LANDSCAPE PDFOrientation = "Landscape"
 )
 
 func IsValidChannelCode(pm ChannelCode) bool {

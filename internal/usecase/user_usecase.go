@@ -129,7 +129,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	}
 
 	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	templatePath := "../internal/helper/templates/notification/registration_success.html"
+	templatePath := "../internal/templates/notification/registration_success.html"
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -166,7 +166,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	newMail.To = []string{user.Email}
 	newMail.Cc = []string{}
 	newMail.Subject = "Registration Successful"
-	templatePath = "../internal/helper/templates/email/registration_success.html"
+	templatePath = "../internal/templates/email/registration_success.html"
 	tmpl, err = template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -465,7 +465,7 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	}
 
 	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	templatePath := "../internal/helper/templates/email/forgot_password.html"
+	templatePath := "../internal/templates/email/forgot_password.html"
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -610,7 +610,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	}
 
 	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	templatePath := "../internal/helper/templates/notification/password_reset.html"
+	templatePath := "../internal/templates/notification/password_reset.html"
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -647,7 +647,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	newMail.To = []string{newUser.Email}
 	newMail.Cc = []string{}
 	newMail.Subject = "Forgot Password"
-	templatePath = "../internal/helper/templates/email/password_reset.html"
+	templatePath = "../internal/templates/email/password_reset.html"
 	tmpl, err = template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -656,10 +656,10 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 
 	bodyBuilder = new(strings.Builder)
 	err = tmpl.Execute(bodyBuilder, map[string]string{
-		"Name":               newUser.Name.FirstName,
-		"Year":               time.Now().Format("2006"),
-		"CompanyName":        newApp.AppName,
-		"LogoImage":          logoImagePath,
+		"Name":        newUser.Name.FirstName,
+		"Year":        time.Now().Format("2006"),
+		"CompanyName": newApp.AppName,
+		"LogoImage":   logoImagePath,
 	})
 	if err != nil {
 		c.Log.Warnf("failed to execute template file html : %+v", err)

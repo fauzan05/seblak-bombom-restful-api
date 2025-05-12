@@ -10,6 +10,7 @@ import (
 	"seblak-bombom-restful-api/internal/usecase"
 	xenditUseCase "seblak-bombom-restful-api/internal/usecase/xendit"
 
+	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/midtrans/midtrans-go/coreapi"
@@ -30,6 +31,7 @@ type BootstrapConfig struct {
 	CoreAPIClient *coreapi.Client
 	XenditClient  *xendit.APIClient
 	Email         *mailer.SMTPMailer
+	PDF           *wkhtmltopdf.PDFGenerator
 }
 
 func Bootstrap(config *BootstrapConfig) {

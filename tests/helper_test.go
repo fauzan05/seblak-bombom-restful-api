@@ -169,8 +169,8 @@ func ClearUsers() {
 
 func DoLoginAdmin(t *testing.T) string {
 	requestBody := model.LoginUserRequest{
-		Email:    "fauzan.hidayat@binus.ac.id",
-		Password: "Johndoe123#",
+		Email:    "F3196813@gmail.com",
+		Password: "JohnDoe123#",
 	}
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
@@ -750,9 +750,9 @@ func DoRegisterAdmin(t *testing.T) {
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
 		LastName:  "Doe",
-		Email:     "fauzan.hidayat@binus.ac.id",
+		Email:     "F3196813@gmail.com",
 		Phone:     "08123456789",
-		Password:  "Johndoe123#",
+		Password:  "JohnDoe123#",
 		Role:      helper.ADMIN,
 	}
 

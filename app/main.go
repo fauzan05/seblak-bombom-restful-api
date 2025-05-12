@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"seblak-bombom-restful-api/internal/config"
+
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
@@ -17,11 +18,12 @@ func main() {
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
 	email := config.NewSMTPMailerTest(viperConfig)
+	pdf := config.NewPDFGenerator(log)
 	app := config.NewFiber(viperConfig)
-
+	
 	// cors setting
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://seblak-bombom-api-consumer-app, http://localhost:8000",  // Frontend are allowed (port 8000), if you use docker so you have to list the container name of api consumer (seblak-bombom-api-consumer)
+		AllowOrigins:     "http://seblak-bombom-api-consumer-app, http://localhost:8000, http://127.0.0.1:5500",  // Frontend are allowed (port 8000), if you use docker so you have to list the container name of api consumer (seblak-bombom-api-consumer)
 		AllowMethods:     "GET,POST,PATCH,PUT,DELETE",                                     // HTTP method are allowed
 		AllowHeaders:     "Origin, Content-Type, X-Requested-With, Accept, Authorization", // Header are allowed
 		AllowCredentials: true,
@@ -36,7 +38,8 @@ func main() {
 		// SnapClient:    snapClient,
 		// CoreAPIClient: coreAPIClient,
 		XenditClient: xenditClient,
-		Email:       email,
+		Email:        email,
+		PDF:          pdf,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

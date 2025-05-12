@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: right;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .bold {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 6px;
+            text-align: left;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .no-border {
+            border: none;
+        }
+        .totals td {
+            border: none;
+        }
+        .totals td:nth-child(1) {
+            width: 70%;
+        }
+    </style>
+    <link rel="stylesheet" href="../../assets/fontawesome-free-6.7.2-web/css/all.css">
+</head>
+<body>
+
+    <h1 style="color: red;">INVOICE <i class="fa fa-receipt"></i></h1>
+    <img src="../../assets/yaya.jpg" alt="">
+    <div class="section">
+        <div><span class="bold">Nomor Invoice:</span> {{.InvoiceNumber}}</div>
+        <div><span class="bold">Tanggal Pembelian:</span> {{.PurchaseDate}}</div>
+    </div>
+
+    <div class="section">
+        <div><span class="bold">Penjual:</span> {{.SellerName}}</div>
+        <div><span class="bold">Pembeli:</span> {{.BuyerName}}</div>
+        <div><span class="bold">Alamat Pengiriman:</span> {{.ShippingAddress}}</div>
+    </div>
+
+    <div class="section">
+        <table>
+            <thead>
+                <tr>
+                    <th>Info Produk</th>
+                    <th>Jumlah</th>
+                    <th>Harga Satuan</th>
+                    <th>Total Harga</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Items}}
+                <tr>
+                    <td>
+                        {{.Name}}<br>
+                        SKU: {{.SKU}}<br>
+                        Berat: {{.Weight}} gr
+                    </td>
+                    <td>{{.Quantity}}</td>
+                    <td>Rp{{.UnitPrice}}</td>
+                    <td>Rp{{.TotalPrice}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <table class="totals">
+            <tr>
+                <td>Subtotal Harga Barang</td>
+                <td class="text-right">Rp{{.Subtotal}}</td>
+            </tr>
+            <tr>
+                <td>Diskon Platform</td>
+                <td class="text-right">-Rp{{.Discount}}</td>
+            </tr>
+            <tr>
+                <td>Total Ongkos Kirim</td>
+                <td class="text-right">Rp{{.ShippingCost}}</td>
+            </tr>
+            <tr>
+                <td>Biaya Jasa Aplikasi</td>
+                <td class="text-right">Rp{{.ServiceFee}}</td>
+            </tr>
+            <tr>
+                <td class="bold">Total Belanja</td>
+                <td class="text-right bold">Rp{{.TotalShopping}}</td>
+            </tr>
+            <tr>
+                <td class="bold">TOTAL TAGIHAN</td>
+                <td class="text-right bold">Rp{{.TotalBilling}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div><span class="bold">Metode Pembayaran:</span> {{.PaymentMethod}}</div>
+    </div>
+
+    <p style="font-size: 10px; color: #888; margin-top: 40px;">
+        Invoice ini sah dan diproses secara otomatis oleh sistem.
+    </p>
+
+</body>
+</html>
