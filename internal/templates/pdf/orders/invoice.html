@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Invoice</title>
@@ -10,48 +11,74 @@
             padding: 20px;
             color: #333;
         }
+
         h1 {
             text-align: right;
             font-size: 20px;
             margin-bottom: 10px;
         }
+
         .section {
             margin-bottom: 20px;
         }
+
         .bold {
             font-weight: bold;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 5px;
         }
-        table, th, td {
+
+        table,
+        th,
+        td {
             border: 1px solid #ccc;
         }
-        th, td {
+
+        th,
+        td {
             padding: 6px;
             text-align: left;
         }
+
         .text-right {
             text-align: right;
         }
+
         .no-border {
             border: none;
         }
+
         .totals td {
             border: none;
         }
+
         .totals td:nth-child(1) {
             width: 70%;
         }
+
+        .fa-solid {
+            font-family: 'Font Awesome 6 Free' !important;
+            font-weight: 900;
+        }
     </style>
-    <link rel="stylesheet" href="../../assets/fontawesome-free-6.7.2-web/css/all.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
+
 <body>
 
-    <h1 style="color: red;">INVOICE <i class="fa fa-receipt"></i></h1>
-    <img src="../../assets/yaya.jpg" alt="">
+    <h1 style="color: red;">INVOICE</h1>
+    <!-- Contoh SVG FontAwesome -->
+    <i class="fa-solid fa-square-check">
+        <svg style="width:16px; height:16px; fill: currentColor;" viewBox="0 0 512 512">
+            <path
+                d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z" />
+        </svg>
+    </i>
+    <!-- <img src="data:image/jpeg;base64,{{.Base64Image}}" alt=""> -->
     <div class="section">
         <div><span class="bold">Nomor Invoice:</span> {{.InvoiceNumber}}</div>
         <div><span class="bold">Tanggal Pembelian:</span> {{.PurchaseDate}}</div>
@@ -128,4 +155,5 @@
     </p>
 
 </body>
+
 </html>

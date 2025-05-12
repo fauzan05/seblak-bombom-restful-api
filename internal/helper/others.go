@@ -3,9 +3,11 @@ package helper
 import (
 	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math"
+	"os"
 	"reflect"
 	"regexp"
 	"time"
@@ -123,6 +125,14 @@ func ValidatePassword(password string) string {
 	if !regexp.MustCompile(`[!@#~$%^&*()+|_]`).MatchString(password) {
 		errs += "Password must contain at least one symbol (!@#~$%^&*()+|_);"
 	}
- 	
+
 	return errs
+}
+
+func ImageToBase64(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }

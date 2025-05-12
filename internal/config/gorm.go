@@ -160,6 +160,43 @@ func NewDatabaseDocker(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 	return db
 }
 
+func NewDatabaseDockerTest(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
+	username := viper.GetString("database.docker_test.username")
+	password := viper.GetString("database.docker_test.password")
+	host := viper.GetString("database.docker_test.host")
+	port := viper.GetInt("database.docker_test.port")
+	database_name := viper.GetString("database.docker_test.name")
+	idleConnection := viper.GetInt("database.docker_test.pool.idle")
+	maxConnection := viper.GetInt("database.docker_test.pool.max")
+	maxLifeTimeConnection := viper.GetInt("database.docker_test.pool.lifetime")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database_name)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
+			SlowThreshold:             time.Second * 5,
+			Colorful:                  false,
+			IgnoreRecordNotFoundError: true,
+			ParameterizedQueries:      true,
+			LogLevel:                  logger.Info,
+		}),
+	})
+	
+	if err != nil {
+		log.Fatalf("failed to connect database : %v", err)
+	}
+	
+	connection, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to connect database : %v", err)
+	}
+
+	connection.SetMaxIdleConns(idleConnection)
+	connection.SetMaxOpenConns(maxConnection)
+	connection.SetConnMaxLifetime(time.Second * time.Duration(maxLifeTimeConnection))
+
+	return db
+}
+
 type logrusWriter struct {
 	Logger *logrus.Logger
 }

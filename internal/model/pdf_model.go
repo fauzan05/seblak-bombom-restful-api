@@ -12,5 +12,4 @@ type CreatePDF struct {
 	Orientation helper.PDFOrientation // gunakan "Portrait" atau "Landscape"
 	PageSize    helper.PDFPageSize    // misalnya: "A4", "Letter"
 	FooterText  string
-	URL         string
 }

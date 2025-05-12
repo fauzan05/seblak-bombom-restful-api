@@ -22,6 +22,10 @@ func TestGeneratePDF(t *testing.T) {
 	templatePath := "../internal/templates/pdf/orders/invoice.html"
 	tmpl, err := template.ParseFiles(templatePath)
 	assert.Nil(t, err)
+
+	image1Path := "../internal/templates/assets/yaya.jpg"
+	image1To64, err := helper.ImageToBase64(image1Path)
+	assert.Nil(t, err)
 	
 	items := []map[string]string{
 		{
@@ -52,6 +56,7 @@ func TestGeneratePDF(t *testing.T) {
 		"TotalBilling": "293.329",
 		"ServiceFee": "1.000",
 		"PaymentMethod": "Mandiri Virtual Account",
+		"Base64Image": image1To64,
 	})
 	assert.Nil(t, err)
 
