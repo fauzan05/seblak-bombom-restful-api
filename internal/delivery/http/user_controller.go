@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -30,6 +31,8 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	request.Language = helper.Languange(getLang)
 	response, err := c.UseCase.Create(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to register an user : %+v", err)

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Warung Seblak</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #fff7f0;
+      color: #333;
+    }
+    .container {
+      max-width: 720px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .logo img {
+      width: 90px;
+    }
+    h1 {
+      color: #e2574c;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 32px;
+    }
+    ul {
+      padding-left: 20px;
+      line-height: 1.8;
+      color: #444;
+    }
+    .cta {
+      text-align: center;
+      margin-top: 40px;
+    }
+    .cta a {
+      text-decoration: none;
+      background-color: #e2574c;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .footer {
+      margin-top: 60px;
+      font-size: 13px;
+      text-align: center;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="{{.LogoImage}}" alt="Company Logo" />
+    </div>
+    <h1>Welcome, {{.Name}}!</h1>
+    <p class="subtitle">Thank you for registering at <strong>{{.CompanyName}}</strong> 🎉</p>
+
+    <p>Your account has been successfully activated. You can now:</p>
+    <ul>
+      <li>Order your favorite seblak directly through our platform</li>
+      <li>Track your order status and view history</li>
+      <li>Enjoy weekly spicy deals and promos 🔥</li>
+    </ul>
+
+    <div class="cta">
+      <a href="/">Go to Homepage</a>
+    </div>
+
+    <div class="footer">
+      &copy; {{.Year}} {{.CompanyName}}. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

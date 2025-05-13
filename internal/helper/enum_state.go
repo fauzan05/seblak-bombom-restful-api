@@ -17,6 +17,7 @@ type PayoutStatus string
 type PayoutMethod string
 type PDFPageSize string
 type PDFOrientation string
+type Languange string
 
 const (
 	// role
@@ -113,6 +114,9 @@ const (
 
 	PORTRAIT  PDFOrientation = "Portrait"
 	LANDSCAPE PDFOrientation = "Landscape"
+
+	INDONESIA Languange = "id"
+	ENGLISH   Languange = "en"
 )
 
 func IsValidChannelCode(pm ChannelCode) bool {

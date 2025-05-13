@@ -129,7 +129,17 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	}
 
 	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	templatePath := "../internal/templates/notification/registration_success.html"
+	newNotification := new(entity.Notification)
+	newNotification.UserID = user.ID
+	newNotification.Title = "Registration Successful 🎉"
+	newNotification.Message = fmt.Sprintf("Hi %s, your account is now active. Welcome!", user.Name.FirstName)
+
+	templatePath := "../internal/templates/english/notification/registration_success.html"
+	if request.Language == helper.INDONESIA {
+		templatePath = "../internal/templates/indonesia/notification/registration_success.html"
+		newNotification.Title = "Registrasi Berhasil 🎉"
+		newNotification.Message = fmt.Sprintf("Hai %s, akunmu sekarang sudah aktif. Selamat Datang!", user.Name.FirstName)
+	}
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -148,10 +158,6 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
 	}
 
-	newNotification := new(entity.Notification)
-	newNotification.UserID = user.ID
-	newNotification.Title = "Registration Successful 🎉"
-	newNotification.Message = fmt.Sprintf("Hi %s, your account at Warung Seblak is now active. Welcome!", user.Name.FirstName)
 	newNotification.IsRead = false
 	newNotification.Type = helper.AUTHENTICATION
 	newNotification.Link = "http://localhost:8000"
@@ -166,7 +172,11 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	newMail.To = []string{user.Email}
 	newMail.Cc = []string{}
 	newMail.Subject = "Registration Successful"
-	templatePath = "../internal/templates/email/registration_success.html"
+	templatePath = "../internal/templates/english/email/registration_success.html"
+	if request.Language == helper.INDONESIA {
+		newMail.Subject = "Registrasi Berhasil"
+		templatePath = "../internal/templates/indonesia/email/registration_success.html"
+	}
 	tmpl, err = template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
