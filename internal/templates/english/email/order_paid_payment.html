@@ -1,39 +1,106 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Invoice Seblak Bombom - Sudah Bayar</title>
+  <title>Invoice {{.CompanyName}} - Paid Payment</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; }
-    .invoice-box { border: 1px solid #eee; padding: 20px; max-width: 700px; margin: auto; }
-    h1, h2 { margin-bottom: 0; }
-    .status-paid { color: green; font-weight: bold; }
-    .info-table, .items-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    .info-table td, .items-table td, .items-table th { border: 1px solid #ddd; padding: 8px; }
-    .items-table th { background-color: #f2f2f2; }
-    .total-row td { font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    .invoice-box {
+      border: 1px solid #eee;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h1,
+    h2 {
+      margin-bottom: 0;
+    }
+
+    .status-paid {
+      color: green;
+      font-weight: bold;
+    }
+
+    .info-table,
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .info-table td,
+    .items-table td,
+    .items-table th {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    .items-table th {
+      background-color: #f2f2f2;
+    }
+
+    .total-row td {
+      font-weight: bold;
+    }
   </style>
 </head>
+
 <body>
   <div class="invoice-box">
+    <img src="{{.LogoImage}}" alt="Logo {{ .CompanyTitle }}" style="height: 150px;">
     <h1>{{.CompanyName}}</h1>
-    <h2>Status: <span class="status-paid">Sudah Dibayar</span></h2>
+    <h2>Status: <span class="status-paid">Paid Payment</span></h2>
 
     <table class="info-table">
-      <tr><td>Invoice</td><td>PYM20250324XXVIII2975209295</td></tr>
-      <tr><td>Tanggal</td><td>24 Maret 2025</td></tr>
-      <tr><td>Nama Pemesan</td><td>Fauzan Nur Hidayat</td></tr>
-      <tr><td>Metode Pembayaran</td><td>Mandiri Virtual Account</td></tr>
+      <tr>
+        <td>Invoice</td>
+        <td>{{.Invoice}}</td>
+      </tr>
+      <tr>
+        <td>Date</td>
+        <td>{{.Date}}</td>
+      </tr>
+      <tr>
+        <td>Customer Name</td>
+        <td>{{.CustomerName}}</td>
+      </tr>
+      <tr>
+        <td>Payment Method</td>
+        <td>{{.PaymentMethod}}</td>
+      </tr>
     </table>
 
     <table class="items-table">
-      <tr><th>Produk</th><th>Jumlah</th><th>Harga</th></tr>
-      <tr><td>Seblak Komplit</td><td>2</td><td>Rp 40.000</td></tr>
-      <tr><td>Es Teh</td><td>1</td><td>Rp 5.000</td></tr>
-      <tr class="total-row"><td colspan="2">Total</td><td>Rp 45.000</td></tr>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price</th>
+      </tr>
+      {{range .Items}}
+      <tr>
+        <td>
+          <img src="{{.ProductImage}}" alt="{{ .ProductImageFilename }}" style="height: 50px;">
+          {{.ProductName}}
+        </td>
+        <td>{{.Quantity}}</td>
+        <td>Rp{{.Price}}</td>
+      </tr>
+      {{end}}
+      <tr class="total-row">
+        <td colspan="2">Total</td>
+        <td>Rp{{.TotalAmount}}</td>
+      </tr>
     </table>
 
-    <p style="margin-top: 30px;">Terima kasih telah memesan di {{.CompanyName}}. Pesanan Anda sedang kami proses. ❤️</p>
+    <p style="margin-top: 30px;">Thank you for ordering at {{.CompanyName}}. We are currently processing your order :).
+    </p>
   </div>
 </body>
+
 </html>

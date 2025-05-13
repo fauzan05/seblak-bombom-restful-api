@@ -48,6 +48,7 @@ type CreateOrderRequest struct {
 	Note            string                      `json:"note"`
 	CurrentBalance  float32                     `json:"current_balance"`
 	OrderProducts   []CreateOrderProductRequest `json:"order_products" validate:"required"`
+	Lang            helper.Languange            `json:"-"`
 }
 
 type GetOrderByCurrentRequest struct {
@@ -57,6 +58,7 @@ type GetOrderByCurrentRequest struct {
 type UpdateOrderRequest struct {
 	ID          uint64             `json:"-" validate:"required"` //order id
 	OrderStatus helper.OrderStatus `json:"order_status"`
+	Lang        helper.Languange   `json:"-"`
 }
 
 type GetOrdersByUserIdRequest struct {

@@ -197,7 +197,7 @@ func DoLoginAdmin(t *testing.T) string {
 
 func DoLoginCustomer(t *testing.T) string {
 	requestBody := model.LoginUserRequest{
-		Email:    "F3196813@gmail.com",
+		Email:    "fauzan.hidayat@binus.ac.id",
 		Password: "Customer1#",
 	}
 	bodyJson, err := json.Marshal(requestBody)
@@ -761,6 +761,7 @@ func DoRegisterAdmin(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
 
 	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
@@ -786,7 +787,7 @@ func DoRegisterCustomer(t *testing.T) {
 	requestBody := model.RegisterUserRequest{
 		FirstName: "Customer",
 		LastName:  "1",
-		Email:     "F3196813@gmail.com",
+		Email:     "fauzan.hidayat@binus.ac.id",
 		Phone:     "0982131244",
 		Password:  "Customer1#",
 		Role:      helper.CUSTOMER,
@@ -797,6 +798,7 @@ func DoRegisterCustomer(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
 
 	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
@@ -935,7 +937,16 @@ func DoCreateApplicationSetting(t *testing.T, tokenAdmin string) {
 	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
 	_ = writer.WriteField("service_fee", "1000")
 
-	filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
+	filePath := "../tests/assets/seblak-logo.jpg"
+	file, err := os.Open(filePath)
+	assert.Nil(t, err)
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	assert.Nil(t, err)
+
+	filename := fileInfo.Name()
+	content, err := io.ReadAll(file)
 	assert.Nil(t, err)
 
 	partHeader := textproto.MIMEHeader{}

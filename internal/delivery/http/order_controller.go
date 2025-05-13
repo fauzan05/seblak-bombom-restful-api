@@ -34,7 +34,8 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
-
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	orderRequest.Lang = helper.Languange(getLang)
 	auth := middleware.GetCurrentUser(ctx)
 	orderRequest.UserId = auth.ID
 	orderRequest.FirstName = auth.FirstName

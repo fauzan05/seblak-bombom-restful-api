@@ -212,7 +212,7 @@ func (r *Repository[T]) FindAndCountById(db *gorm.DB, entity *T) (int64, error) 
 
 func (r *Repository[T]) FindAndCountProductById(db *gorm.DB, entity *T) (int64, error) {
 	var count int64
-	err := db.Preload("Category").Find(&entity).Count(&count).Error
+	err := db.Preload("Category").Preload("Images").Find(&entity).Count(&count).Error
 	if err != nil {
 		return int64(0), err
 	}

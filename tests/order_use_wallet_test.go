@@ -19,12 +19,15 @@ import (
 func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	ClearAll()
 	DoRegisterAdmin(t)
-	token := DoLoginAdmin(t)
-	currentUser := GetCurrentUserByToken(t, token)
-	DoSetBalanceManually(token, float32(150000))
-	delivery := DoCreateDelivery(t, token)
-	DoCreateManyAddress(t, token, 2, 1, delivery)
-	product := DoCreateProduct(t, token, 2, 1)
+	tokenAdmin := DoLoginAdmin(t)
+	DoCreateApplicationSetting(t, tokenAdmin)
+	DoRegisterCustomer(t)
+	tokenCustomer := DoLoginCustomer(t)
+	DoSetBalanceManually(tokenCustomer, float32(150000))
+	currentUser := GetCurrentUserByToken(t, tokenCustomer)
+	delivery := DoCreateDelivery(t, tokenAdmin)
+	DoCreateManyAddress(t, tokenCustomer, 2, 1, delivery)
+	product := DoCreateProduct(t, tokenAdmin, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
@@ -45,12 +48,13 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	}
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
-	request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))
+	request := httptest.NewRequest(http.MethodPost, "/api/orders?lang=id", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
-	request.Header.Set("Authorization", token)
+	request.Header.Set("Authorization", tokenCustomer)
+	request.Host = "localhost"
 
-	response, err := app.Test(request)
+	response, err := app.Test(request, int(time.Second) * 5)
 	assert.Nil(t, err)
 
 	bytes, err := io.ReadAll(response.Body)
@@ -95,8 +99,9 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 		assert.Equal(t, requestBody.OrderProducts[i].ProductId, product.ProductId)
 		assert.Equal(t, requestBody.OrderProducts[i].Quantity, product.Quantity)
 	}
+
 	// cek saldo
-	currentUser = GetCurrentUserByToken(t, token)
+	currentUser = GetCurrentUserByToken(t, tokenCustomer)
 	assert.Equal(t, (float32(150000) - responseBody.Data.TotalFinalPrice), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)

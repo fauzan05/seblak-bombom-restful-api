@@ -133,12 +133,11 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	newNotification.UserID = user.ID
 	newNotification.Title = "Registration Successful 🎉"
 	newNotification.Message = fmt.Sprintf("Hi %s, your account is now active. Welcome!", user.Name.FirstName)
-
 	templatePath := "../internal/templates/english/notification/registration_success.html"
 	if request.Language == helper.INDONESIA {
-		templatePath = "../internal/templates/indonesia/notification/registration_success.html"
 		newNotification.Title = "Registrasi Berhasil 🎉"
 		newNotification.Message = fmt.Sprintf("Hai %s, akunmu sekarang sudah aktif. Selamat Datang!", user.Name.FirstName)
+		templatePath = "../internal/templates/indonesia/notification/registration_success.html"
 	}
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
