@@ -2,11 +2,14 @@ package http
 
 import (
 	"fmt"
+	"html/template"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -30,7 +33,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
-	
+
 	auth := middleware.GetCurrentUser(ctx)
 	orderRequest.UserId = auth.ID
 	orderRequest.FirstName = auth.FirstName
@@ -45,7 +48,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	for _, address := range auth.Addresses {
 		if address.IsMain {
 			orderRequest.CompleteAddress = address.CompleteAddress
-			if (address.Delivery.ID == 0 && orderRequest.IsDelivery) {
+			if address.Delivery.ID == 0 && orderRequest.IsDelivery {
 				c.Log.Warnf("delivery not found, please selected one!")
 				return fiber.NewError(fiber.StatusNotFound, "delivery not found, please selected one!")
 			}
@@ -115,11 +118,11 @@ func (c *OrderController) GetAll(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.OrderResponse]{
-		Code:   200,
-		Status: "success to get all orders by current user",
-		Data:   response,
-		TotalDatas: totalOrders,
-		TotalPages: totalPages,
+		Code:         200,
+		Status:       "success to get all orders by current user",
+		Data:         response,
+		TotalDatas:   totalOrders,
+		TotalPages:   totalPages,
 		CurrentPages: page,
 		DataPerPages: perPage,
 	})
@@ -175,4 +178,90 @@ func (c *OrderController) GetAllByUserId(ctx *fiber.Ctx) error {
 		Status: "success to get all orders by user id",
 		Data:   response,
 	})
+}
+
+func (c *OrderController) ShowInvoiceByOrderId(ctx *fiber.Ctx) error {
+	getId := ctx.Params("orderId")
+	orderId, err := strconv.Atoi(getId)
+	if err != nil {
+		c.Log.Warnf("failed to convert order id : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert order id : %+v", err))
+	}
+
+	order, app, err := c.UseCase.GetInvoice(ctx.Context(), uint64(orderId))
+	if err != nil {
+		c.Log.Warnf("failed to get order by order id : %+v", err)
+		return err
+	}
+
+	items := []map[string]any{}
+	for _, orderProduct := range order.OrderProducts {
+		item := map[string]any{
+			"Name":       orderProduct.ProductName,
+			"Quantity":   orderProduct.Quantity,
+			"UnitPrice":  helper.FormatNumberFloat32(orderProduct.Price),
+			"TotalPrice": helper.FormatNumberFloat32(orderProduct.Price * float32(orderProduct.Quantity)),
+		}
+		items = append(items, item)
+	}
+
+	templatePath := "../internal/templates/pdf/orders/invoice.html"
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	timeZone := helper.TimeZoneMap[getTimeZoneUser]
+
+	logoImage := fmt.Sprintf("../uploads/images/application/%s", app.LogoFilename)
+	logoImageToBase64, err := helper.ImageToBase64(logoImage)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	paymentStatusColor := helper.GetPaymentStatusColor(order.PaymentStatus)
+	orderMethod := "Ambil Di Tempat (Pickup)"
+	if order.IsDelivery {
+		orderMethod = "Diantar Ke Alamat"
+	}
+
+	bodyBuilder := new(strings.Builder)
+	err = tmpl.Execute(bodyBuilder, map[string]any{
+		"InvoiceNumber":      order.Invoice,
+		"PurchaseDate":       order.CreatedAt.ToTime().In(loc).Format("02 January 2006 15:04"),
+		"TimeZone":           timeZone,
+		"BuyerName":          order.FirstName + " " + order.LastName,
+		"ShippingAddress":    order.CompleteAddress,
+		"Items":              items,
+		"IsDelivery":         order.IsDelivery,
+		"Subtotal":           helper.FormatNumberFloat32(order.TotalProductPrice),
+		"Discount":           helper.FormatNumberFloat32(order.TotalDiscount),
+		"ShippingCost":       helper.FormatNumberFloat32(order.DeliveryCost),
+		"TotalBilling":       helper.FormatNumberFloat32(order.TotalFinalPrice + app.ServiceFee),
+		"ServiceFee":         helper.FormatNumberFloat32(app.ServiceFee),
+		"PaymentMethod":      order.PaymentMethod,
+		"PaymentStatus":      order.PaymentStatus,
+		"PaymentStatusColor": paymentStatusColor,
+		"OrderMethod":        orderMethod,
+		"UpdatedAt":          order.UpdatedAt.ToTime().In(loc).Format("02 January 2006 15:04"),
+		"CompanyTitle":       app.AppName,
+		"CompanyPhone":       app.PhoneNumber,
+		"CompanyEmail":       app.Email,
+		"CompanyAddress":     app.Address,
+		"LogoImage":          logoImageToBase64,
+	})
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	ctx.Type("html", "utf-8")
+	return ctx.SendString(bodyBuilder.String())
 }

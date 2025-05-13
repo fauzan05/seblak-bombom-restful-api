@@ -18,6 +18,7 @@ func ApplicationToResponse(application *entity.Application) *model.ApplicationRe
 		Description:    application.Description,
 		PhoneNumber:    application.PhoneNumber,
 		Email:          application.Email,
+		ServiceFee:     application.ServiceFee,
 		InstagramName:  application.SocialMedia.InstagramName,
 		InstagramLink:  application.SocialMedia.InstagramLink,
 		TwitterName:    application.SocialMedia.TwitterName,

@@ -16,6 +16,7 @@ type ApplicationResponse struct {
 	Description    string             `json:"description"`
 	PhoneNumber    string             `json:"phone_number"`
 	Email          string             `json:"email"`
+	ServiceFee     float32            `json:"service_fee"`
 	InstagramName  string             `json:"instagram_name"`
 	InstagramLink  string             `json:"instagram_link"`
 	TwitterName    string             `json:"twitter_name"`

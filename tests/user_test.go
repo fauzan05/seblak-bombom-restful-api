@@ -23,7 +23,7 @@ func TestRegisterAdmin(t *testing.T) {
 		LastName:  "Doe",
 		Email:     "F3196813@gmail.com",
 		Phone:     "08123456789",
-		Password:  "johndoe123",
+		Password:  "JohnDoe123#",
 		Role:      helper.ADMIN,
 	}
 
@@ -63,7 +63,7 @@ func TestRegisterCustomer(t *testing.T) {
 		LastName:  "1",
 		Email:     "fauzan.hidayat@binus.ac.id",
 		Phone:     "0982131244",
-		Password:  "customer1",
+		Password:  "Customer1#",
 		Role:      helper.CUSTOMER,
 	}
 

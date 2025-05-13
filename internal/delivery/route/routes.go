@@ -50,6 +50,9 @@ func (c *RouteConfig) SetupXenditCallbacksRoute() {
 // GUEST
 func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api")
+	wd, _ := os.Getwd()
+	staticPath := filepath.Join(wd, "../internal/templates/assets")
+	api.Static("/assets", staticPath)
 
 	// User
 	api.Post("/users", c.UserController.Register)
@@ -98,6 +101,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 		return c.SendFile(filepath)
 	})
 
+	// Application
 	api.Get("/applications", c.ApplicationController.Get)
 }
 
@@ -125,6 +129,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
 	auth.Get("/orders", c.OrderController.GetAll)
+	auth.Get("/orders/:orderId/invoice", c.OrderController.ShowInvoiceByOrderId)
 
 	// Product review
 	auth.Post("/reviews", c.ProductReviewController.Create)

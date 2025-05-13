@@ -14,6 +14,7 @@ type Application struct {
 	Description    string      `gorm:"column:description"`
 	PhoneNumber    string      `gorm:"column:phone_number"`
 	Email          string      `gorm:"column:email"`
+	ServiceFee     float32     `gorm:"column:service_fee"`
 	SocialMedia    SocialMedia `gorm:"embedded"`
 	CreatedAt      time.Time   `gorm:"column:created_at;autoCreateTime;<-:create"`
 	UpdatedAt      time.Time   `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
