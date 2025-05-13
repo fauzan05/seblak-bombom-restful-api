@@ -806,5 +806,4 @@ func (c *OrderUseCase) GetInvoice(ctx context.Context, orderId uint64) (*model.O
 	}
 
 	return converter.OrderToResponse(newOrder), converter.ApplicationToResponse(newApplication), nil
-
 }
