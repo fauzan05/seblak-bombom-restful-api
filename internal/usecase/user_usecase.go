@@ -467,7 +467,6 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	newMail := new(model.Mail)
 	newMail.To = []string{newUser.Email}
 	newMail.Cc = []string{}
-	newMail.Subject = "Forgot Password"
 	newApp := new(entity.Application)
 	if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
 		c.Log.Warnf("failed to find application from database : %+v", err)
@@ -475,7 +474,12 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	}
 
 	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	templatePath := "../internal/templates/email/forgot_password.html"
+	newMail.Subject = "Forgot Password"
+	templatePath := "../internal/templates/english/email/forgot_password.html"
+	if request.Lang == helper.INDONESIA {
+		newMail.Subject = "Lupa Kata Sandi"
+		templatePath = "../internal/templates/indonesia/email/forgot_password.html"
+	}
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -620,7 +624,10 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	}
 
 	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	templatePath := "../internal/templates/notification/password_reset.html"
+	templatePath := "../internal/templates/english/notification/password_reset.html"
+	if request.Lang == helper.INDONESIA {
+		templatePath = "../internal/templates/indonesia/notification/password_reset.html"
+	}
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -643,6 +650,10 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	newNotification.UserID = newUser.ID
 	newNotification.Title = "Password Reset Successful 🎉"
 	newNotification.Message = fmt.Sprintf("Hi %s, We've successfully updated your password. You can now log in with your new credentials. If you did not request this change, please contact our support immediately to secure your account.", newUser.Name.FirstName)
+	if request.Lang == helper.INDONESIA {
+		newNotification.Title = "Mengatur Ulang Kata Sandi Berhasil 🎉"
+		newNotification.Message = fmt.Sprintf("Hai %s, Kata sandi Anda berhasil diperbarui. Sekarang Anda dapat masuk menggunakan kata sandi baru Anda. Jika Anda tidak meminta perubahan ini, segera hubungi tim dukungan kami untuk mengamankan akun Anda.", newUser.Name.FirstName)
+	}
 	newNotification.IsRead = false
 	newNotification.Type = helper.AUTHENTICATION
 	newNotification.Link = "http://localhost:8000"
@@ -656,8 +667,12 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	newMail := new(model.Mail)
 	newMail.To = []string{newUser.Email}
 	newMail.Cc = []string{}
-	newMail.Subject = "Forgot Password"
-	templatePath = "../internal/templates/email/password_reset.html"
+	newMail.Subject = "Password Reset Successful"
+	templatePath = "../internal/templates/english/email/password_reset.html"
+	if request.Lang == helper.INDONESIA {
+		newMail.Subject = "Atur Ulang Kata Sandi Berhasil"
+		templatePath = "../internal/templates/indonesia/email/password_reset.html"
+	}
 	tmpl, err = template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)

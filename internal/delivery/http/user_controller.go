@@ -173,6 +173,8 @@ func (c *UserController) CreateForgotPassword(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	request.Lang = helper.Languange(getLang)
 	response, err := c.UseCase.AddForgotPassword(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to create an forgot password request : %+v", err)
@@ -224,6 +226,8 @@ func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
 
 	request := new(model.PasswordResetRequest)
 	request.ID = uint64(passwordResetId)
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	request.Lang = helper.Languange(getLang)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))

@@ -69,7 +69,7 @@ func TestRegisterCustomer(t *testing.T) {
 
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
-	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
+	request := httptest.NewRequest(http.MethodPost, "/api/users?lang=id", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Host = "localhost"

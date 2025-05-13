@@ -933,6 +933,7 @@ func DoCreateApplicationSetting(t *testing.T, tokenAdmin string) {
 	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
 	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
 	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
 
 	filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
 	assert.Nil(t, err)
