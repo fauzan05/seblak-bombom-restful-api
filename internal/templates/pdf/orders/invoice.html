@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Invoice</title>
+    <title>Invoice {{ .CompanyTitle }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,9 +13,9 @@
         }
 
         h1 {
-            text-align: right;
-            font-size: 20px;
-            margin-bottom: 10px;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 5px;
         }
 
         .section {
@@ -48,10 +48,6 @@
             text-align: right;
         }
 
-        .no-border {
-            border: none;
-        }
-
         .totals td {
             border: none;
         }
@@ -60,98 +56,197 @@
             width: 70%;
         }
 
-        .fa-solid {
-            font-family: 'Font Awesome 6 Free' !important;
-            font-weight: 900;
+        .footer-note {
+            font-size: 10px;
+            color: #888;
+            margin-top: 40px;
+        }
+
+        .store-name {
+            color: #D32F2F;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .table-no-border,
+        .table-no-border td,
+        .table-no-border th {
+            border: none !important;
+        }
+
+        .icon {
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.125em;
+        }
+
+        .total-tagihan {
+            margin-top: 5px;
+            border-top: 2px solid #ccc;
+        }
+
+        .red {
+            color: #D32F2F;
+        }
+
+        .green {
+            color: green;
+        }
+
+        .uppercase {
+            text-transform: uppercase;
+        }
+
+        .capitalize {
+            text-transform: capitalize;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge.green {
+            background-color: #34C759;
+            color: #fff;
+        }
+
+        .badge.orange {
+            background-color: #FFC107;
+            color: #fff;
+        }
+
+        .badge.red {
+            background-color: #FF3B30;
+            color: #fff;
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
 
 <body>
 
-    <h1 style="color: red;">INVOICE</h1>
-    <!-- Contoh SVG FontAwesome -->
-    <i class="fa-solid fa-square-check">
-        <svg style="width:16px; height:16px; fill: currentColor;" viewBox="0 0 512 512">
-            <path
-                d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z" />
-        </svg>
-    </i>
-    <!-- <img src="data:image/jpeg;base64,{{.Base64Image}}" alt=""> -->
+    <div style="text-align: center;">
+        <div class="store-name" style="margin-bottom: 5px;">{{ .CompanyTitle }}</div>
+        <div style="margin-bottom: 5px;">{{ .CompanyAddress }}</div>
+        <div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="#25D366" viewBox="0 0 448 512">!Font Awesome
+                Free 6.7.2 by @fontawesome -
+                https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons,
+                Inc.
+                <path
+                    d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+            </svg>
+            <span style="margin-right: 20px;">{{ .CompanyPhone }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 512 512">!Font Awesome Free 6.7.2 by
+                @fontawesome -
+                https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.
+                <path
+                    d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48L48 64zM0 176L0 384c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-208L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z" />
+            </svg>
+            {{ .CompanyEmail }}
+        </div>
+    </div>
+
+    <hr style="margin: 20px 0;">
+
+    <table class="table-no-border" style="width: 100%; margin-bottom: 20px; border: none !important;">
+        <tr>
+            <td style="vertical-align: middle;">
+                <img src="data:image/png;base64,{{ .LogoImage }}" alt="Logo {{ .CompanyTitle }}" style="height: 150px;">
+            </td>
+            <td style="text-align: right;">
+                <div style="font-size: 22px; font-weight: bold;">INVOICE</div>
+                <div style="font-size: 14px; color: #D32F2F;">{{.InvoiceNumber}}</div>
+            </td>
+        </tr>
+    </table>
+
     <div class="section">
-        <div><span class="bold">Nomor Invoice:</span> {{.InvoiceNumber}}</div>
-        <div><span class="bold">Tanggal Pembelian:</span> {{.PurchaseDate}}</div>
+        <div style="margin-bottom: 5px;"><span class="bold">Tanggal Pesanan:</span> {{.PurchaseDate}}</div>
+        <div style="margin-bottom: 5px;"><span class="bold">Nama Pembeli:</span> <span
+                class="capitalize">{{.BuyerName}}</span></div>
+        {{ if .IsDelivery }}
+        <div style="margin-bottom: 5px;"><span class="bold">Alamat Pengiriman:</span> {{.ShippingAddress}}</div>
+        {{ end }}
+        <div style="margin-bottom: 5px;"><span class="bold">Metode Pengambilan:</span> {{ .OrderMethod }}</div>
     </div>
 
     <div class="section">
-        <div><span class="bold">Penjual:</span> {{.SellerName}}</div>
-        <div><span class="bold">Pembeli:</span> {{.BuyerName}}</div>
-        <div><span class="bold">Alamat Pengiriman:</span> {{.ShippingAddress}}</div>
-    </div>
-
-    <div class="section">
-        <table>
-            <thead>
+        <table style="border-collapse: collapse; width: 100%;">
+            <thead style="background-color: #f0f0f0;">
                 <tr>
-                    <th>Info Produk</th>
-                    <th>Jumlah</th>
-                    <th>Harga Satuan</th>
-                    <th>Total Harga</th>
+                    <th style="padding: 10px; text-align: left;">Menu</th>
+                    <th style="padding: 10px; text-align: center;">Jumlah</th>
+                    <th style="padding: 10px; text-align: right;">Harga</th>
+                    <th style="padding: 10px; text-align: right;">Total</th>
                 </tr>
             </thead>
             <tbody>
                 {{range .Items}}
-                <tr>
-                    <td>
-                        {{.Name}}<br>
-                        SKU: {{.SKU}}<br>
-                        Berat: {{.Weight}} gr
-                    </td>
-                    <td>{{.Quantity}}</td>
-                    <td>Rp{{.UnitPrice}}</td>
-                    <td>Rp{{.TotalPrice}}</td>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td style="padding: 10px; text-align: left; color: red;">{{.Name}}</td>
+                    <td style="padding: 10px; text-align: center;">{{.Quantity}}</td>
+                    <td style="padding: 10px; text-align: right;">Rp{{.UnitPrice}}</td>
+                    <td style="padding: 10px; text-align: right;">Rp{{.TotalPrice}}</td>
                 </tr>
                 {{end}}
             </tbody>
         </table>
+        {{ if .Note }}
+        <div style="margin-top: 10px;">
+            <span class="bold">Catatan Pembeli:</span> {{.Note}}
+        </div>
+        {{ end }}
     </div>
 
     <div class="section">
-        <table class="totals">
+        <table class="table-no-border">
             <tr>
-                <td>Subtotal Harga Barang</td>
+                <td>Subtotal Makanan</td>
                 <td class="text-right">Rp{{.Subtotal}}</td>
             </tr>
             <tr>
-                <td>Diskon Platform</td>
+                <td>Diskon (jika ada)</td>
                 <td class="text-right">-Rp{{.Discount}}</td>
             </tr>
+            {{ if .IsDelivery }}
             <tr>
-                <td>Total Ongkos Kirim</td>
+                <td>Ongkos Kirim</td>
                 <td class="text-right">Rp{{.ShippingCost}}</td>
             </tr>
+            {{ end }}
             <tr>
-                <td>Biaya Jasa Aplikasi</td>
-                <td class="text-right">Rp{{.ServiceFee}}</td>
+                <td>Biaya Layanan</td>
+                <td class="text-right">Rp{{ .ServiceFee }}</td>
             </tr>
             <tr>
-                <td class="bold">Total Belanja</td>
-                <td class="text-right bold">Rp{{.TotalShopping}}</td>
+                <td colspan="2">
+                    <hr style="margin: 0 0 5px 0;">
+                </td>
             </tr>
             <tr>
-                <td class="bold">TOTAL TAGIHAN</td>
+                <td class="bold total-tagihan">Total Tagihan</td>
                 <td class="text-right bold">Rp{{.TotalBilling}}</td>
             </tr>
         </table>
     </div>
 
     <div class="section">
-        <div><span class="bold">Metode Pembayaran:</span> {{.PaymentMethod}}</div>
+        <div style="margin-bottom: 10px;">
+            <span class="bold">Metode Pembayaran:</span>
+            <span class="capitalize">{{.PaymentMethod}}</span>
+        </div>
+        <div>
+            <span class="bold">Status Pembayaran:</span>
+            <span class="badge {{.PaymentStatusColor}} uppercase">{{.PaymentStatus}}</span>
+        </div>
     </div>
 
-    <p style="font-size: 10px; color: #888; margin-top: 40px;">
-        Invoice ini sah dan diproses secara otomatis oleh sistem.
+    <p class="footer-note">
+        <em>Invoice ini dibuat otomatis oleh sistem {{ .CompanyTitle }}. Terakhir diupdate {{.UpdatedAt}}
+            {{.TimeZone}}</em>
     </p>
 
 </body>

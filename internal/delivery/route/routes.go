@@ -102,7 +102,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	})
 
 	// Application
-	api.Get("/invoice", c.OrderController.ShowInvoiceById)
+	api.Get("/applications", c.ApplicationController.Get)
 }
 
 // USER
@@ -129,6 +129,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
 	auth.Get("/orders", c.OrderController.GetAll)
+	auth.Get("/orders/:orderId/invoice", c.OrderController.ShowInvoiceByOrderId)
 
 	// Product review
 	auth.Post("/reviews", c.ProductReviewController.Create)

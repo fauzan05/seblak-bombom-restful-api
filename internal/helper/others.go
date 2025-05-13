@@ -10,6 +10,8 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -135,4 +137,52 @@ func ImageToBase64(path string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(data), nil
+}
+
+func GetPaymentStatusColor(status PaymentStatus) string {
+	switch status {
+	case PAID_PAYMENT:
+		return "green"
+	case PENDING_PAYMENT:
+		return "orange"
+	case CANCELLED_PAYMENT, FAILED_PAYMENT, EXPIRED_PAYMENT:
+		return "red"
+	default:
+		return "gray" // atau warna lain untuk status yang tidak diketahui
+	}
+}
+
+var TimeZoneMap = map[string]string{
+	"Asia/Jakarta":   "WIB",
+	"Asia/Pontianak": "WIB",
+	"Asia/Makassar":  "WITA",
+	"Asia/Jayapura":  "WIT",
+	"UTC":            "UTC",
+	// tambahkan time zone lainnya di Indonesia
+}
+
+func FormatNumberFloat32(n float32) string {
+	str := strconv.FormatFloat(float64(n), 'f', 0, 32)
+	parts := strings.Split(str, ".")
+	var integerPart string
+	var fractionalPart string
+
+	integerPart = parts[0]
+	if len(parts) > 1 {
+		fractionalPart = parts[1]
+	}
+
+	var result string
+	for i, r := range integerPart {
+		if i > 0 && (len(integerPart)-i)%3 == 0 {
+			result += "."
+		}
+		result += string(r)
+	}
+
+	if fractionalPart != "" {
+		result += "," + fractionalPart
+	}
+
+	return result
 }

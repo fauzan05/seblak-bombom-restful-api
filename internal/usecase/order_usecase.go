@@ -36,6 +36,7 @@ type OrderUseCase struct {
 	XenditTransactionRepository    *repository.XenditTransctionRepository
 	XenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase
 	XenditClient                   *xendit.APIClient
+	ApplicationRepository          *repository.ApplicationRepository
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
@@ -44,7 +45,8 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 	discountRepository *repository.DiscountCouponRepository, discountUsageRepository *repository.DiscountUsageRepository,
 	deliveryRepository *repository.DeliveryRepository, orderProductRepository *repository.OrderProductRepository,
 	walletRepository *repository.WalletRepository, xenditTransactionRepository *repository.XenditTransctionRepository,
-	xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase, xenditClient *xendit.APIClient) *OrderUseCase {
+	xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase, xenditClient *xendit.APIClient,
+	applicationRepository *repository.ApplicationRepository) *OrderUseCase {
 	return &OrderUseCase{
 		DB:                             db,
 		Log:                            log,
@@ -61,6 +63,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 		XenditTransactionRepository:    xenditTransactionRepository,
 		XenditTransactionQRCodeUseCase: xenditTransactionQRCodeUseCase,
 		XenditClient:                   xenditClient,
+		ApplicationRepository:          applicationRepository,
 	}
 }
 
@@ -784,4 +787,24 @@ func (c *OrderUseCase) GetByUserId(ctx context.Context, request *model.GetOrders
 	}
 
 	return converter.OrdersToResponse(newOrders), nil
+}
+
+func (c *OrderUseCase) GetInvoice(ctx context.Context, orderId uint64) (*model.OrderResponse, *model.ApplicationResponse, error) {
+	tx := c.DB.WithContext(ctx)
+
+	newOrder := new(entity.Order)
+	newOrder.ID = orderId
+	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
+		c.Log.Warnf("failed to get order by order id : %+v", err)
+		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get order by order id : %+v", err))
+	}
+
+	newApplication := new(entity.Application)
+	if err := c.ApplicationRepository.FindFirst(tx, newApplication); err != nil {
+		c.Log.Warnf("failed to get application setting : %+v", err)
+		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get application setting : %+v", err))
+	}
+
+	return converter.OrderToResponse(newOrder), converter.ApplicationToResponse(newApplication), nil
+
 }
