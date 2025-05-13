@@ -269,6 +269,10 @@ func (r *Repository[T]) FindWithPreloads(db *gorm.DB, entity *T, preload string)
 	return db.Preload(preload).Find(&entity).Error
 }
 
+func (r *Repository[T]) FindOrderByInvoiceId(db *gorm.DB, entity *T, invoiceId string) error {
+	return db.Where("invoice = ?", invoiceId).Preload("OrderProducts").Find(&entity).Error
+}
+
 func (r *Repository[T]) FindCurrentUserCartWithPreloads(db *gorm.DB, entity *T, preload string, userId uint64) error {
 	return db.Where("user_id = ?", userId).Preload(preload).Find(&entity).Error
 }

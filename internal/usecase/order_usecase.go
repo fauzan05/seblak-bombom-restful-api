@@ -369,6 +369,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newOrder.XenditTransaction = newXenditTransaction
 	}
 
+	// send email
+
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("failed to find newly created order : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly created order : %+v", err))
@@ -789,14 +791,14 @@ func (c *OrderUseCase) GetByUserId(ctx context.Context, request *model.GetOrders
 	return converter.OrdersToResponse(newOrders), nil
 }
 
-func (c *OrderUseCase) GetInvoice(ctx context.Context, orderId uint64) (*model.OrderResponse, *model.ApplicationResponse, error) {
+func (c *OrderUseCase) GetInvoice(ctx context.Context, invoiceId string) (*model.OrderResponse, *model.ApplicationResponse, error) {
 	tx := c.DB.WithContext(ctx)
 
 	newOrder := new(entity.Order)
-	newOrder.ID = orderId
-	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
-		c.Log.Warnf("failed to get order by order id : %+v", err)
-		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get order by order id : %+v", err))
+	newOrder.Invoice = invoiceId
+	if err := c.OrderRepository.FindOrderByInvoiceId(tx, newOrder, invoiceId); err != nil {
+		c.Log.Warnf("failed to get order by invoice id : %+v", err)
+		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get order by invoice id : %+v", err))
 	}
 
 	newApplication := new(entity.Application)

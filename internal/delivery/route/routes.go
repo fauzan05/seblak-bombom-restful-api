@@ -129,7 +129,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
 	auth.Get("/orders", c.OrderController.GetAll)
-	auth.Get("/orders/:orderId/invoice", c.OrderController.ShowInvoiceByOrderId)
+	auth.Get("/orders/:invoiceId/invoice", c.OrderController.ShowInvoiceByOrderId)
 
 	// Product review
 	auth.Post("/reviews", c.ProductReviewController.Create)

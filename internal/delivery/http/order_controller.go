@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"html/template"
+	"net/url"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
@@ -181,14 +182,14 @@ func (c *OrderController) GetAllByUserId(ctx *fiber.Ctx) error {
 }
 
 func (c *OrderController) ShowInvoiceByOrderId(ctx *fiber.Ctx) error {
-	getId := ctx.Params("orderId")
-	orderId, err := strconv.Atoi(getId)
+	getInvoiceId := ctx.Params("invoiceId")
+	decoded, err := url.QueryUnescape(getInvoiceId)
 	if err != nil {
-		c.Log.Warnf("failed to convert order id : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert order id : %+v", err))
+		c.Log.Warnf("failed to decode invoice id : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to decode invoice id : %+v", err))
 	}
 
-	order, app, err := c.UseCase.GetInvoice(ctx.Context(), uint64(orderId))
+	order, app, err := c.UseCase.GetInvoice(ctx.Context(), decoded)
 	if err != nil {
 		c.Log.Warnf("failed to get order by order id : %+v", err)
 		return err
