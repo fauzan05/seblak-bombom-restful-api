@@ -17,10 +17,10 @@ func main() {
 	// coreAPIClient := config.NewMidtransSanboxCoreAPIClient(viperConfig, log)
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
-	email := config.NewSMTPMailerTest(viperConfig)
+	email := config.NewEmailWorker(viperConfig)
 	pdf := config.NewPDFGenerator(log)
 	app := config.NewFiber(viperConfig)
-	
+
 	// cors setting
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://seblak-bombom-api-consumer-app, http://localhost:8000",  // Frontend are allowed (port 8000), if you use docker so you have to list the container name of api consumer (seblak-bombom-api-consumer)
@@ -47,4 +47,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to start server : %v", err)
 	}
+
+	defer email.Stop()
 }

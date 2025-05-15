@@ -30,7 +30,7 @@ type BootstrapConfig struct {
 	SnapClient    *snap.Client
 	CoreAPIClient *coreapi.Client
 	XenditClient  *xendit.APIClient
-	Email         *mailer.SMTPMailer
+	Email         *mailer.EmailWorker
 	PDF           *wkhtmltopdf.PDFGenerator
 }
 

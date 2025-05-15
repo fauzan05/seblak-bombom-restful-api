@@ -371,7 +371,6 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 			Type:            helper.PERCENT,
 			Start:           helper.TimeRFC3339(startWIB),
 			End:             helper.TimeRFC3339(endWIB),
-			TotalMaxUsage:   100,
 			MaxUsagePerUser: 5,
 			UsedCount:       0,
 			MinOrderValue:   20000,
@@ -403,7 +402,6 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 		assert.Equal(t, requestBody.Type, responseBody.Data.Type)
 		assert.Equal(t, requestBody.Start.ToTime(), responseBody.Data.Start.ToTime())
 		assert.Equal(t, requestBody.End.ToTime(), responseBody.Data.End.ToTime())
-		assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
 		assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
 		assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
 		assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)
@@ -428,7 +426,6 @@ func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc 
 		Type:            tipe,
 		Start:           start,
 		End:             end,
-		TotalMaxUsage:   totalMaxUsage,
 		MaxUsagePerUser: maxUsagePerUser,
 		UsedCount:       0,
 		MinOrderValue:   minOrderValue,
@@ -460,7 +457,6 @@ func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc 
 	assert.Equal(t, requestBody.Type, responseBody.Data.Type)
 	assert.Equal(t, requestBody.Start.ToTime(), responseBody.Data.Start.ToTime())
 	assert.Equal(t, requestBody.End.ToTime(), responseBody.Data.End.ToTime())
-	assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
 	assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
 	assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
 	assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)

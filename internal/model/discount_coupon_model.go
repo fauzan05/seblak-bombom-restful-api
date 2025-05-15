@@ -14,7 +14,6 @@ type DiscountCouponResponse struct {
 	Start           helper.TimeRFC3339  `json:"start"`
 	End             helper.TimeRFC3339  `json:"end"`
 	Status          bool                `json:"status"`
-	TotalMaxUsage   int                 `json:"total_max_usage"`
 	MaxUsagePerUser int                 `json:"max_usage_per_user"`
 	UsedCount       int                 `json:"used_count"`
 	MinOrderValue   float32             `json:"min_order_value"`
@@ -30,7 +29,6 @@ type CreateDiscountCouponRequest struct {
 	Type            helper.DiscountType `json:"type" validate:"required"`
 	Start           helper.TimeRFC3339  `json:"start" validate:"required"`
 	End             helper.TimeRFC3339  `json:"end" validate:"required"`
-	TotalMaxUsage   int                 `json:"total_max_usage" validate:"required"`
 	MaxUsagePerUser int                 `json:"max_usage_per_user" validate:"required"`
 	UsedCount       int                 `json:"used_count"`
 	MinOrderValue   float32             `json:"min_order_value"`
@@ -50,7 +48,6 @@ type UpdateDiscountCouponRequest struct {
 	Type            helper.DiscountType `json:"type" validate:"required"`
 	Start           helper.TimeRFC3339  `json:"start" validate:"required"`
 	End             helper.TimeRFC3339  `json:"end" validate:"required"`
-	TotalMaxUsage   int                 `json:"total_max_usage" validate:"required"`
 	MaxUsagePerUser int                 `json:"max_usage_per_user" validate:"required"`
 	UsedCount       int                 `json:"used_count"`
 	MinOrderValue   float32             `json:"min_order_value"`

@@ -18,7 +18,6 @@ func DiscountCouponToResponse(discount *entity.DiscountCoupon) *model.DiscountCo
 		End:             helper.TimeRFC3339(discount.End),
 		Status:          discount.Status,
 		MaxUsagePerUser: discount.MaxUsagePerUser,
-		TotalMaxUsage:   discount.TotalMaxUsage,
 		UsedCount:       discount.UsedCount,
 		MinOrderValue:   discount.MinOrderValue,
 		CreatedAt:       helper.TimeRFC3339(discount.CreatedAt),

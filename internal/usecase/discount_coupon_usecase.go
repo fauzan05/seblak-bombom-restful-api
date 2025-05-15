@@ -61,7 +61,6 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 	newDiscount.Start = request.Start.ToTime()
 	newDiscount.End = request.End.ToTime()
 	newDiscount.Status = request.Status
-	newDiscount.TotalMaxUsage = request.TotalMaxUsage
 	newDiscount.MaxUsagePerUser = request.MaxUsagePerUser
 	newDiscount.UsedCount = request.UsedCount
 	newDiscount.MinOrderValue = request.MinOrderValue
@@ -187,7 +186,6 @@ func (c *DiscountCouponUseCase) Edit(ctx context.Context, request *model.UpdateD
 	newDiscount.Start = request.Start.ToTime()
 	newDiscount.End = request.End.ToTime()
 	newDiscount.Status = request.Status
-	newDiscount.TotalMaxUsage = request.TotalMaxUsage
 	newDiscount.MaxUsagePerUser = request.MaxUsagePerUser
 	newDiscount.UsedCount = request.UsedCount
 	newDiscount.MinOrderValue = request.MinOrderValue

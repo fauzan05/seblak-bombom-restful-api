@@ -33,7 +33,7 @@ type UserUseCase struct {
 	WalletRepository       *repository.WalletRepository
 	CartRepository         *repository.CartRepository
 	NotificationRepository *repository.NotificationRepository
-	Email                  *mailer.SMTPMailer
+	Email                  *mailer.EmailWorker
 	ApplicationRepository  *repository.ApplicationRepository
 	PasswordReset          *repository.PasswordResetRepository
 }
@@ -42,7 +42,7 @@ func NewUserUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 	userRepository *repository.UserRepository, tokenRepository *repository.TokenRepository,
 	addressRepository *repository.AddressRepository, walletRepository *repository.WalletRepository,
 	cartRepository *repository.CartRepository, notificationRepository *repository.NotificationRepository,
-	email *mailer.SMTPMailer, applicationRepository *repository.ApplicationRepository,
+	email *mailer.EmailWorker, applicationRepository *repository.ApplicationRepository,
 	passwordReset *repository.PasswordResetRepository) *UserUseCase {
 	return &UserUseCase{
 		DB:                     db,
@@ -196,10 +196,11 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	}
 
 	newMail.Template = *bodyBuilder
-	err = c.Email.Send(*newMail)
-	if err != nil {
-		c.Log.Warnf("failed to send email registration : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to send email registration : %+v", err))
+	select {
+	case c.Email.MailQueue <- *newMail:
+	default:
+		c.Log.Warnf("email queue full, failed to send to %s", user.Email)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", user.Email))
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -500,10 +501,11 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	}
 
 	newMail.Template = *bodyBuilder
-	err = c.Email.Send(*newMail)
-	if err != nil {
-		c.Log.Warnf("failed to send email forgot password : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to send email forgot password : %+v", err))
+	select {
+	case c.Email.MailQueue <- *newMail:
+	default:
+		c.Log.Warnf("email queue full, failed to send to %s", newUser.Email)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newUser.Email))
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -691,10 +693,11 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	}
 
 	newMail.Template = *bodyBuilder
-	err = c.Email.Send(*newMail)
-	if err != nil {
-		c.Log.Warnf("failed to send email reset password : %+v", err)
-		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to send email reset password : %+v", err))
+	select {
+	case c.Email.MailQueue <- *newMail:
+	default:
+		c.Log.Warnf("email queue full, failed to send to %s", newUser.Email)
+		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newUser.Email))
 	}
 
 	if err := tx.Commit().Error; err != nil {

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Email Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            padding: 20px;
+            color: #333;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            border-radius: 8px;
+        }
+        .footer {
+            font-size: 12px;
+            color: #999;
+            margin-top: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h2>Hello!</h2>
+        <p>{{.Message}}</p>
+
+        <p>Best regards,<br>
+        <strong>{{.Sender}}</strong></p>
+
+        <div class="footer">
+            &copy; {{.Year}} Fauzan Dev Testing Mail
+        </div>
+    </div>
+</body>
+</html>

@@ -37,7 +37,6 @@ func TestCreateDiscountCoupon(t *testing.T) {
 			Type:            helper.PERCENT,
 			Start:           helper.TimeRFC3339(parseStart),
 			End:             helper.TimeRFC3339(parseEnd),
-			TotalMaxUsage:   100,
 			MaxUsagePerUser: 5,
 			UsedCount:       0,
 			MinOrderValue:   20000,
@@ -69,7 +68,6 @@ func TestCreateDiscountCoupon(t *testing.T) {
 		assert.Equal(t, requestBody.Type, responseBody.Data.Type)
 		assert.Equal(t, requestBody.Start, responseBody.Data.Start)
 		assert.Equal(t, requestBody.End, responseBody.Data.End)
-		assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
 		assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
 		assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
 		assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)
@@ -101,7 +99,6 @@ func TestCreateDiscountCouponFailed(t *testing.T) {
 			Type:            helper.PERCENT,
 			Start:           helper.TimeRFC3339(parseStart),
 			End:             helper.TimeRFC3339(parseEnd),
-			TotalMaxUsage:   100,
 			MaxUsagePerUser: 5,
 			UsedCount:       0,
 			MinOrderValue:   20000,
@@ -207,7 +204,6 @@ func TestGetDiscountCouponById(t *testing.T) {
 	assert.Equal(t, getDiscountCoupon.Code, responseBody.Data.Code)
 	assert.Equal(t, getDiscountCoupon.Start.ToTime(), responseBody.Data.Start.ToTime())
 	assert.Equal(t, getDiscountCoupon.End.ToTime(), responseBody.Data.End.ToTime())
-	assert.Equal(t, getDiscountCoupon.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
 	assert.Equal(t, getDiscountCoupon.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
 	assert.Equal(t, getDiscountCoupon.MinOrderValue, responseBody.Data.MinOrderValue)
 	assert.Equal(t, getDiscountCoupon.Type, responseBody.Data.Type)
@@ -258,7 +254,6 @@ func TestUpdateDiscountCouponById(t *testing.T) {
 		Type:            helper.PERCENT,
 		Start:           helper.TimeRFC3339(parseStart),
 		End:             helper.TimeRFC3339(parseEnd),
-		TotalMaxUsage:   100,
 		MaxUsagePerUser: 5,
 		UsedCount:       0,
 		MinOrderValue:   20000,
@@ -290,7 +285,6 @@ func TestUpdateDiscountCouponById(t *testing.T) {
 	assert.Equal(t, requestBodyCreate.Type, responseBodyCreate.Data.Type)
 	assert.Equal(t, requestBodyCreate.Start, responseBodyCreate.Data.Start)
 	assert.Equal(t, requestBodyCreate.End, responseBodyCreate.Data.End)
-	assert.Equal(t, requestBodyCreate.TotalMaxUsage, responseBodyCreate.Data.TotalMaxUsage)
 	assert.Equal(t, requestBodyCreate.MaxUsagePerUser, responseBodyCreate.Data.MaxUsagePerUser)
 	assert.Equal(t, requestBodyCreate.UsedCount, responseBodyCreate.Data.UsedCount)
 	assert.Equal(t, requestBodyCreate.MinOrderValue, responseBodyCreate.Data.MinOrderValue)
@@ -306,7 +300,6 @@ func TestUpdateDiscountCouponById(t *testing.T) {
 		Type:            helper.NOMINAL,
 		Start:           helper.TimeRFC3339(parseStart),
 		End:             helper.TimeRFC3339(parseEnd),
-		TotalMaxUsage:   1000,
 		MaxUsagePerUser: 3,
 		UsedCount:       0,
 		MinOrderValue:   25000,
@@ -339,7 +332,6 @@ func TestUpdateDiscountCouponById(t *testing.T) {
 	assert.Equal(t, requestBodyUpdate.Type, responseBodyUpdate.Data.Type)
 	assert.Equal(t, requestBodyUpdate.Start, responseBodyUpdate.Data.Start)
 	assert.Equal(t, requestBodyUpdate.End, responseBodyUpdate.Data.End)
-	assert.Equal(t, requestBodyUpdate.TotalMaxUsage, responseBodyUpdate.Data.TotalMaxUsage)
 	assert.Equal(t, requestBodyUpdate.MaxUsagePerUser, responseBodyUpdate.Data.MaxUsagePerUser)
 	assert.Equal(t, requestBodyUpdate.UsedCount, responseBodyUpdate.Data.UsedCount)
 	assert.Equal(t, requestBodyUpdate.MinOrderValue, responseBodyUpdate.Data.MinOrderValue)
@@ -367,7 +359,6 @@ func TestUpdateDiscountCouponByIdBadRequest(t *testing.T) {
 		Type:            helper.PERCENT,
 		Start:           helper.TimeRFC3339(parseStart),
 		End:             helper.TimeRFC3339(parseEnd),
-		TotalMaxUsage:   100,
 		MaxUsagePerUser: 5,
 		UsedCount:       0,
 		MinOrderValue:   20000,
@@ -399,7 +390,6 @@ func TestUpdateDiscountCouponByIdBadRequest(t *testing.T) {
 	assert.Equal(t, requestBodyCreate.Type, responseBodyCreate.Data.Type)
 	assert.Equal(t, requestBodyCreate.Start, responseBodyCreate.Data.Start)
 	assert.Equal(t, requestBodyCreate.End, responseBodyCreate.Data.End)
-	assert.Equal(t, requestBodyCreate.TotalMaxUsage, responseBodyCreate.Data.TotalMaxUsage)
 	assert.Equal(t, requestBodyCreate.MaxUsagePerUser, responseBodyCreate.Data.MaxUsagePerUser)
 	assert.Equal(t, requestBodyCreate.UsedCount, responseBodyCreate.Data.UsedCount)
 	assert.Equal(t, requestBodyCreate.MinOrderValue, responseBodyCreate.Data.MinOrderValue)
@@ -415,7 +405,6 @@ func TestUpdateDiscountCouponByIdBadRequest(t *testing.T) {
 		Type:            helper.PERCENT,
 		Start:           helper.TimeRFC3339(parseStart),
 		End:             helper.TimeRFC3339(parseEnd),
-		TotalMaxUsage:   100,
 		MaxUsagePerUser: 5,
 		UsedCount:       0,
 		MinOrderValue:   20000,
@@ -464,7 +453,6 @@ func TestUpdateDiscountCouponByIdNotFound(t *testing.T) {
 		Type:            helper.NOMINAL,
 		Start:           helper.TimeRFC3339(parseStart),
 		End:             helper.TimeRFC3339(parseEnd),
-		TotalMaxUsage:   1000,
 		MaxUsagePerUser: 3,
 		UsedCount:       0,
 		MinOrderValue:   25000,
@@ -515,7 +503,6 @@ func TestDeleteDiscountCoupon(t *testing.T) {
 			Type:            helper.PERCENT,
 			Start:           helper.TimeRFC3339(parseStart),
 			End:             helper.TimeRFC3339(parseEnd),
-			TotalMaxUsage:   100,
 			MaxUsagePerUser: 5,
 			UsedCount:       0,
 			MinOrderValue:   20000,
@@ -547,7 +534,6 @@ func TestDeleteDiscountCoupon(t *testing.T) {
 		assert.Equal(t, requestBody.Type, responseBody.Data.Type)
 		assert.Equal(t, requestBody.Start, responseBody.Data.Start)
 		assert.Equal(t, requestBody.End, responseBody.Data.End)
-		assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
 		assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
 		assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
 		assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)

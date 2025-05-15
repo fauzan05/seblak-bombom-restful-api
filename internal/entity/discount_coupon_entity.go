@@ -14,7 +14,6 @@ type DiscountCoupon struct {
 	Type            helper.DiscountType `gorm:"column:type"`
 	Start           time.Time           `gorm:"column:start"`
 	End             time.Time           `gorm:"column:end"`
-	TotalMaxUsage   int                 `gorm:"column:total_max_usage"`
 	MaxUsagePerUser int                 `gorm:"column:max_usage_per_user"`
 	UsedCount       int                 `gorm:"column:used_count"`
 	MinOrderValue   float32             `gorm:"column:min_order_value"`

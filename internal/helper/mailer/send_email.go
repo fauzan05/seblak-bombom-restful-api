@@ -3,13 +3,22 @@ package mailer
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"mime/quotedprintable"
 	"net/smtp"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"strings"
+	"sync"
 	"time"
 )
+
+type EmailWorker struct {
+	Mailer     *SMTPMailer
+	MailQueue  chan model.Mail
+	WorkerSize int
+	wg         sync.WaitGroup
+}
 
 type SMTPMailer struct {
 	AuthEmail    string
@@ -78,4 +87,29 @@ func (s *SMTPMailer) Send(mail model.Mail) error {
 	recipients := append(mail.To, mail.Cc...)
 	addr := fmt.Sprintf("%s:%d", s.Host, s.Port)
 	return smtp.SendMail(addr, auth, s.AuthEmail, recipients, []byte(msg.String()))
+}
+
+func (w *EmailWorker) Start() {
+	for i := 0; i < w.WorkerSize; i++ {
+		w.wg.Add(1)
+		go w.runWorker(i)
+	}
+}
+
+func (w *EmailWorker) runWorker(id int) {
+	defer w.wg.Done()
+	for mail := range w.MailQueue {
+		err := w.Mailer.Send(mail)
+		if err != nil {
+			log.Printf("[Worker %d] Failed send email to %v: %v", id, mail.To, err)
+		} else {
+			log.Printf("[Worker %d] Email successfully sent to %v", id, mail.To)
+		}
+	}
+	log.Printf("[Worker %d] Finished", id)
+}
+
+func (w *EmailWorker) Stop() {
+	close(w.MailQueue) // Ini penting untuk keluarin semua goroutine dari loop
+	w.wg.Wait()        // Tunggu semua selesai
 }

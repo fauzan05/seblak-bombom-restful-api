@@ -40,7 +40,7 @@ type OrderUseCase struct {
 	XenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase
 	XenditClient                   *xendit.APIClient
 	ApplicationRepository          *repository.ApplicationRepository
-	Email                          *mailer.SMTPMailer
+	Email                          *mailer.EmailWorker
 }
 
 func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
@@ -50,7 +50,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 	deliveryRepository *repository.DeliveryRepository, orderProductRepository *repository.OrderProductRepository,
 	walletRepository *repository.WalletRepository, xenditTransactionRepository *repository.XenditTransctionRepository,
 	xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase, xenditClient *xendit.APIClient,
-	applicationRepository *repository.ApplicationRepository, email *mailer.SMTPMailer) *OrderUseCase {
+	applicationRepository *repository.ApplicationRepository, email *mailer.EmailWorker) *OrderUseCase {
 	return &OrderUseCase{
 		DB:                             db,
 		Log:                            log,
@@ -242,6 +242,12 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 				}
 
 				newOrder.DiscountValue = newDiscount.Value
+				// update used count
+				newDiscount.UsedCount = newDiscount.UsedCount + 1
+				if err := c.DiscountRepository.Update(tx, newDiscount); err != nil {
+					c.Log.Warnf("failed to update discount used count : %+v", err)
+						return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update discount used count : %+v", err))
+				}
 			} else {
 				if newDiscount.End.Before(time.Now()) {
 					c.Log.Warnf("discount has expired and is no longer available!")
@@ -455,10 +461,11 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
 		}
 		newMail.Template = *bodyBuilder
-		err = c.Email.Send(*newMail)
-		if err != nil {
-			c.Log.Warnf("failed to send email pending payment : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to send email pending payment : %+v", err))
+		select {
+		case c.Email.MailQueue <- *newMail:
+		default:
+			c.Log.Warnf("email queue full, failed to send to %s", newOrder.Email)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newOrder.Email))
 		}
 	} else {
 		newMail := new(model.Mail)
@@ -495,10 +502,11 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
 		}
 		newMail.Template = *bodyBuilder
-		err = c.Email.Send(*newMail)
-		if err != nil {
-			c.Log.Warnf("failed to send email paid payment : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to send email paid payment : %+v", err))
+		select {
+		case c.Email.MailQueue <- *newMail:
+		default:
+			c.Log.Warnf("email queue full, failed to send to %s", newOrder.Email)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newOrder.Email))
 		}
 	}
 
