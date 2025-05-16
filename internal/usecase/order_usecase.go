@@ -40,6 +40,7 @@ type OrderUseCase struct {
 	XenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase
 	XenditClient                   *xendit.APIClient
 	ApplicationRepository          *repository.ApplicationRepository
+	NotificationRepository         *repository.NotificationRepository
 	Email                          *mailer.EmailWorker
 }
 
@@ -50,7 +51,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 	deliveryRepository *repository.DeliveryRepository, orderProductRepository *repository.OrderProductRepository,
 	walletRepository *repository.WalletRepository, xenditTransactionRepository *repository.XenditTransctionRepository,
 	xenditTransactionQRCodeUseCase *xenditUseCase.XenditTransactionQRCodeUseCase, xenditClient *xendit.APIClient,
-	applicationRepository *repository.ApplicationRepository, email *mailer.EmailWorker) *OrderUseCase {
+	applicationRepository *repository.ApplicationRepository, email *mailer.EmailWorker, notificationRepository *repository.NotificationRepository) *OrderUseCase {
 	return &OrderUseCase{
 		DB:                             db,
 		Log:                            log,
@@ -69,6 +70,7 @@ func NewOrderUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Valida
 		XenditClient:                   xenditClient,
 		ApplicationRepository:          applicationRepository,
 		Email:                          email,
+		NotificationRepository:         notificationRepository,
 	}
 }
 
@@ -101,22 +103,30 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		}
 
 		var imageSelectedFileName string
-		var productImagePath string
+		var productImageBase64 string
 		for _, image := range newProduct.Images {
 			if image.Position == 1 {
 				imageSelectedFileName = image.FileName
-				productImagePath = fmt.Sprintf("%s://%s/api/image/products/%s", ctx.Protocol(), ctx.Hostname(), image.FileName)
+				// productImagePath = fmt.Sprintf("%s://%s/api/image/products/%s", ctx.Protocol(), ctx.Hostname(), image.FileName)
+				productImagePath := fmt.Sprintf("../uploads/images/products/%s", image.FileName)
+				imageBase64, err := helper.ImageToBase64(productImagePath)
+				if err != nil {
+					c.Log.Warnf("failed to convert product image to base64 : %+v", err)
+					return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert product image to base64 : %+v", err))
+				}
+				productImageBase64 = imageBase64
 			}
 			break
 		}
 
 		productImage := map[string]any{
 			"ProductImageFilename": imageSelectedFileName,
-			"ProductImage":         productImagePath,
+			"ProductImage":         productImageBase64,
 			"ProductName":          newProduct.Name,
 			"Quantity":             orderProductRequest.Quantity,
-			"Price":                newProduct.Price,
+			"Price":                helper.FormatNumberFloat32(newProduct.Price),
 		}
+
 		productSelected = append(productSelected, productImage)
 
 		if newProduct.Stock < 1 {
@@ -246,7 +256,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 				newDiscount.UsedCount = newDiscount.UsedCount + 1
 				if err := c.DiscountRepository.Update(tx, newDiscount); err != nil {
 					c.Log.Warnf("failed to update discount used count : %+v", err)
-						return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update discount used count : %+v", err))
+					return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update discount used count : %+v", err))
 				}
 			} else {
 				if newDiscount.End.Before(time.Now()) {
@@ -342,6 +352,13 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	// mengambil alamat utama yang diambil oleh user
 	newOrder.CompleteAddress = request.CompleteAddress
 
+	newApp := new(entity.Application)
+	if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
+		c.Log.Warnf("failed to find application from database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
+	}
+
+	newOrder.ServiceFee = newApp.ServiceFee
 	if err := c.OrderRepository.Create(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to create new order : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new order : %+v", err))
@@ -405,69 +422,18 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly created order : %+v", err))
 	}
 
-	// send email
-	newApp := new(entity.Application)
-	if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
-		c.Log.Warnf("failed to find application from database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
-	}
-
 	if newApp.LogoFilename == "" {
 		c.Log.Warnf("application logo has not uploaded yet!")
 		return nil, fiber.NewError(fiber.StatusBadRequest, "application logo has not uploaded yet!")
 	}
 
-	logoImagePath := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	if newOrder.PaymentStatus == helper.PENDING_PAYMENT {
-		newMail := new(model.Mail)
-		newMail.To = []string{newOrder.Email}
-		newMail.Subject = "Awaiting Payment"
-		if request.Lang == helper.INDONESIA {
-			newMail.Subject = "Menunggu Pembayaran"
-		}
-
-		logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-		logoImageBase64, err := helper.ImageToBase64(logoImagePath)
-		if err != nil {
-			c.Log.Warnf("failed to parse image to base64 : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse image to base64 : %+v", err))
-		}
-
-		templatePath := "../internal/templates/english/email/order_pending_payment.html"
-		if request.Lang == helper.INDONESIA {
-			templatePath = "../internal/templates/indonesia/email/order_pending_payment.html"
-		}
-
-		tmpl, err := template.ParseFiles(templatePath)
-		if err != nil {
-			c.Log.Warnf("failed to parse template file html : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
-		}
-
-		bodyBuilder := new(strings.Builder)
-		err = tmpl.Execute(bodyBuilder, map[string]any{
-			"CustomerName":  newOrder.FirstName + " " + newOrder.LastName,
-			"Invoice":       newOrder.Invoice,
-			"Date":          time.Now().Format("02 January 2006 15:04"),
-			"PaymentMethod": string(newOrder.PaymentMethod),
-			"Items":         productSelected,
-			"LogoImage":     logoImageBase64,
-			"CompanyTitle":  newApp.AppName,
-			"ExpiredAt":     newOrder.XenditTransaction.ExpiresAt,
-			"TotalAmount":   newOrder.TotalFinalPrice,
-		})
-		if err != nil {
-			c.Log.Warnf("failed to execute template file html : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
-		}
-		newMail.Template = *bodyBuilder
-		select {
-		case c.Email.MailQueue <- *newMail:
-		default:
-			c.Log.Warnf("email queue full, failed to send to %s", newOrder.Email)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newOrder.Email))
-		}
-	} else {
+	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+	logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+	if err != nil {
+		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
+	}
+	if newOrder.PaymentStatus == helper.PAID_PAYMENT {
 		newMail := new(model.Mail)
 		newMail.To = []string{newOrder.Email}
 		newMail.Subject = "Paid Payment"
@@ -488,26 +454,43 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 		bodyBuilder := new(strings.Builder)
 		err = tmpl.Execute(bodyBuilder, map[string]any{
-			"CustomerName":  newOrder.FirstName + " " + newOrder.LastName,
-			"Invoice":       newOrder.Invoice,
-			"Date":          time.Now().Format("02 January 2006 15:04"),
-			"PaymentMethod": string(newOrder.PaymentMethod),
-			"Items":         productSelected,
-			"LogoImage":     logoImagePath,
-			"CompanyTitle":  newApp.AppName,
-			"TotalAmount":   newOrder.TotalFinalPrice,
+			"CustomerName":   newOrder.FirstName + " " + newOrder.LastName,
+			"Invoice":        newOrder.Invoice,
+			"Date":           time.Now().Format("02 January 2006 15:04"),
+			"PaymentMethod":  string(newOrder.PaymentMethod),
+			"Items":          productSelected,
+			"LogoImage":      logoImageBase64,
+			"CompanyTitle":   newApp.AppName,
+			"TotalAmount":    helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
+			"Year":           time.Now().Format("2006"),
+			"CustomerNotes":  newOrder.Note,
+			"ShippingMethod": newOrder.IsDelivery,
+			"ShippingCost":   helper.FormatNumberFloat32(newOrder.DeliveryCost),
+			"ServiceFee":     helper.FormatNumberFloat32(newOrder.ServiceFee),
+			"Discount":       helper.FormatNumberFloat32(newOrder.TotalDiscount),
 		})
 		if err != nil {
 			c.Log.Warnf("failed to execute template file html : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
 		}
 		newMail.Template = *bodyBuilder
+		// send email
 		select {
 		case c.Email.MailQueue <- *newMail:
 		default:
 			c.Log.Warnf("email queue full, failed to send to %s", newOrder.Email)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newOrder.Email))
 		}
+
+		// newNotification := new(entity.Notification)
+		// newNotification.UserID = newOrder.UserId
+		// // newNotification.
+
+		// // newNotification
+		// if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
+		// 	c.Log.Warnf("failed to create new paid notification into database : %+v", err)
+		// 	return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new paid notification into database : %+v", err))
+		// }
 	}
 
 	if err := tx.Commit().Error; err != nil {

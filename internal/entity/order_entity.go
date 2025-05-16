@@ -25,10 +25,11 @@ type Order struct {
 	DeliveryCost      float32               `gorm:"column:delivery_cost"`
 	CompleteAddress   string                `gorm:"column:complete_address"`
 	Note              string                `gorm:"column:note"`
+	ServiceFee        float32               `gorm:"column:service_fee"`
 	TotalProductPrice float32               `gorm:"column:total_product_price"`
 	TotalFinalPrice   float32               `gorm:"column:total_final_price"`
-	CreatedAt        time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
-	UpdatedAt        time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	CreatedAt         time.Time             `gorm:"column:created_at;autoCreateTime;<-:create"`
+	UpdatedAt         time.Time             `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	OrderProducts     []OrderProduct        `gorm:"foreignKey:order_id;references:id"`
 	XenditTransaction *XenditTransactions   `gorm:"foreignKey:order_id;references:id"`
 }

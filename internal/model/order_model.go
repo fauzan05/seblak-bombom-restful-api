@@ -24,6 +24,7 @@ type OrderResponse struct {
 	DeliveryCost      float32                    `json:"delivery_cost"`
 	CompleteAddress   string                     `json:"complete_address"`
 	Note              string                     `json:"note"`
+	ServiceFee        float32                    `json:"service_fee"`
 	TotalProductPrice float32                    `json:"total_product_price"`
 	TotalFinalPrice   float32                    `json:"total_final_price"`
 	CreatedAt         helper.TimeRFC3339         `json:"created_at"`
