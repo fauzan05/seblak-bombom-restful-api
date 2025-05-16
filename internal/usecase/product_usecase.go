@@ -310,6 +310,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 	}
 
 	// Jika user menambahkan gambar baru
+	fmt.Println("GAMBAR BARU : ", newImageFiles)
 	if len(newImageFiles) > 0 {
 		newImages := make([]entity.Image, len(newImageFiles))
 

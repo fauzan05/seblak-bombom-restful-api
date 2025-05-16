@@ -39,6 +39,7 @@ func TestAddApplicationSetting(t *testing.T) {
 	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
 	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
 	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
 
 	filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
 	assert.Nil(t, err)
@@ -113,6 +114,7 @@ func TestAddApplicationSettingBadRequest(t *testing.T) {
 	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
 	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
 	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
 
 	filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
 	assert.Nil(t, err)
@@ -171,6 +173,7 @@ func TestUpdateApplicationSetting(t *testing.T) {
 	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
 	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
 	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
 
 	filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
 	assert.Nil(t, err)
@@ -239,6 +242,7 @@ func TestUpdateApplicationSetting(t *testing.T) {
 	_ = writer.WriteField("twitter_link", "https://www.twitter-update.com/")
 	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook-update")
 	_ = writer.WriteField("facebook_link", "https://www.facebook-update.com/")
+	_ = writer.WriteField("service_fee", "1000")
 
 	filename, content, err = GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
 	assert.Nil(t, err)
@@ -313,6 +317,7 @@ func TestAddApplicationSettingFileLogoExceededThan1Mb(t *testing.T) {
 	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
 	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
 	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
 
 	filename, content, err := GenerateDummyJPEG(2 * 1024 * 1024) // 1 MB
 	assert.Nil(t, err)

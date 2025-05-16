@@ -43,12 +43,10 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 	}
 
 	newApplication := new(entity.Application)
-	if request.ID > 0 {
-		newApplication.ID = request.ID
-		if err := c.ApplicationRepository.FindById(tx, newApplication); err != nil {
-			c.Log.Warnf("failed to find current application data in database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find current application data in database : %+v", err))
-		}
+	count, err := c.ApplicationRepository.FindAndCountById(tx, newApplication)
+	if err != nil {
+		c.Log.Warnf("failed to find application in database : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application in database : %+v", err))
 	}
 
 	var hashedFilename string
@@ -67,7 +65,7 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 		}
 
 		// delete data gambar sebelumnya
-		if newApplication.ID > 0 {
+		if count > 0 {
 			if newApplication.LogoFilename != "" {
 				filePath := "../uploads/images/application/"
 				err = os.Remove(filePath + newApplication.LogoFilename)
@@ -79,11 +77,7 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 		}
 	}
 
-	count, err := c.ApplicationRepository.FindCount(tx, newApplication)
-	if err != nil {
-		c.Log.Warnf("failed to find application in database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application in database : %+v", err))
-	}
+	fmt.Println("ID APP : ", newApplication.ID)
 
 	newApplication.AppName = request.AppName
 	if request.Logo != nil {
@@ -104,15 +98,17 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 	newApplication.SocialMedia.TwitterLink = request.TwitterLink
 	newApplication.SocialMedia.FacebookName = request.FacebookName
 	newApplication.SocialMedia.FacebookLink = request.FacebookLink
-
+	newApplication.ServiceFee = request.ServiceFee
 	// application settings harus berupa 1 baris data saja, tidak boleh lebih dari 2 karena akan membgingunkan nantinya saat pengambilan data mengenai pengaturan aplikasinya
-	if count < 1 {
+	if count == 0 {
+		fmt.Println("BUAT LAGI : ", count)
 		// boleh dibuat
 		if err := c.ApplicationRepository.Create(tx, newApplication); err != nil {
 			c.Log.Warnf("failed to create new application request : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new application request : %+v", err))
 		}
-	} else if count > 0 {
+	} else if count == 1 {
+		fmt.Println("UPDATE SAJA : ", count)
 		// tidak boleh buat lagi, dan mengupdate yang sekarang
 		if err := c.ApplicationRepository.Update(tx, newApplication); err != nil {
 			c.Log.Warnf("failed to update new application request : %+v", err)

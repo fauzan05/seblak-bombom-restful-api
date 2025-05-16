@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice {{.CompanyName}} - Paid Payment</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 30px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    .invoice-box {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    img.logo {
+      height: 100px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-top: 5px;
+    }
+
+    .status-paid {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .info-table,
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .info-table td,
+    .items-table td,
+    .items-table th {
+      border: 1px solid #ddd;
+      padding: 10px;
+      vertical-align: middle;
+    }
+
+    .items-table th {
+      background-color: #f2f2f2;
+      text-align: left;
+    }
+
+    .product-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .product-info img {
+      height: 50px;
+      width: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    .total-row td {
+      font-weight: bold;
+      background-color: #f9f9f9;
+    }
+
+    .footer-message {
+      margin-top: 30px;
+      font-size: 14px;
+      text-align: center;
+      color: #666;
+    }
+
+    .capitalize {
+      text-transform: capitalize;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="invoice-box">
+    <img src="data:image/png;base64,{{ .LogoImage }}" alt="Logo {{ .CompanyTitle }}" class="logo">
+    <h1>{{.CompanyName}}</h1>
+    <h2>Status: <span class="status-paid">Paid Payment</span></h2>
+
+    <table class="info-table">
+      <tr>
+        <td>Invoice</td>
+        <td>{{.Invoice}}</td>
+      </tr>
+      <tr>
+        <td>Date</td>
+        <td>{{.Date}}</td>
+      </tr>
+      <tr>
+        <td>Customer Name</td>
+        <td><span class="capitalize">{{.CustomerName}}</span></td>
+      </tr>
+      <tr>
+        <td>Payment Method</td>
+        <td>{{.PaymentMethod}}</td>
+      </tr>
+      <tr>
+        <td>Shipping Method</td>
+        {{if .ShippingMethod}}
+        <td>Delivery</td>
+        {{else}}
+        <td>Pick Up</td>
+        {{end}}
+      </tr>
+    </table>
+
+    <div style="margin-top: 20px;">
+      <strong>Notes: </strong>
+      <div
+        style="background-color: #fcfcfc; border: 1px solid #ddd; padding: 10px; border-radius: 5px; font-size: 14px; margin-top: 5px;">
+        {{if .CustomerNotes}}
+        {{.CustomerNotes}}
+        {{else}}
+        -
+        {{end}}
+      </div>
+    </div>
+
+    <table class="items-table">
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price</th>
+      </tr>
+      {{range .Items}}
+      <tr>
+        <td>
+          <div class="product-info">
+            <img src="data:image/png;base64,{{ .ProductImage }}" alt="{{ .ProductImageFilename }}">
+            <span>{{.ProductName}}</span>
+          </div>
+        </td>
+        <td>{{.Quantity}}</td>
+        <td>Rp{{.Price}}</td>
+      </tr>
+      {{end}}
+      <tr>
+        <td colspan="2">Shipping Cost</td>
+        <td>Rp{{.ShippingCost}}</td>
+      </tr>
+      <tr>
+        <td colspan="2">Service Fee</td>
+        <td>Rp{{.ServiceFee}}</td>
+      </tr>
+      <tr>
+        <td colspan="2">Discount</td>
+        <td>- Rp{{.Discount}}</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="2">Total</td>
+        <td>Rp{{.TotalAmount}}</td>
+      </tr>
+    </table>
+
+    <p class="footer-message">
+      Thank you for ordering at {{.CompanyName}}. We are currently processing your order 😉.
+    </p>
+    <hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;" />
+    <p style="font-size: 13px; color: #999; text-align: center;">&copy; {{.Year}} {{.CompanyName}}. All rights reserved.
+    </p>
+    <p style="font-size: 13px; color: #bbb; text-align: center;">This email was sent automatically. Please do not reply.
+    </p>
+  </div>
+</body>
+
+</html>

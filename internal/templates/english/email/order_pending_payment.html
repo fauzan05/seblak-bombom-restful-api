@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice {{.CompanyName}} - Awaiting Payment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    .invoice-box {
+      border: 1px solid #eee;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h1,
+    h2 {
+      margin-bottom: 0;
+    }
+
+    .status-unpaid {
+      color: orange;
+      font-weight: bold;
+    }
+
+    .info-table,
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .info-table td,
+    .items-table td,
+    .items-table th {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    .items-table th {
+      background-color: #f2f2f2;
+    }
+
+    .total-row td {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="invoice-box">
+    <img src="data:image/png;base64,{{ .LogoImage }}" alt="Logo {{ .CompanyTitle }}" style="height: 150px;">
+    <h1>{{.CompanyName}}</h1>
+    <h2>Status: <span class="status-unpaid">Awaiting Payment</span></h2>
+
+    <table class="info-table">
+      <tr>
+        <td>Invoice</td>
+        <td>{{.Invoice}}</td>
+      </tr>
+      <tr>
+        <td>Date</td>
+        <td>{{.CreatedAt}}</td>
+      </tr>
+      <tr>
+        <td>Customer Name</td>
+        <td>{{.CustomerName}}</td>
+      </tr>
+      <tr>
+        <td>Payment Method</td>
+        <td>{{.PaymentMethod}}</td>
+      </tr>
+    </table>
+
+    <table class="items-table">
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price</th>
+      </tr>
+      {{range .Items}}
+      <tr>
+        <td>
+          <img src="data:image/png;base64,{{ .ProductImage }}" alt="{{ .ProductImageFilename }}" style="height: 50px;">
+          {{.ProductName}}
+        </td>
+        <td>{{.Quantity}}</td>
+        <td>{{.Price}}</td>
+      </tr>
+      {{end}}
+      <tr class="total-row">
+        <td colspan="2">Total</td>
+        <td>{{.TotalAmount}}</td>
+      </tr>
+    </table>
+
+    <p style="margin-top: 30px;">
+      Please make the payment to the above virtual account number before <strong>{{.ExpiredAt}}</strong> to avoid order
+      cancellation.
+    </p>
+  </div>
+</body>
+
+</html>

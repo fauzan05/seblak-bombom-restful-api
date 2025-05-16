@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"seblak-bombom-restful-api/internal/delivery/http"
 	xenditController "seblak-bombom-restful-api/internal/delivery/http/xendit"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -82,23 +83,30 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 	// Images
 	uploadsDir := "../uploads/images"
-	api.Static("/uploads", uploadsDir)
+	api.Get("/image/*", func(c *fiber.Ctx) error {
+		relativePath := c.Params("*") // Menangkap seluruh path setelah /image/
+		if relativePath == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Missing file path")
+		}
 
-	api.Get("/image/:dir/:filename", func(c *fiber.Ctx) error {
-		dir := c.Params("dir")           // Direktori (contoh: products, applications)
-		filename := c.Params("filename") // Nama file
+		// Gabungkan path dengan root upload
+		unsafePath := filepath.Join(uploadsDir, relativePath)
+		cleanPath := filepath.Clean(unsafePath)
 
-		// Gabungkan path menggunakan filepath.Join untuk keamanan
-		filepath := filepath.Join(uploadsDir, dir, filename)
+		// Pastikan cleanPath masih dalam uploadsDir
+		absUploadsDir, _ := filepath.Abs(uploadsDir)
+		absCleanPath, _ := filepath.Abs(cleanPath)
+		if !strings.HasPrefix(absCleanPath, absUploadsDir) {
+			return c.Status(fiber.StatusForbidden).SendString("Access denied")
+		}
 
-		// Mengecek apakah file ada di direktori uploads
-		if _, err := os.Stat(filepath); os.IsNotExist(err) {
-			// Jika file tidak ditemukan, kembalikan error 404
+		// Cek apakah file ada
+		if _, err := os.Stat(absCleanPath); os.IsNotExist(err) {
 			return c.Status(fiber.StatusNotFound).SendString("File not found")
 		}
 
-		// Kirimkan gambar jika ditemukan
-		return c.SendFile(filepath)
+		// Kirim file
+		return c.SendFile(absCleanPath)
 	})
 
 	// Application
@@ -129,27 +137,27 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
 	auth.Get("/orders", c.OrderController.GetAll)
-	auth.Get("/orders/:orderId/invoice", c.OrderController.ShowInvoiceByOrderId)
+	auth.Get("/orders/:invoiceId/invoice", c.OrderController.ShowInvoiceByOrderId)
 
 	// Product review
 	auth.Post("/reviews", c.ProductReviewController.Create)
 
 	// Midtrans
-	api.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
-	api.Post("/midtrans/core-api/orders", c.MidtransCoreAPIOrderController.CreateCoreAPI)
-	api.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrder)
+	auth.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
+	auth.Post("/midtrans/core-api/orders", c.MidtransCoreAPIOrderController.CreateCoreAPI)
+	auth.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrder)
 
 	// Xendit
-	api.Post("/xendit/orders/qr-code/transaction", c.XenditQRCodeTransactionController.Create)
-	api.Get("/xendit/orders/:orderId/qr-code/transaction", c.XenditQRCodeTransactionController.GetTransaction)
-	api.Post("/xendit/payout-request/:payoutId/cancel", c.XenditPayoutController.Cancel)
-	api.Get("/xendit/payout-request/:payoutId", c.XenditPayoutController.GetPayoutById)
+	auth.Post("/xendit/orders/qr-code/transaction", c.XenditQRCodeTransactionController.Create)
+	auth.Get("/xendit/orders/:orderId/qr-code/transaction", c.XenditQRCodeTransactionController.GetTransaction)
+	auth.Post("/xendit/payout-request/:payoutId/cancel", c.XenditPayoutController.Cancel)
+	auth.Get("/xendit/payout-request/:payoutId", c.XenditPayoutController.GetPayoutById)
 
 	// Cart
-	api.Post("/carts", c.CartController.Create)
-	api.Get("/carts", c.CartController.GetAllCurrent)
-	api.Patch("/carts/cart-items/:cartItemId", c.CartController.Update)
-	api.Delete("/carts/cart-items/:cartItemId", c.CartController.Delete)
+	auth.Post("/carts", c.CartController.Create)
+	auth.Get("/carts", c.CartController.GetAllCurrent)
+	auth.Patch("/carts/cart-items/:cartItemId", c.CartController.Update)
+	auth.Delete("/carts/cart-items/:cartItemId", c.CartController.Delete)
 
 	// Xendit payout
 	auth.Post("/xendit/payouts/:userId", c.XenditPayoutController.Create)

@@ -6,7 +6,6 @@ CREATE TABLE discount_coupons (
     type ENUM("nominal", "percent") NOT NULL,
     start DATETIME NULL DEFAULT NULL,
     end DATETIME NULL DEFAULT NULL,
-    total_max_usage INT DEFAULT 1,
     max_usage_per_user INT DEFAULT 1,
     used_count INT DEFAULT 0,
     min_order_value DECIMAL(15, 2) DEFAULT 0,

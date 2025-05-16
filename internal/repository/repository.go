@@ -212,7 +212,7 @@ func (r *Repository[T]) FindAndCountById(db *gorm.DB, entity *T) (int64, error) 
 
 func (r *Repository[T]) FindAndCountProductById(db *gorm.DB, entity *T) (int64, error) {
 	var count int64
-	err := db.Preload("Category").Find(&entity).Count(&count).Error
+	err := db.Preload("Category").Preload("Images").Find(&entity).Count(&count).Error
 	if err != nil {
 		return int64(0), err
 	}
@@ -267,6 +267,10 @@ func (r *Repository[T]) FindWithJoins(db *gorm.DB, entity *T, join string) error
 
 func (r *Repository[T]) FindWithPreloads(db *gorm.DB, entity *T, preload string) error {
 	return db.Preload(preload).Find(&entity).Error
+}
+
+func (r *Repository[T]) FindOrderByInvoiceId(db *gorm.DB, entity *T, invoiceId string) error {
+	return db.Where("invoice = ?", invoiceId).Preload("OrderProducts").Find(&entity).Error
 }
 
 func (r *Repository[T]) FindCurrentUserCartWithPreloads(db *gorm.DB, entity *T, preload string, userId uint64) error {

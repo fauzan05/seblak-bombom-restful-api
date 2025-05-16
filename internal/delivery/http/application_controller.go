@@ -32,13 +32,17 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		c.Log.Warnf("cannot parse multipart form data: %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data: %+v", err))
+		c.Log.Warnf("cannot parse multipart form data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data : %+v", err))
 	}
 
 	request := new(model.CreateApplicationRequest)
 	if len(form.Value["id"]) > 0 {
-		request.ID, _ = strconv.ParseUint(form.Value["id"][0], 10, 64)
+		request.ID, err = strconv.ParseUint(form.Value["id"][0], 10, 64)
+		if err != nil {
+			c.Log.Warnf("cannot parse application_id to int : %+v", err)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse application_id to int : %+v", err))
+		}
 	}
 
 	request.AppName = strings.TrimSpace(form.Value["app_name"][0])
@@ -69,6 +73,15 @@ func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 	request.TwitterLink = getFirst("twitter_link")
 	request.FacebookName = getFirst("facebook_name")
 	request.FacebookLink = getFirst("facebook_link")
+	serviceFee := getFirst("service_fee")
+	if serviceFee != "" {
+		serviceFeeFloat64, err := strconv.ParseFloat(serviceFee, 32)
+		if err != nil {
+			c.Log.Warnf("cannot parse service_fee to float32 : %+v", err)
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse service_fee to float32: %+v", err))
+		}
+		request.ServiceFee = float32(serviceFeeFloat64)
+	}
 
 	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {

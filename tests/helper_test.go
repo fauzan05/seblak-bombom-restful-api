@@ -197,7 +197,7 @@ func DoLoginAdmin(t *testing.T) string {
 
 func DoLoginCustomer(t *testing.T) string {
 	requestBody := model.LoginUserRequest{
-		Email:    "F3196813@gmail.com",
+		Email:    "fauzan.hidayat@binus.ac.id",
 		Password: "Customer1#",
 	}
 	bodyJson, err := json.Marshal(requestBody)
@@ -371,7 +371,6 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 			Type:            helper.PERCENT,
 			Start:           helper.TimeRFC3339(startWIB),
 			End:             helper.TimeRFC3339(endWIB),
-			TotalMaxUsage:   100,
 			MaxUsagePerUser: 5,
 			UsedCount:       0,
 			MinOrderValue:   20000,
@@ -403,7 +402,6 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 		assert.Equal(t, requestBody.Type, responseBody.Data.Type)
 		assert.Equal(t, requestBody.Start.ToTime(), responseBody.Data.Start.ToTime())
 		assert.Equal(t, requestBody.End.ToTime(), responseBody.Data.End.ToTime())
-		assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
 		assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
 		assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
 		assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)
@@ -428,7 +426,6 @@ func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc 
 		Type:            tipe,
 		Start:           start,
 		End:             end,
-		TotalMaxUsage:   totalMaxUsage,
 		MaxUsagePerUser: maxUsagePerUser,
 		UsedCount:       0,
 		MinOrderValue:   minOrderValue,
@@ -460,7 +457,6 @@ func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc 
 	assert.Equal(t, requestBody.Type, responseBody.Data.Type)
 	assert.Equal(t, requestBody.Start.ToTime(), responseBody.Data.Start.ToTime())
 	assert.Equal(t, requestBody.End.ToTime(), responseBody.Data.End.ToTime())
-	assert.Equal(t, requestBody.TotalMaxUsage, responseBody.Data.TotalMaxUsage)
 	assert.Equal(t, requestBody.MaxUsagePerUser, responseBody.Data.MaxUsagePerUser)
 	assert.Equal(t, requestBody.UsedCount, responseBody.Data.UsedCount)
 	assert.Equal(t, requestBody.MinOrderValue, responseBody.Data.MinOrderValue)
@@ -761,6 +757,7 @@ func DoRegisterAdmin(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
 
 	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
@@ -786,7 +783,7 @@ func DoRegisterCustomer(t *testing.T) {
 	requestBody := model.RegisterUserRequest{
 		FirstName: "Customer",
 		LastName:  "1",
-		Email:     "F3196813@gmail.com",
+		Email:     "fauzan.hidayat@binus.ac.id",
 		Phone:     "0982131244",
 		Password:  "Customer1#",
 		Role:      helper.CUSTOMER,
@@ -797,6 +794,7 @@ func DoRegisterCustomer(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	request.Host = "localhost"
 
 	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
@@ -933,8 +931,18 @@ func DoCreateApplicationSetting(t *testing.T, tokenAdmin string) {
 	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
 	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
 	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
 
-	filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
+	filePath := "../tests/assets/seblak-logo.jpg"
+	file, err := os.Open(filePath)
+	assert.Nil(t, err)
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	assert.Nil(t, err)
+
+	filename := fileInfo.Name()
+	content, err := io.ReadAll(file)
 	assert.Nil(t, err)
 
 	partHeader := textproto.MIMEHeader{}

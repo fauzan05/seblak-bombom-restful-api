@@ -44,4 +44,5 @@ type CreateApplicationRequest struct {
 	TwitterLink    string                `json:"twitter_link"`
 	FacebookName   string                `json:"facebook_name"`
 	FacebookLink   string                `json:"facebook_link"`
+	ServiceFee     float32               `json:"service_fee"`
 }

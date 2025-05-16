@@ -12,7 +12,6 @@ type Notification struct {
 	Message     string                  `gorm:"column:message"`
 	IsRead      bool                    `gorm:"column:is_read"`
 	Type        helper.NotificationType `gorm:"column:type"`
-	Link        string                  `gorm:"column:link"`
 	BodyContent string                  `gorm:"column:body_content"`
 	CreatedAt   time.Time               `gorm:"column:created_at;autoCreateTime;<-:create"`
 	UpdatedAt   time.Time               `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`

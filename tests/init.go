@@ -21,7 +21,7 @@ var log *logrus.Logger
 
 var validate *validator.Validate
 
-var email *mailer.SMTPMailer
+var email *mailer.EmailWorker
 
 func init() {
 	viperConfig = config.NewViper()
@@ -29,7 +29,7 @@ func init() {
 	validate = config.NewValidator(viperConfig)
 	app = config.NewFiber(viperConfig)
 	db = config.NewDatabaseTest(viperConfig, log)
-	email = config.NewSMTPMailerTest(viperConfig)
+	email = config.NewEmailWorker(viperConfig)
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:       db,
 		App:      app,
