@@ -474,6 +474,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
 		}
 		newMail.Template = *bodyBuilder
+		c.Email.Mailer.SenderName = fmt.Sprintf("System %s", newApp.AppName)
 		// send email
 		select {
 		case c.Email.MailQueue <- *newMail:

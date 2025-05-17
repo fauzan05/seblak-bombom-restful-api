@@ -89,5 +89,8 @@
             "password": "your-app-generate-password"
         },
         "prod": {}
+    },
+    "auth_admin": {
+        "admin_creation_key": ""
     }
 }

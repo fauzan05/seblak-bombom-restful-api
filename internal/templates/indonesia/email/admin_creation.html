@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Notifikasi User Admin Baru</title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f9f9f9; font-family: Arial, sans-serif;">
+    <div
+        style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        <div style="text-align:center; margin-bottom:20px;">
+            <img src="data:image/png;base64,{{.LogoImage}}" alt="{{.CompanyName}}" style="max-width:150px;">
+        </div>
+        <h2 style="color:#d9534f; text-align:center;">User Admin Baru Dibuat</h2>
+
+        <p>Halo Admin,</p>
+        <p>Ada user baru dengan <strong>role Admin</strong> yang telah berhasil dibuat di sistem.</p>
+
+        <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+            <tr>
+                <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Nama</td>
+                <td style="padding:8px; border:1px solid #ddd;">{{.FirstName}} {{.LastName}}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Email</td>
+                <td style="padding:8px; border:1px solid #ddd;">{{.Email}}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Waktu Pembuatan</td>
+                <td style="padding:8px; border:1px solid #ddd;">{{.CreatedAt}}</td>
+            </tr>
+        </table>
+
+        <p style="margin-top:30px; font-size:14px; color:#555;">Jika Anda tidak mengenal aktivitas ini, segera cek
+            keamanan sistem Anda.</p>
+        </p>
+    </div>
+</body>
+
+</html>

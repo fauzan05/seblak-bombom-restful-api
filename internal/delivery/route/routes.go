@@ -31,6 +31,7 @@ type RouteConfig struct {
 	AuthMiddleware                    fiber.Handler
 	RoleMiddleware                    fiber.Handler
 	AuthXenditMiddleware              fiber.Handler
+	AuthAdminCreationMiddleware       fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -61,6 +62,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api.Post("/users/forgot-password", c.UserController.CreateForgotPassword)
 	api.Post("/users/forgot-password/:passwordResetId/validate", c.UserController.ValidateForgotPassword)
 	api.Post("/users/forgot-password/:passwordResetId/reset-password", c.UserController.ResetPassword)
+	api.Get("/users/verify-email/:token", c.UserController.VerifyEmailRegistration)
 
 	// Discount Coupon
 	api.Get("/discount-coupons", c.DiscountCouponController.GetAll)
@@ -111,6 +113,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 	// Application
 	api.Get("/applications", c.ApplicationController.Get)
+	api.Use(c.AuthAdminCreationMiddleware).Post("/applications-use-admin-key", c.ApplicationController.Create) // add & update
 }
 
 // USER

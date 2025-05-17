@@ -26,7 +26,7 @@ var email *mailer.EmailWorker
 func init() {
 	viperConfig = config.NewViper()
 	log = config.NewLogger(viperConfig)
-	validate = config.NewValidator(viperConfig)
+	validate = config.NewValidator()
 	app = config.NewFiber(viperConfig)
 	db = config.NewDatabaseTest(viperConfig, log)
 	email = config.NewEmailWorker(viperConfig)

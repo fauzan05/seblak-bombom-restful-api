@@ -10,8 +10,9 @@ import (
 
 func NewAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		getToken := c.Get("Authorization", "NOT_FOUND")
 		request := &model.GetUserByTokenRequest{
-			Token: c.Get("Authorization", "NOT_FOUND"),
+			Token: getToken,
 		}
 		userUseCase.Log.Debugf("Authorization : %s", request.Token)
 

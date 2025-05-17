@@ -16,9 +16,11 @@ func main() {
 	// snapClient := config.NewMidtransSanboxSnapClient(viperConfig, log)
 	// coreAPIClient := config.NewMidtransSanboxCoreAPIClient(viperConfig, log)
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
-	validate := config.NewValidator(viperConfig)
+	validate := config.NewValidator()
 	email := config.NewEmailWorker(viperConfig)
+	authConfig := config.NewAuthConfig(viperConfig)
 	pdf := config.NewPDFGenerator(log)
+
 	app := config.NewFiber(viperConfig)
 
 	// cors setting
@@ -40,6 +42,7 @@ func main() {
 		XenditClient: xenditClient,
 		Email:        email,
 		PDF:          pdf,
+		AuthConfig:   authConfig,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

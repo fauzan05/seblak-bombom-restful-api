@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; background-color: #fff7f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div
+        style="max-width: 600px; margin: auto; padding: 40px 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+
+        <div style="text-align: center;">
+            <img src="data:image/png;base64,{{ .LogoImage }}" alt="Company Logo" width="100"
+                style="margin-bottom: 20px;" />
+            <h1 style="color: #e2574c; margin-bottom: 10px;">Verify Your Email</h1>
+            <p style="color: #555; font-size: 16px;">Hi <strong>{{.Name}}</strong>, thank you for registering at
+                <strong>{{.CompanyName}}</strong> 🎉</p>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <p style="font-size: 15px; color: #333;">To complete your registration and activate your account, please
+                verify your email address by clicking the button below:</p>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="{{.VerificationURL}}"
+                style="display: inline-block; padding: 12px 24px; background-color: #e2574c; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                Verify Email
+            </a>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <p style="font-size: 14px; color: #666;">If you did not create an account, you can safely ignore this email.
+            </p>
+            <p style="font-size: 13px; color: #999;">This link will expire at {{.TokenExpiry}}.</p>
+        </div>
+
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;" />
+        <p style="font-size: 13px; color: #999; text-align: center;">&copy; {{.Year}} {{.CompanyName}}. All rights
+            reserved.</p>
+        <p style="font-size: 13px; color: #bbb; text-align: center;">This is an automated message. Please do not reply.
+        </p>
+    </div>
+</body>
+
+</html>

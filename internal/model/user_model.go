@@ -26,7 +26,12 @@ type RegisterUserRequest struct {
 	Phone     string           `json:"phone" validate:"required,max=50"`
 	Password  string           `json:"password" validate:"required,min=8,max=100"`
 	Role      helper.Role      `json:"role" validate:"required"`
-	Language  helper.Languange `json:"-"`
+	Lang      helper.Languange `json:"-"`
+}
+
+type VerifyEmailRegisterRequest struct {
+	VerificationToken string           `json:"verification_token" validate:"required,max=100"`
+	Lang              helper.Languange `json:"-"`
 }
 
 type VerifyUserRequest struct {

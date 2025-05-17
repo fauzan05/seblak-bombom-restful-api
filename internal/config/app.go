@@ -6,6 +6,7 @@ import (
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/delivery/route"
 	"seblak-bombom-restful-api/internal/helper/mailer"
+	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/repository"
 	"seblak-bombom-restful-api/internal/usecase"
 	xenditUseCase "seblak-bombom-restful-api/internal/usecase/xendit"
@@ -32,6 +33,7 @@ type BootstrapConfig struct {
 	XenditClient  *xendit.APIClient
 	Email         *mailer.EmailWorker
 	PDF           *wkhtmltopdf.PDFGenerator
+	AuthConfig    *model.AuthConfig
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -79,7 +81,7 @@ func Bootstrap(config *BootstrapConfig) {
 	payoutUseCase := usecase.NewPayoutUseCase(config.DB, config.Log, config.Validate, payoutRepository, xenditPayoutUseCase, walletRepository, userRepository)
 
 	// setup controller
-	userController := http.NewUserController(userUseCase, config.Log)
+	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
@@ -99,8 +101,9 @@ func Bootstrap(config *BootstrapConfig) {
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
 	roleMiddleware := middleware.NewRole(userUseCase)
-	authXenditMiddleware := middleware.NewAuthXenditCallback(*config.Config, config.Log)
-
+	authXenditMiddleware := middleware.NewAuthXenditCallback(config.Config, config.Log)
+	authAdminCreationMiddleware := middleware.NewAuthUseAdminKey(config.AuthConfig, config.Log)
+	
 	routeConfig := route.RouteConfig{
 		App:                               config.App,
 		UserController:                    userController,
@@ -122,6 +125,7 @@ func Bootstrap(config *BootstrapConfig) {
 		AuthMiddleware:                    authMiddleware,
 		RoleMiddleware:                    roleMiddleware,
 		AuthXenditMiddleware:              authXenditMiddleware,
+		AuthAdminCreationMiddleware:       authAdminCreationMiddleware,
 	}
 	routeConfig.Setup()
 }

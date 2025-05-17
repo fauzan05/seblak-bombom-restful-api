@@ -13,14 +13,16 @@ import (
 )
 
 type UserController struct {
-	Log     *logrus.Logger
-	UseCase *usecase.UserUseCase
+	Log        *logrus.Logger
+	UseCase    *usecase.UserUseCase
+	AuthConfig *model.AuthConfig
 }
 
-func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger) *UserController {
+func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger, authConfig *model.AuthConfig) *UserController {
 	return &UserController{
-		Log:     logger,
-		UseCase: useCase,
+		Log:        logger,
+		UseCase:    useCase,
+		AuthConfig: authConfig,
 	}
 }
 
@@ -31,8 +33,16 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
+	if request.Role == helper.ADMIN {
+		adminKey := ctx.Get("X-Admin-Key", "")
+		if adminKey != c.AuthConfig.AdminCreationKey {
+			c.Log.Warnf("invalid admin creation key!")
+			return fiber.NewError(fiber.StatusForbidden, "invalid admin creation key!")
+		}
+	}
+
 	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Language = helper.Languange(getLang)
+	request.Lang = helper.Languange(getLang)
 	response, err := c.UseCase.Create(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to register an user : %+v", err)
@@ -42,6 +52,25 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.UserResponse]{
 		Code:   201,
 		Status: "success to register an user",
+		Data:   response,
+	})
+}
+
+func (c *UserController) VerifyEmailRegistration(ctx *fiber.Ctx) error {
+	getVerifyToken := ctx.Params("token", "")
+	request := new(model.VerifyEmailRegisterRequest)
+	request.VerificationToken = getVerifyToken
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	request.Lang = helper.Languange(getLang)
+	response, err := c.UseCase.VerifyEmailRegistration(ctx, request)
+	if err != nil {
+		c.Log.Warnf("failed to verify email registration an user : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
+		Code:   200,
+		Status: "success to verify email registration an user",
 		Data:   response,
 	})
 }
