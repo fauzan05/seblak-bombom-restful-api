@@ -140,51 +140,14 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	}
 
 	if request.Role == helper.CUSTOMER {
-		// newNotification := new(entity.Notification)
-		// newNotification.UserID = user.ID
-		// newNotification.Title = "Registration Successful 🎉"
-		// newNotification.Message = fmt.Sprintf("Hi %s, your account is now active. Welcome!", user.Name.FirstName)
-		// templatePath := "../internal/templates/english/notification/registration_success.html"
-		// if request.Language == helper.INDONESIA {
-		// 	newNotification.Title = "Registrasi Berhasil 🎉"
-		// 	newNotification.Message = fmt.Sprintf("Hai %s, akunmu sekarang sudah aktif. Selamat Datang!", user.Name.FirstName)
-		// 	templatePath = "../internal/templates/indonesia/notification/registration_success.html"
-		// }
-		// tmpl, err := template.ParseFiles(templatePath)
-		// if err != nil {
-		// 	c.Log.Warnf("failed to parse template file html : %+v", err)
-		// 	return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
-		// }
-
-		// bodyBuilder := new(strings.Builder)
-		// err = tmpl.Execute(bodyBuilder, map[string]string{
-		// 	"Name":        user.Name.FirstName,
-		// 	"Year":        time.Now().Format("2006"),
-		// 	"CompanyName": newApp.AppName,
-		// 	"LogoImage":   logoImageBase64,
-		// })
-		// if err != nil {
-		// 	c.Log.Warnf("failed to execute template file html : %+v", err)
-		// 	return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
-		// }
-
-		// newNotification.IsRead = false
-		// newNotification.Type = helper.AUTHENTICATION
-		// newNotification.BodyContent = bodyBuilder.String()
-		// if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
-		// 	c.Log.Warnf("failed to create notification into database : %+v", err)
-		// 	return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create notification into database : %+v", err))
-		// }
-
 		// setelah semuanya berhasil maka kirim notifikasi email
 		newMail := new(model.Mail)
 		newMail.To = []string{newUser.Email}
 		newMail.Cc = []string{}
+		templatePath := fmt.Sprintf("../internal/templates/%s/email/email_verification.html", request.Lang)
 		newMail.Subject = "Email Verification"
-		templatePath := "../internal/templates/english/email/email_verification.html"
 		if request.Lang == helper.INDONESIA {
 			newMail.Subject = "Verifikasi Email"
-			templatePath = "../internal/templates/indonesia/email/email_verification.html"
 		}
 		tmpl, err := template.ParseFiles(templatePath)
 		if err != nil {
@@ -192,7 +155,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
 		}
 
-		verifyURL := fmt.Sprintf("%s://%s/api/users/verify-email/%s", ctx.Protocol(), ctx.Hostname(), newUser.VerificationToken)
+		verifyURL := fmt.Sprintf("%s://%s/api/users/verify-email/%s?lang=%s&timezone=%s", ctx.Protocol(), ctx.Hostname(), newUser.VerificationToken, request.Lang, request.TimeLocation.String())
 		bodyBuilder := new(strings.Builder)
 		err = tmpl.Execute(bodyBuilder, map[string]string{
 			"Name":            newUser.Name.FirstName,
@@ -200,7 +163,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 			"CompanyName":     newApp.AppName,
 			"LogoImage":       logoImageBase64,
 			"VerificationURL": verifyURL,
-			"TokenExpiry":     newUser.TokenExpiry.Format("02 Jan 06 15:04 MST"),
+			"TokenExpiry":     newUser.TokenExpiry.In(&request.TimeLocation).Format("02 Jan 06 15:04 MST"),
 		})
 		if err != nil {
 			c.Log.Warnf("failed to execute template file html : %+v", err)
@@ -220,10 +183,9 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		newMail.To = []string{newUser.Email}
 		newMail.Cc = []string{}
 		newMail.Subject = "Admin Email Verification"
-		templatePath := "../internal/templates/english/email/email_verification_admin.html"
+		templatePath := fmt.Sprintf("../internal/templates/%s/email/email_verification_admin.html", request.Lang)
 		if request.Lang == helper.INDONESIA {
 			newMail.Subject = "Verifikasi Email Admin"
-			templatePath = "../internal/templates/indonesia/email/email_verification_admin.html"
 		}
 		tmpl, err := template.ParseFiles(templatePath)
 		if err != nil {
@@ -234,7 +196,8 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		baseURL := fmt.Sprintf("%s://%s/api/users/verify-email/%s", ctx.Protocol(), ctx.Hostname(), newUser.VerificationToken)
 		params := url.Values{}
 		params.Set("lang", string(request.Lang))
-		
+		params.Set("timezone", request.TimeLocation.String())
+
 		verifyURL := baseURL
 		if encoded := params.Encode(); encoded != "" {
 			verifyURL += "?" + encoded
@@ -246,7 +209,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 			"LogoImage":       logoImageBase64,
 			"CompanyName":     newApp.AppName,
 			"VerificationURL": verifyURL,
-			"TokenExpiry":     newUser.TokenExpiry.Format("02 Jan 06 15:04 MST"),
+			"TokenExpiry":     newUser.TokenExpiry.In(&request.TimeLocation).Format("02 Jan 06 15:04 MST"),
 		})
 
 		if err != nil {
@@ -293,77 +256,73 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 		return nil, fiber.NewError(fiber.StatusBadRequest, "verify token was expired!")
 	}
 
-	if newUser.EmailVerified {
-		c.Log.Warnf("email already verified")
-		return nil, fiber.NewError(fiber.StatusBadRequest, "email already verified")
-	}
-
-	// send email bahwa registrasi berhasil karena email sudah diverifikasi
-	newMail := new(model.Mail)
-	newMail.To = []string{newUser.Email}
-	newApp := new(entity.Application)
-	if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
-		c.Log.Warnf("failed to find application from database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
-	}
-
-	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-	logoImageBase64, err := helper.ImageToBase64(logoImagePath)
-	if err != nil {
-		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
-	}
-	newMail.Subject = "Registration Successful"
-	templatePath := "../internal/templates/english/email/registration_success.html"
-	if request.Lang == helper.INDONESIA {
-		newMail.Subject = "Registrasi Berhasil"
-		templatePath = "../internal/templates/indonesia/email/registration_success.html"
-	}
-
-	if newUser.Role == helper.ADMIN {
-		newMail.Subject = "New Admin User Created"
-		templatePath = "../internal/templates/english/email/admin_creation.html"
-		if request.Lang == helper.INDONESIA {
-			newMail.Subject = "Akun Admin Baru Berhasil Dibuat"
-			templatePath = "../internal/templates/indonesia/email/admin_creation.html"
+	if !newUser.EmailVerified {
+		newUser.EmailVerified = true
+		if err := c.UserRepository.Update(tx, newUser); err != nil {
+			c.Log.Warnf("failed to update email verified into database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update email verified into database : %+v", err))
 		}
-	}
 
-	tmpl, err := template.ParseFiles(templatePath)
-	if err != nil {
-		c.Log.Warnf("failed to parse template file html : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
-	}
+		// send email bahwa registrasi berhasil karena email sudah diverifikasi
+		newMail := new(model.Mail)
+		newMail.To = []string{newUser.Email}
+		newApp := new(entity.Application)
+		if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
+			c.Log.Warnf("failed to find application from database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
+		}
 
-	bodyBuilder := new(strings.Builder)
-	err = tmpl.Execute(bodyBuilder, map[string]string{
-		"FirstName":   newUser.Name.FirstName,
-		"LastName":    newUser.Name.LastName,
-		"LoginURL":    "http://localhost:8000/login",
-		"Year":        time.Now().Format("2006"),
-		"CompanyName": newApp.AppName,
-		"LogoImage":   logoImageBase64,
-		"Email":       newUser.Email,
-		"CreatedAt":   newUser.CreatedAt.Format("02 Jan 06 15:04 MST"),
-	})
-	if err != nil {
-		c.Log.Warnf("failed to execute template file html : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
-	}
+		logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+		logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+		if err != nil {
+			c.Log.Warnf("failed to convert logo to base64 : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
+		}
+		templatePath := fmt.Sprintf("../internal/templates/%s/email/registration_success.html", request.Lang)
+		newMail.Subject = "Registration Successful"
+		if request.Lang == helper.INDONESIA {
+			newMail.Subject = "Registrasi Berhasil"
+		}
 
-	newMail.Template = *bodyBuilder
-	c.Email.Mailer.SenderName = fmt.Sprintf("System %s", newApp.AppName)
-	select {
-	case c.Email.MailQueue <- *newMail:
-	default:
-		c.Log.Warnf("email queue full, failed to send to %s", newUser.Email)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newUser.Email))
-	}
+		if newUser.Role == helper.ADMIN {
+			templatePath = fmt.Sprintf("../internal/templates/%s/email/admin_creation.html", request.Lang)
+			newMail.Subject = "New Admin User Created"
+			if request.Lang == helper.INDONESIA {
+				newMail.Subject = "Akun Admin Baru Berhasil Dibuat"
+			}
+		}
 
-	newUser.EmailVerified = true
-	if err := c.UserRepository.Update(tx, newUser); err != nil {
-		c.Log.Warnf("failed to update email verified into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update email verified into database : %+v", err))
+		tmpl, err := template.ParseFiles(templatePath)
+		if err != nil {
+			c.Log.Warnf("failed to parse template file html : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
+		}
+
+		loginURL := fmt.Sprintf("%s/login", request.BaseURL)
+		bodyBuilder := new(strings.Builder)
+		err = tmpl.Execute(bodyBuilder, map[string]string{
+			"FirstName":   newUser.Name.FirstName,
+			"LastName":    newUser.Name.LastName,
+			"LoginURL":    loginURL,
+			"Year":        time.Now().Format("2006"),
+			"CompanyName": newApp.AppName,
+			"LogoImage":   logoImageBase64,
+			"Email":       newUser.Email,
+			"CreatedAt":   newUser.CreatedAt.In(&request.TimeLocation).Format("02 Jan 06 15:04 MST"),
+		})
+		if err != nil {
+			c.Log.Warnf("failed to execute template file html : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
+		}
+
+		newMail.Template = *bodyBuilder
+		c.Email.Mailer.SenderName = fmt.Sprintf("System %s", newApp.AppName)
+		select {
+		case c.Email.MailQueue <- *newMail:
+		default:
+			c.Log.Warnf("email queue full, failed to send to %s", newUser.Email)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newUser.Email))
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -372,6 +331,23 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 	}
 
 	return converter.UserToResponse(newUser), nil
+}
+
+func (c *UserUseCase) ValidateVerifyTokenIsValid(ctx *fiber.Ctx, verifyToken string) (error) {
+	tx := c.DB.WithContext(ctx.Context())
+
+	newUser := new(entity.User)
+	if err := c.UserRepository.FindVerifyToken(tx, newUser, verifyToken); err != nil {
+		c.Log.Warnf("verify token not found : %+v", err)
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("verify token not found : %+v", err))
+	}
+
+	if !newUser.EmailVerified {
+		c.Log.Warnf("email not verified")
+		return fiber.NewError(fiber.StatusBadRequest, "email not verified")
+	}
+
+	return nil
 }
 
 func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUserRequest) (*model.UserTokenResponse, error) {
@@ -383,13 +359,18 @@ func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUser
 		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
-	user := new(entity.User)
-	if err := c.UserRepository.FindByEmail(c.DB, user, request.Email); err != nil {
+	newUser := new(entity.User)
+	if err := c.UserRepository.FindByEmail(c.DB, newUser, request.Email); err != nil {
 		c.Log.Warnf("user not found : %+v", err)
 		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("user not found : %+v", err))
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
+	if !newUser.EmailVerified {
+		c.Log.Warnf("your account has not verified email")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "your account has not verified email!")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(newUser.Password), []byte(request.Password)); err != nil {
 		c.Log.Warnf("password is wrong : %+v", err)
 		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("password is wrong : %+v", err))
 	}
@@ -398,7 +379,7 @@ func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUser
 	now := time.Now()
 	oneHours := now.Add(24 * time.Hour)
 	token.Token = uuid.New().String()
-	token.UserId = user.ID
+	token.UserId = newUser.ID
 	token.ExpiryDate = oneHours
 	if err := c.TokenRepository.Create(tx, token); err != nil {
 		c.Log.Warnf("failed to create token by user into database : %+v", err)
@@ -642,12 +623,12 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 	}
+	templatePath := fmt.Sprintf("../internal/templates/%s/email/forgot_password.html", request.Lang)
 	newMail.Subject = "Forgot Password"
-	templatePath := "../internal/templates/english/email/forgot_password.html"
 	if request.Lang == helper.INDONESIA {
 		newMail.Subject = "Lupa Kata Sandi"
-		templatePath = "../internal/templates/indonesia/email/forgot_password.html"
 	}
+
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -800,10 +781,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 	}
-	templatePath := "../internal/templates/english/notification/password_reset.html"
-	if request.Lang == helper.INDONESIA {
-		templatePath = "../internal/templates/indonesia/notification/password_reset.html"
-	}
+	templatePath := fmt.Sprintf("../internal/templates/%s/notification/password_reset.html", request.Lang)
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -843,11 +821,10 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	newMail := new(model.Mail)
 	newMail.To = []string{newUser.Email}
 	newMail.Cc = []string{}
+	templatePath = fmt.Sprintf("../internal/templates/%s/email/password_reset.html", request.Lang)
 	newMail.Subject = "Password Reset Successful"
-	templatePath = "../internal/templates/english/email/password_reset.html"
 	if request.Lang == helper.INDONESIA {
 		newMail.Subject = "Atur Ulang Kata Sandi Berhasil"
-		templatePath = "../internal/templates/indonesia/email/password_reset.html"
 	}
 	tmpl, err = template.ParseFiles(templatePath)
 	if err != nil {
@@ -861,6 +838,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 		"Year":        time.Now().Format("2006"),
 		"CompanyName": newApp.AppName,
 		"LogoImage":   logoImageBase64,
+		"UpdatedAt":   newUser.UpdatedAt.In(&request.TimeLocation).Format("02 Jan 06 15:04 MST"),
 	})
 	if err != nil {
 		c.Log.Warnf("failed to execute template file html : %+v", err)

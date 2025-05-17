@@ -23,17 +23,18 @@ import (
 )
 
 type BootstrapConfig struct {
-	DB            *gorm.DB
-	App           *fiber.App
-	Log           *logrus.Logger
-	Validate      *validator.Validate
-	Config        *viper.Viper
-	SnapClient    *snap.Client
-	CoreAPIClient *coreapi.Client
-	XenditClient  *xendit.APIClient
-	Email         *mailer.EmailWorker
-	PDF           *wkhtmltopdf.PDFGenerator
-	AuthConfig    *model.AuthConfig
+	DB             *gorm.DB
+	App            *fiber.App
+	Log            *logrus.Logger
+	Validate       *validator.Validate
+	Config         *viper.Viper
+	SnapClient     *snap.Client
+	CoreAPIClient  *coreapi.Client
+	XenditClient   *xendit.APIClient
+	Email          *mailer.EmailWorker
+	PDF            *wkhtmltopdf.PDFGenerator
+	AuthConfig     *model.AuthConfig
+	FrontEndConfig *model.FrontEndConfig
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -81,7 +82,7 @@ func Bootstrap(config *BootstrapConfig) {
 	payoutUseCase := usecase.NewPayoutUseCase(config.DB, config.Log, config.Validate, payoutRepository, xenditPayoutUseCase, walletRepository, userRepository)
 
 	// setup controller
-	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig)
+	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig, config.FrontEndConfig)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
@@ -103,7 +104,7 @@ func Bootstrap(config *BootstrapConfig) {
 	roleMiddleware := middleware.NewRole(userUseCase)
 	authXenditMiddleware := middleware.NewAuthXenditCallback(config.Config, config.Log)
 	authAdminCreationMiddleware := middleware.NewAuthUseAdminKey(config.AuthConfig, config.Log)
-	
+
 	routeConfig := route.RouteConfig{
 		App:                               config.App,
 		UserController:                    userController,

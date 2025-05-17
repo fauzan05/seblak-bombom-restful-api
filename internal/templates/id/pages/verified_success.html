@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Email Verified</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #ff5722;
+      /* seblak‐ish orange */
+      --primary-dark: #e64a19;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e1e1e;
+      --shadow: 0 8px 24px rgba(0, 0, 0, .08);
+      font-size: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      padding: 1rem;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .card h1 {
+      font-size: 1.75rem;
+      margin: 0 0 1rem;
+      font-weight: 600;
+    }
+
+    .card p {
+      margin: 0 0 2.25rem;
+      line-height: 1.6;
+      color: #555;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 2.25rem;
+      border-radius: 9999px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background .25s, transform .25s;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* dark‑mode auto (optional) */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --card-bg: #1f2937;
+        --bg: #111827;
+        --text: #f9fafb;
+        --shadow: 0 8px 24px rgba(0, 0, 0, .3);
+      }
+
+      .card p {
+        color: #d1d5db;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <!-- cute illustration (emoji) -->
+    <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
+    <h1>Email Terverifikasi!</h1>
+    <p>Akunmu sudah aktif. Klik tombol di bawah untuk masuk dan mulai memesan.</p>
+    <a href="{{.LoginURL}}" class="btn">Login Sekarang</a>
+  </main>
+</body>
+
+</html>

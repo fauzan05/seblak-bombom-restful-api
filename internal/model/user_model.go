@@ -20,18 +20,21 @@ type UserResponse struct {
 }
 
 type RegisterUserRequest struct {
-	FirstName string           `json:"first_name" validate:"required,max=100"`
-	LastName  string           `json:"last_name" validate:"required,max=100"`
-	Email     string           `json:"email" validate:"required,max=100"`
-	Phone     string           `json:"phone" validate:"required,max=50"`
-	Password  string           `json:"password" validate:"required,min=8,max=100"`
-	Role      helper.Role      `json:"role" validate:"required"`
-	Lang      helper.Languange `json:"-"`
+	FirstName    string           `json:"first_name" validate:"required,max=100"`
+	LastName     string           `json:"last_name" validate:"required,max=100"`
+	Email        string           `json:"email" validate:"required,max=100"`
+	Phone        string           `json:"phone" validate:"required,max=50"`
+	Password     string           `json:"password" validate:"required,min=8,max=100"`
+	Role         helper.Role      `json:"role" validate:"required"`
+	Lang         helper.Languange `json:"-"`
+	TimeLocation time.Location    `json:"-"`
 }
 
 type VerifyEmailRegisterRequest struct {
 	VerificationToken string           `json:"verification_token" validate:"required,max=100"`
 	Lang              helper.Languange `json:"-"`
+	TimeLocation      time.Location    `json:"-"`
+	BaseURL           string           `json:"-"`
 }
 
 type VerifyUserRequest struct {
@@ -87,6 +90,7 @@ type PasswordResetRequest struct {
 	NewPassword        string           `json:"new_password" validate:"required,min=8,max=100"`
 	NewPasswordConfirm string           `json:"new_password_confirm" validate:"required,eqfield=NewPassword"`
 	Lang               helper.Languange `json:"-"`
+	TimeLocation       time.Location    `json:"-"`
 }
 
 type PasswordResetResponse struct {

@@ -92,5 +92,8 @@
     },
     "auth_admin": {
         "admin_creation_key": ""
+    },
+    "front_end": {
+        "base_url": ""
     }
 }
