@@ -97,16 +97,10 @@ func (c *UserController) ShowVerifiedSuccess(ctx *fiber.Ctx) error {
 	bodyBuilder := new(strings.Builder)
 	getLang := ctx.Query("lang", string(helper.ENGLISH))
 	getVerifyToken := ctx.Params("token", "")
-	err := c.UseCase.ValidateVerifyTokenIsValid(ctx, getVerifyToken)
+	getEmail := ctx.Query("email", "")
+	err := c.UseCase.ValidateVerifyTokenIsValid(ctx, getVerifyToken, getEmail)
 	if err != nil {
 		c.Log.Warnf("%+v", err)
-		htmlBytes, _ := os.ReadFile(fmt.Sprintf("internal/templates/%s/pages/internal_error.html", getLang))
-		return ctx.Status(500).Type("html").SendString(string(htmlBytes))
-	}
-
-	getEmail := ctx.Query("email", "")
-	if getEmail == "" {
-		c.Log.Warnf("email not found on query params!")
 		htmlBytes, _ := os.ReadFile(fmt.Sprintf("internal/templates/%s/pages/internal_error.html", getLang))
 		return ctx.Status(500).Type("html").SendString(string(htmlBytes))
 	}
@@ -120,6 +114,7 @@ func (c *UserController) ShowVerifiedSuccess(ctx *fiber.Ctx) error {
 	loginUrl := fmt.Sprintf("%s/login", c.FrontEndConfig.BaseURL)
 	err = tmpl.Execute(bodyBuilder, map[string]string{
 		"LoginURL": loginUrl,
+		"Email":    getEmail,
 	})
 
 	if err != nil {

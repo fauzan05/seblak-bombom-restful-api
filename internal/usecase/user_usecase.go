@@ -333,7 +333,7 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 	return converter.UserToResponse(newUser), nil
 }
 
-func (c *UserUseCase) ValidateVerifyTokenIsValid(ctx *fiber.Ctx, verifyToken string) (error) {
+func (c *UserUseCase) ValidateVerifyTokenIsValid(ctx *fiber.Ctx, verifyToken string, email string) (error) {
 	tx := c.DB.WithContext(ctx.Context())
 
 	newUser := new(entity.User)
@@ -343,8 +343,13 @@ func (c *UserUseCase) ValidateVerifyTokenIsValid(ctx *fiber.Ctx, verifyToken str
 	}
 
 	if !newUser.EmailVerified {
-		c.Log.Warnf("email not verified")
-		return fiber.NewError(fiber.StatusBadRequest, "email not verified")
+		c.Log.Warnf("email not verified!")
+		return fiber.NewError(fiber.StatusBadRequest, "email not verified!")
+	}
+
+	if newUser.Email != email {
+		c.Log.Warnf("email is not match!")
+		return fiber.NewError(fiber.StatusBadRequest, "email is not match!")
 	}
 
 	return nil
