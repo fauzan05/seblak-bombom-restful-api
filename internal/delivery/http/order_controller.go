@@ -214,14 +214,12 @@ func (c *OrderController) ShowInvoiceByOrderId(ctx *fiber.Ctx) error {
 	}
 
 	getTimeZoneUser := ctx.Query("timezone", "UTC")
-
 	loc, err := time.LoadLocation(getTimeZoneUser)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	timeZone := helper.TimeZoneMap[getTimeZoneUser]
-
 	logoImage := fmt.Sprintf("../uploads/images/application/%s", app.LogoFilename)
 	logoImageToBase64, err := helper.ImageToBase64(logoImage)
 	if err != nil {

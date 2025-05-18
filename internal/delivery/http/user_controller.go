@@ -2,27 +2,33 @@ package http
 
 import (
 	"fmt"
+	"html/template"
+	"os"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type UserController struct {
-	Log        *logrus.Logger
-	UseCase    *usecase.UserUseCase
-	AuthConfig *model.AuthConfig
+	Log            *logrus.Logger
+	UseCase        *usecase.UserUseCase
+	AuthConfig     *model.AuthConfig
+	FrontEndConfig *model.FrontEndConfig
 }
 
-func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger, authConfig *model.AuthConfig) *UserController {
+func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger, authConfig *model.AuthConfig, frontEndConfig *model.FrontEndConfig) *UserController {
 	return &UserController{
-		Log:        logger,
-		UseCase:    useCase,
-		AuthConfig: authConfig,
+		Log:            logger,
+		UseCase:        useCase,
+		AuthConfig:     authConfig,
+		FrontEndConfig: frontEndConfig,
 	}
 }
 
@@ -33,6 +39,13 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	request.TimeLocation = *loc
 	if request.Role == helper.ADMIN {
 		adminKey := ctx.Get("X-Admin-Key", "")
 		if adminKey != c.AuthConfig.AdminCreationKey {
@@ -62,17 +75,54 @@ func (c *UserController) VerifyEmailRegistration(ctx *fiber.Ctx) error {
 	request.VerificationToken = getVerifyToken
 	getLang := ctx.Query("lang", string(helper.ENGLISH))
 	request.Lang = helper.Languange(getLang)
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.TimeLocation = *loc
+	request.BaseURL = c.FrontEndConfig.BaseURL
 	response, err := c.UseCase.VerifyEmailRegistration(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to verify email registration an user : %+v", err)
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
-		Code:   200,
-		Status: "success to verify email registration an user",
-		Data:   response,
+	url := fmt.Sprintf("/verified-success/%s?lang=%s&email=%s", getVerifyToken, getLang, response.Email)
+	return ctx.Redirect(url, fiber.StatusFound)
+}
+
+func (c *UserController) ShowVerifiedSuccess(ctx *fiber.Ctx) error {
+	ctx.Type("html", "utf-8")
+	bodyBuilder := new(strings.Builder)
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	getVerifyToken := ctx.Params("token", "")
+	getEmail := ctx.Query("email", "")
+	err := c.UseCase.ValidateVerifyTokenIsValid(ctx, getVerifyToken, getEmail)
+	if err != nil {
+		c.Log.Warnf("%+v", err)
+		htmlBytes, _ := os.ReadFile(fmt.Sprintf("internal/templates/%s/pages/internal_error.html", getLang))
+		return ctx.Status(500).Type("html").SendString(string(htmlBytes))
+	}
+
+	templatePath := fmt.Sprintf("../internal/templates/%s/pages/verified_success.html", getLang)
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "internal server error")
+	}
+
+	loginUrl := fmt.Sprintf("%s/login", c.FrontEndConfig.BaseURL)
+	err = tmpl.Execute(bodyBuilder, map[string]string{
+		"LoginURL": loginUrl,
+		"Email":    getEmail,
 	})
+
+	if err != nil {
+		c.Log.Warnf("failed to execute verified_success page : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "internal server error")
+	}
+
+	return ctx.SendString(bodyBuilder.String())
 }
 
 func (c *UserController) Login(ctx *fiber.Ctx) error {
@@ -174,15 +224,23 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 
 func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 	// ambil data form update
-	dataRequest := new(model.DeleteCurrentUserRequest)
-	if err := ctx.BodyParser(dataRequest); err != nil {
+	request := new(model.DeleteCurrentUserRequest)
+	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	request.Lang = helper.Languange(getLang)
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.TimeLocation = *loc
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
-	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), dataRequest, auth)
+	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), request, auth)
 	if err != nil {
 		c.Log.Warnf("failed to delete current user : %+v", err)
 		return err
@@ -257,6 +315,12 @@ func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
 	request.ID = uint64(passwordResetId)
 	getLang := ctx.Query("lang", string(helper.ENGLISH))
 	request.Lang = helper.Languange(getLang)
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.TimeLocation = *loc
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))

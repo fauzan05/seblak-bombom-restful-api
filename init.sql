@@ -1,0 +1,3 @@
+CREATE DATABASE IF NOT EXISTS seblak_bombom;
+
+CREATE DATABASE IF NOT EXISTS seblak_bombom_test;

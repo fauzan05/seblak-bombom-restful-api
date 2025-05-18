@@ -1,23 +1,47 @@
+# Stage 1: Install wkhtmltopdf di Alpine 3.14
+FROM alpine:3.14 AS wkhtml
+
+RUN apk add --no-cache \
+    wkhtmltopdf \
+    ttf-dejavu \
+    fontconfig
+
+# Stage 2: Gunakan image Go dengan Alpine terbaru
 FROM golang:1.22.2-alpine
 
-# Environment variables which CompileDaemon requires to run
+# ─── Env untuk CompileDaemon ───────────────────────────────────────
 ENV GO111MODULE=on \
     CGO_ENABLED=0
 
 WORKDIR /app
 
-RUN mkdir "/build"
+# ─── Salin wkhtmltopdf dari Stage 1 ────────────────────────────────
+COPY --from=wkhtml /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
+COPY --from=wkhtml /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
+COPY --from=wkhtml /usr/share/fonts /usr/share/fonts
 
+# ─── Install Dependensi Tambahan ───────────────────────────────────
+RUN apk add --no-cache \
+    libgcc \
+    ttf-dejavu \
+    fontconfig
+
+# ─── Copy Project & Buat Symlink untuk Internal Directory ──────────
 COPY . .
 
-COPY go.mod .
+# Buat symlink agar "../internal" di kode mengarah ke "/app/internal"
+RUN ln -s /app/internal /internal
 
-# bisa juga menggunakan tidy
+# ─── Build tools & app ─────────────────────────────────────────────
+RUN mkdir /build
+
+COPY go.mod .
 RUN go mod download
 
-RUN go get github.com/githubnemo/CompileDaemon
-RUN go install github.com/githubnemo/CompileDaemon
+RUN go install github.com/githubnemo/CompileDaemon@latest
 
 EXPOSE 80
 
-ENTRYPOINT CompileDaemon -build="go build -o /build/app ./app/main.go" -command="/build/app"
+ENTRYPOINT [ "CompileDaemon", \
+  "-build=go build -o /build/app ./app/main.go", \
+  "-command=/build/app" ]

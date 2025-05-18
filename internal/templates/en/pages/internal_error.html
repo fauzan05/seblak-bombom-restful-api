@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>500 - Internal Server Error</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        :root {
+            --primary: #ef4444;
+            /* merah lembut */
+            --primary-dark: #dc2626;
+            --bg: #f9fafb;
+            --text: #374151;
+            --muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 1rem;
+        }
+
+        .card {
+            text-align: center;
+            padding: 2.5rem 2rem;
+            max-width: 460px;
+            width: 100%;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+            animation: fadeIn .6s ease-out;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            color: var(--primary);
+        }
+
+        h2 {
+            margin: .25rem 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        p {
+            margin: 0 0 2rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        a.button {
+            display: inline-block;
+            padding: .75rem 2rem;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 9999px;
+            text-decoration: none;
+            transition: background .25s, transform .25s;
+        }
+
+        a.button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                --bg: #111827;
+                --text: #e5e7eb;
+                --muted: #9ca3af;
+            }
+
+            .card {
+                background: #1f2937;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card">
+        <h1>500</h1>
+        <h2>Internal Server Error</h2>
+        <p>Oops! Something went wrong on our side. Please try again later.</p>
+    </main>
+</body>
+
+</html>

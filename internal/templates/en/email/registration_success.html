@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Registration Successful</title>
+</head>
+
+<body
+  style="margin: 0; padding: 0; background-color: #fff7f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div
+    style="max-width: 600px; margin: auto; padding: 40px 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+
+    <div style="text-align: center;">
+      <img src="data:image/png;base64,{{ .LogoImage }}" alt="Company Logo" width="100" style="margin-bottom: 20px;" />
+      <h1 style="color: #e2574c; margin-bottom: 10px;">Registration Successful!</h1>
+      <p style="color: #555; font-size: 16px;">Hi <strong>{{.FirstName}}</strong>, welcome to
+        <strong>{{.CompanyName}}</strong> 🎉
+      </p>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <p style="font-size: 15px; color: #333;">Your account is now active and ready to use. You can now:</p>
+      <ul style="color: #555; padding-left: 20px;">
+        <li>Order your favorite seblak directly from the app</li>
+        <li>View your order history and status</li>
+        <li>Get weekly spicy promotions 🔥</li>
+      </ul>
+      <p style="font-size: 15px; color: #333;">Don’t forget to log in and enjoy our services whenever you're hungry!</p>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center;">
+      <a href="{{.LoginURL}}"
+        style="display: inline-block; padding: 12px 24px; background-color: #e2574c; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
+        Log In Now
+      </a>
+    </div>
+
+    <hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;" />
+    <p style="font-size: 13px; color: #999; text-align: center;">&copy; {{.Year}} {{.CompanyName}}. All rights reserved.
+    </p>
+    <p style="font-size: 13px; color: #bbb; text-align: center;">This email was sent automatically. Please do not reply.
+    </p>
+  </div>
+</body>
+
+</html>

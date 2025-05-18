@@ -12,13 +12,15 @@ func main() {
 	log := config.NewLogger(viperConfig)
 	// db := config.NewDatabaseProd(viperConfig, log) //prod
 	// db := config.NewDatabaseTest(viperConfig, log) // test
-	db := config.NewDatabaseDev(viperConfig, log) // dev
+	// db := config.NewDatabaseDev(viperConfig, log) // dev
+	db := config.NewDatabaseDocker(viperConfig, log)
 	// snapClient := config.NewMidtransSanboxSnapClient(viperConfig, log)
 	// coreAPIClient := config.NewMidtransSanboxCoreAPIClient(viperConfig, log)
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator()
 	email := config.NewEmailWorker(viperConfig)
 	authConfig := config.NewAuthConfig(viperConfig)
+	frontEndConfig := config.NewFrontEndConfig(viperConfig)
 	pdf := config.NewPDFGenerator(log)
 
 	app := config.NewFiber(viperConfig)
@@ -39,10 +41,11 @@ func main() {
 		Config:   viperConfig,
 		// SnapClient:    snapClient,
 		// CoreAPIClient: coreAPIClient,
-		XenditClient: xenditClient,
-		Email:        email,
-		PDF:          pdf,
-		AuthConfig:   authConfig,
+		XenditClient:   xenditClient,
+		Email:          email,
+		PDF:            pdf,
+		AuthConfig:     authConfig,
+		FrontEndConfig: frontEndConfig,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

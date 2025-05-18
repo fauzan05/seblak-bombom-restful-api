@@ -15,11 +15,12 @@ services:
     ports:
       - "3330:3306"
     environment:
-      MYSQL_DATABASE: seblak_bombom
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     networks:
       - seblak-bombom-network
-    healthcheck:  # <-- Add healthcheck for be sure of MySQL has ready to use
+    volumes:
+      - .:/docker-entrypoint-initdb.d
+    healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 5
@@ -42,4 +43,4 @@ services:
       - seblak-bombom-network
     depends_on:
       mysql:
-        condition: service_healthy  # <-- Make sure the app only runs if MySQL is healthy.
+        condition: service_healthy # <-- Make sure the app only runs if MySQL is healthy.

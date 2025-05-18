@@ -63,6 +63,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api.Post("/users/forgot-password/:passwordResetId/validate", c.UserController.ValidateForgotPassword)
 	api.Post("/users/forgot-password/:passwordResetId/reset-password", c.UserController.ResetPassword)
 	api.Get("/users/verify-email/:token", c.UserController.VerifyEmailRegistration)
+	c.App.Get("/verified-success/:token", c.UserController.ShowVerifiedSuccess)
 
 	// Discount Coupon
 	api.Get("/discount-coupons", c.DiscountCouponController.GetAll)
