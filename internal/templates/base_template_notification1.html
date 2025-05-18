@@ -1,0 +1,115 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!-- ====== Base Styles ====== -->
+    <style>
+        :root {
+            --brand: #ff5e57;
+            --bg: #fef7f5;
+            --text: #333;
+            --muted: #999;
+            --radius: 8px;
+        }
+
+        /* Page */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+        }
+
+        /* Container */
+        .notif-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
+            overflow: hidden;
+        }
+
+        /* Logo */
+        .logo {
+            text-align: center;
+            margin: 32px 0 16px;
+        }
+
+        .logo img {
+            width: 90px;
+        }
+
+        /* Header strip (optional; hide by omitting block) */
+        .header {
+            background: var(--brand);
+            color: #fff;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        /* Body/content area */
+        .content {
+            padding: 24px;
+        }
+
+        .content p,
+        .content li {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* Helpers */
+        .capitalize {
+            text-transform: capitalize;
+        }
+    </style>
+
+    <!-- Dynamic title; overridable in child template -->
+    <title>{{block "title" .}}Default Title{{end}}</title>
+</head>
+
+<body>
+    <div class="notif-container">
+
+        <!-- ====== Logo ====== -->
+        <div class="logo">
+            <img src="{{.LogoImagePath}}" alt="Company Logo">
+        </div>
+
+        <!-- ====== Optional header strip ====== -->
+        {{/* Child template dapat mengganti/menyembunyikan blok ini */}}
+        {{block "header" .}}{{end}}
+
+        <!-- ====== Main content ====== -->
+        <div class="content">
+            {{block "content" .}}{{/* child will override */}}{{end}}
+        </div>
+
+        <!-- ====== Footer ====== -->
+        <div class="footer">
+            &copy; {{.Year}} <span class="capitalize">{{.CompanyName}}</span>. All rights reserved.
+        </div>
+
+    </div>
+</body>
+
+</html>
+{{end}}

@@ -1,75 +1,17 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registrasi Berhasil</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #fef7f5;
-      color: #333;
-      padding: 0;
-      margin: 0;
-    }
-
-    .email-container {
-      max-width: 600px;
-      margin: auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    .header {
-      background-color: #ff5e57;
-      color: white;
-      text-align: center;
-      padding: 24px;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-
-    .content {
-      padding: 24px;
-    }
-
-    .content p {
-      font-size: 16px;
-      line-height: 1.6;
-    }
-
-    .footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 13px;
-      color: #999;
-    }
-  </style>
-</head>
-<body>
-  <div class="email-container">
-    <div class="header">
-      <h1>Registrasi Berhasil!</h1>
-    </div>
-    <div class="content">
-      <p>Halo <strong>{{.Nama}}</strong>,</p>
-      <p>
-        Terima kasih telah bergabung bersama <strong>Warung Seblak</strong> 🍜<br />
-        Akun kamu sudah berhasil dibuat dan siap digunakan!
-      </p>
-      <p>
-        Nikmati berbagai pilihan seblak pedas favoritmu dengan lebih mudah.<br />
-        Jangan lupa aktifkan notifikasi agar kamu nggak ketinggalan promo 🔥
-      </p>
-    </div>
-    <div class="footer">
-      &copy; {{.Year}} Warung Seblak. Semua hak dilindungi.
-    </div>
-  </div>
-</body>
-</html>
+{{define "title"}}Registration Successful{{end}}
+{{define "content"}}
+<div class="header">
+  <h1>Registration Successful!</h1>
+</div>
+<div class="content">
+  <p>Hello <strong class="capitalize">{{.FirstName}}</strong>,</p>
+  <p>
+    Thank you for joining <strong class="capitalize">{{.CompanyName}}</strong> 🍜<br />
+    Your account has been created and is ready to use!
+  </p>
+  <p>
+    Enjoy a wide selection of your favorite spicy seblak more easily.<br />
+    Don’t forget to turn on notifications so you never miss a promo 🔥
+  </p>
+</div>
+{{end}}

@@ -45,7 +45,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	request.TimeLocation = *loc
+	request.TimeZone = *loc
 	if request.Role == helper.ADMIN {
 		adminKey := ctx.Get("X-Admin-Key", "")
 		if adminKey != c.AuthConfig.AdminCreationKey {
@@ -80,7 +80,7 @@ func (c *UserController) VerifyEmailRegistration(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	request.TimeLocation = *loc
+	request.TimeZone = *loc
 	request.BaseURL = c.FrontEndConfig.BaseURL
 	response, err := c.UseCase.VerifyEmailRegistration(ctx, request)
 	if err != nil {
@@ -237,7 +237,7 @@ func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	request.TimeLocation = *loc
+	request.TimeZone = *loc
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
 	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), request, auth)
@@ -320,7 +320,7 @@ func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	request.TimeLocation = *loc
+	request.TimeZone = *loc
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))

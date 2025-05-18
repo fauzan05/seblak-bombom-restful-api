@@ -1,14 +1,14 @@
 CREATE TABLE notifications (
-    id INTEGER AUTO_INCREMENT,
-    user_id INTEGER NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) CHARACTER
+        SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     is_read BOOLEAN NOT NULL,
-    type ENUM("transaction", "promotion", "authentication") NOT NULL,
-    body_content MEDIUMTEXT NOT NULL,
+    type ENUM ('transaction', 'promotion', 'authentication') NOT NULL,
+    body_content MEDIUMTEXT CHARACTER
+        SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME NULL DEFAULT NULL,
-    PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

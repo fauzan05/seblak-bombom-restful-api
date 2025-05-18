@@ -1,0 +1,70 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff7f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 40px 30px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
+            text-align: center;
+        }
+
+        .logo {
+            width: 100px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            color: #2e7d32;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .footer {
+            font-size: 13px;
+            color: #999;
+            margin-top: 50px;
+        }
+
+        .capitalize {
+            text-transform: capitalize;
+        }
+    </style>
+    <title class="capitalize">{{block "title" .}}Default Title{{end}}</title>
+</head>
+
+<body>
+    <div class="container">
+        <img src="data:image/png;base64,{{.LogoImage}}" alt="Company Logo" style="max-width:150px;">
+        {{block "content" .}}{{/* di‑override per halaman spesifik */}}{{end}}
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;" />
+        <div class="footer">&copy; {{.Year}} <span class="capitalize">{{.CompanyName}}</span>. All rights reserved.
+        </div>
+        <p style="font-size: 13px; color: #bbb; text-align: center;">This is an automated message. Please do not reply.
+        </p>
+    </div>
+</body>
+
+</html>
+{{end}}

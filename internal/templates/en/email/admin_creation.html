@@ -1,41 +1,25 @@
-<!DOCTYPE html>
-<html>
+{{define "title"}}New Admin User Created{{end}}
+{{define "content"}}
+<h2 style="color:#d9534f; text-align:center;">New Admin User Created</h2>
+<p>Hello Admin,</p>
+<p>A new user with the <strong>Admin role</strong> has been successfully created in the system.</p>
 
-<head>
-    <meta charset="UTF-8" />
-    <title>New Admin User Created</title>
-</head>
+<table style="width:100%; border-collapse:collapse; margin-top:20px;">
+    <tr>
+        <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Name</td>
+        <td style="padding:8px; border:1px solid #ddd;" class="capitalize">{{.FirstName}} {{.LastName}}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Email</td>
+        <td style="padding:8px; border:1px solid #ddd;">{{.Email}}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Created At</td>
+        <td style="padding:8px; border:1px solid #ddd;">{{.CreatedAt}}</td>
+    </tr>
+</table>
 
-<body style="margin:0; padding:0; background-color:#f9f9f9; font-family: Arial, sans-serif;">
-    <div
-        style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-        <div style="text-align:center; margin-bottom:20px;">
-            <img src="data:image/png;base64,{{.LogoImage}}" alt="{{.CompanyName}}" style="max-width:150px;">
-        </div>
-        <h2 style="color:#d9534f; text-align:center;">New Admin User Created</h2>
-
-        <p>Hello Admin,</p>
-        <p>A new user with the <strong>Admin role</strong> has been successfully created in the system.</p>
-
-        <table style="width:100%; border-collapse:collapse; margin-top:20px;">
-            <tr>
-                <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Name</td>
-                <td style="padding:8px; border:1px solid #ddd;">{{.FirstName}} {{.LastName}}</td>
-            </tr>
-            <tr>
-                <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Email</td>
-                <td style="padding:8px; border:1px solid #ddd;">{{.Email}}</td>
-            </tr>
-            <tr>
-                <td style="font-weight:bold; padding:8px; border:1px solid #ddd;">Created At</td>
-                <td style="padding:8px; border:1px solid #ddd;">{{.CreatedAt}}</td>
-            </tr>
-        </table>
-
-        <p style="margin-top:30px; font-size:14px; color:#555;">If you did not recognize this activity, please check
-            your system security immediately.</p>
-        </p>
-    </div>
-</body>
-
-</html>
+<p style="margin-top:30px; font-size:14px; color:#555;">If you did not recognize this activity, please check
+    your system security immediately.</p>
+</p>
+{{end}}

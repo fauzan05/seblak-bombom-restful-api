@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,7 +20,7 @@
       background-color: #ffffff;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
     .header {
@@ -51,15 +52,17 @@
     }
   </style>
 </head>
+
 <body>
   <div class="email-container">
+    <img src="data:image/png;base64,{{ .LogoImage }}" alt="Company Logo" width="100" style="margin-bottom: 20px;" />
     <div class="header">
       <h1>Registrasi Berhasil!</h1>
     </div>
     <div class="content">
-      <p>Halo <strong>{{.Nama}}</strong>,</p>
+      <p>Halo <strong>{{.FirstName}}</strong>,</p>
       <p>
-        Terima kasih telah bergabung bersama <strong>Warung Seblak</strong> 🍜<br />
+        Terima kasih telah bergabung bersama <strong>{{.CompanyName}}</strong> 🍜<br />
         Akun kamu sudah berhasil dibuat dan siap digunakan!
       </p>
       <p>
@@ -68,8 +71,9 @@
       </p>
     </div>
     <div class="footer">
-      &copy; {{.Year}} Warung Seblak. Semua hak dilindungi.
+      &copy; {{.Year}} {{.CompanyName}}. All rights reserved.
     </div>
   </div>
 </body>
+
 </html>

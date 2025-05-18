@@ -417,6 +417,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newOrder.XenditTransaction = newXenditTransaction
 	}
 
+	// tidak perlu preload xendit_transactions karena sudah di handle pada if diatas
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("failed to find newly created order : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly created order : %+v", err))
@@ -441,11 +442,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			newMail.Subject = "Pembayaran Lunas"
 		}
 
-		templatePath := "../internal/templates/english/email/order_paid_payment.html"
-		if request.Lang == helper.INDONESIA {
-			templatePath = "../internal/templates/indonesia/email/order_paid_payment.html"
-		}
-
+		templatePath := fmt.Sprintf("../internal/templates/%s/email/order_paid_payment.html", request.Lang)
 		tmpl, err := template.ParseFiles(templatePath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -456,7 +453,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		err = tmpl.Execute(bodyBuilder, map[string]any{
 			"CustomerName":   newOrder.FirstName + " " + newOrder.LastName,
 			"Invoice":        newOrder.Invoice,
-			"Date":           time.Now().Format("02 January 2006 15:04"),
+			"Date":           newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
 			"PaymentMethod":  string(newOrder.PaymentMethod),
 			"Items":          productSelected,
 			"LogoImage":      logoImageBase64,
@@ -483,15 +480,18 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newOrder.Email))
 		}
 
-		// newNotification := new(entity.Notification)
-		// newNotification.UserID = newOrder.UserId
-		// // newNotification.
+		newNotification := new(entity.Notification)
+		newNotification.UserID = newOrder.UserId
+		newNotification.Title = newMail.Subject
+		newNotification.IsRead = false
+		newNotification.Type = helper.TRANSACTION
+		// newNotification.BodyContent = 
 
-		// // newNotification
-		// if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
-		// 	c.Log.Warnf("failed to create new paid notification into database : %+v", err)
-		// 	return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create new paid notification into database : %+v", err))
-		// }
+		// newNotification
+		if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
+			c.Log.Warnf("failed to create notification into database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create notification into database : %+v", err))
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
