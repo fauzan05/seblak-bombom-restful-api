@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Penghapusan Akun Berhasil</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#fef2f2;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+    <div
+        style="max-width:600px;margin:auto;padding:40px 30px;background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+
+        <!-- Header -->
+        <div style="text-align:center;">
+            <img src="data:image/png;base64,{{ .LogoImage }}" alt="Logo Perusahaan" width="100"
+                style="margin-bottom:20px;">
+            <h1 style="color:#ef4444;margin-bottom:10px;">Penghapusan Akun Berhasil</h1>
+            <p style="color:#444;font-size:16px;">Halo <strong>{{.Name}}</strong>,</p>
+            <p style="color:#555;font-size:16px;">
+                Akun Anda telah berhasil dihapus secara permanen pada {{.DeletedAt}}. Kami menyesal Anda pergi.
+            </p>
+        </div>
+
+        <!-- Body -->
+        <div style="margin-top:30px;color:#555;font-size:15px;line-height:1.5;">
+            <p>Jika tindakan ini bukan Anda yang melakukan, segera hubungi tim dukungan kami untuk mengamankan data
+                Anda. Sesuai kebijakan retensi data, sebagian informasi yang telah dianonimkan mungkin tetap kami simpan
+                untuk kepatuhan hukum.</p>
+            <p>Bila di kemudian hari Anda berubah pikiran, Anda selalu dipersilakan untuk membuat akun baru kapan saja.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <hr style="margin:40px 0;border:none;border-top:1px solid #eee;">
+        <p style="font-size:13px;color:#999;text-align:center;">&copy; {{.Year}} {{.CompanyName}}. All rights reserved.
+        </p>
+        <p style="font-size:13px;color:#bbb;text-align:center;">Email ini dikirim secara otomatis. Mohon untuk tidak
+            membalas.</p>
+    </div>
+</body>
+
+</html>

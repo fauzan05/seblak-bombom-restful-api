@@ -5,7 +5,7 @@ CREATE TABLE notifications (
     message TEXT NOT NULL,
     is_read BOOLEAN NOT NULL,
     type ENUM("transaction", "promotion", "authentication") NOT NULL,
-    body_content TEXT NOT NULL,
+    body_content MEDIUMTEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME NULL DEFAULT NULL,

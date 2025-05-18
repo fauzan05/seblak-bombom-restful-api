@@ -256,7 +256,7 @@ func (r *Repository[T]) UserCountByEmail(db *gorm.DB, entity *T, email string) (
 	return total, err
 }
 
-func (r *Repository[T]) DeleteAllAddressByUserId(db *gorm.DB, entity *T, userId uint64) *gorm.DB {
+func (r *Repository[T]) DeleteAllByUserId(db *gorm.DB, entity *T, userId uint64) *gorm.DB {
 	result := db.Where("user_id = ?", userId).Delete(&entity)
 	return result
 }

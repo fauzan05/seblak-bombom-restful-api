@@ -71,7 +71,9 @@ type GetUserByTokenRequest struct {
 }
 
 type DeleteCurrentUserRequest struct {
-	OldPassword string `json:"old_password" validate:"required"`
+	OldPassword  string           `json:"old_password" validate:"required"`
+	Lang         helper.Languange `json:"-"`
+	TimeLocation time.Location    `json:"-"`
 }
 
 type CreateForgotPassword struct {

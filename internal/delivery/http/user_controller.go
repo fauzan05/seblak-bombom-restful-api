@@ -224,15 +224,23 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 
 func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 	// ambil data form update
-	dataRequest := new(model.DeleteCurrentUserRequest)
-	if err := ctx.BodyParser(dataRequest); err != nil {
+	request := new(model.DeleteCurrentUserRequest)
+	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	request.Lang = helper.Languange(getLang)
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.TimeLocation = *loc
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
-	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), dataRequest, auth)
+	response, err := c.UseCase.RemoveCurrentAccount(ctx.Context(), request, auth)
 	if err != nil {
 		c.Log.Warnf("failed to delete current user : %+v", err)
 		return err
