@@ -1,40 +1,14 @@
-<!DOCTYPE html>
-<html>
+{{define "title"}}Account Deletion Successful{{end}}
+{{define "content"}}
+<h1 style="color:#ef4444;margin-bottom:10px;">Account Deletion Successful</h1>
+<p style="color:#444;font-size:16px;">Hi <strong class="capitalize">{{.FirstName}}</strong>,</p>
+<p style="color:#555;font-size:16px;">
+    Your account was permanently deleted at {{.DeletedAt}}. We’re sorry to see you go.
+</p>
 
-<head>
-    <meta charset="UTF-8">
-    <title>Account Deletion Successful</title>
-</head>
-
-<body style="margin:0;padding:0;background-color:#fef2f2;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-    <div
-        style="max-width:600px;margin:auto;padding:40px 30px;background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-
-        <!-- Header -->
-        <div style="text-align:center;">
-            <img src="data:image/png;base64,{{ .LogoImage }}" alt="Company Logo" width="100"
-                style="margin-bottom:20px;">
-            <h1 style="color:#ef4444;margin-bottom:10px;">Account Deletion Successful</h1>
-            <p style="color:#444;font-size:16px;">Hi <strong>{{.Name}}</strong>,</p>
-            <p style="color:#555;font-size:16px;">
-                Your account was permanently deleted at {{.DeletedAt}}. We’re sorry to see you go.
-            </p>
-        </div>
-
-        <!-- Body -->
-        <div style="margin-top:30px;color:#555;font-size:15px;line-height:1.5;">
-            <p>If this action was not initiated by you, please contact our support team immediately. Depending on our
-                data‑retention policy, some anonymized information may be kept for compliance purposes.</p>
-            <p>If you change your mind, you’re always welcome to create a new account anytime.</p>
-        </div>
-
-        <!-- Footer -->
-        <hr style="margin:40px 0;border:none;border-top:1px solid #eee;">
-        <p style="font-size:13px;color:#999;text-align:center;">&copy; {{.Year}} {{.CompanyName}}. All rights reserved.
-        </p>
-        <p style="font-size:13px;color:#bbb;text-align:center;">This email was sent automatically. Please do not reply.
-        </p>
-    </div>
-</body>
-
-</html>
+<div style="margin-top:30px;color:#555;font-size:15px;line-height:1.5;">
+    <p>If this action was not initiated by you, please contact Admin immediately. Depending on our
+        data‑retention policy, some anonymized information may be kept for compliance purposes.</p>
+    <p>If you change your mind, you’re always welcome to create a new account anytime.</p>
+</div>
+{{end}}

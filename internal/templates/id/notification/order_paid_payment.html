@@ -1,99 +1,16 @@
-<!DOCTYPE html>
-<html lang="id">
+{{define "title"}}Pembayaran Berhasil{{end}}
+{{define "content"}}
+<h1>Pembayaran Berhasil!</h1>
+<p>Terima kasih, <span class="capitalize">{{.FirstName}}</span>—pembayaran Anda telah kami terima.</p>
 
-<head>
-    <meta charset="UTF-8" />
-    <title>Pembayaran Berhasil</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f6f8;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<div class="order-details">
+    <div><strong>Nomor Invoice:</strong> {{.Invoice}}</div>
+    <div><strong>Tanggal:</strong> {{.Date}}</div>
+    <div><strong>Metode Pembayaran:</strong> <span class="capitalize">{{.PaymentMethod}}</span></div>
+    <div><strong>Status Pesanan:</strong> <span style="color:#17a2b8;" class="capitalize">{{.OrderStatus}}</span></div>
+</div>
 
-        .notification-box {
-            background-color: #fff;
-            padding: 40px 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            max-width: 500px;
-            text-align: center;
-        }
+<p>Pesanan Anda sedang kami proses. Kami akan mengirimkan notifikasi begitu pesanan dikirim.</p>
 
-        .notification-box img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-        }
-
-        .notification-box h1 {
-            font-size: 22px;
-            margin-bottom: 10px;
-            color: #28a745;
-        }
-
-        .notification-box p {
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-
-        .order-details {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        .order-details div {
-            margin-bottom: 8px;
-        }
-
-        .btn-track {
-            background-color: #007bff;
-            color: #fff;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 14px;
-            display: inline-block;
-        }
-
-        .footer-text {
-            margin-top: 30px;
-            font-size: 12px;
-            color: #888;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="notification-box">
-        <img src="{{.IconImage}}" alt="Pembayaran Berhasil">
-        <h1>Pembayaran Berhasil!</h1>
-        <p>Terima kasih {{.CustomerName}}, pembayaran Anda telah kami terima.</p>
-
-        <div class="order-details">
-            <div><strong>Nomor Invoice:</strong> {{.Invoice}}</div>
-            <div><strong>Tanggal:</strong> {{.Date}}</div>
-            <div><strong>Metode Pembayaran:</strong> {{.PaymentMethod}}</div>
-            <div><strong>Status Pesanan:</strong> <span style="color: #17a2b8;">Sedang diproses</span></div>
-        </div>
-
-        <a href="{{.OrderTrackingURL}}" class="btn-track">Lacak Pesanan</a>
-
-        <div class="footer-text">
-            Email ini dikirim secara otomatis. Jangan balas ke alamat ini.<br>
-            &copy; {{.Year}} {{.CompanyName}}.
-        </div>
-    </div>
-</body>
-
-</html>
+<a href="{{.OrderTrackingURL}}" class="btn-track">Lacak Pesanan</a>
+{{end}}

@@ -592,7 +592,7 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 		return false, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("old Password is wrong : %+v", err))
 	}
 
-	// lalu hapus usernya
+	// lalu hapus usernya (soft delete)
 	if err := c.UserRepository.Delete(tx, newUser); err != nil {
 		c.Log.Warnf("can't delete current user : %+v", err)
 		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("can't delete current user : %+v", err))
@@ -614,20 +614,21 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 
 	newMail := new(model.Mail)
 	newMail.To = []string{newUser.Email}
-	templatePath := fmt.Sprintf("../internal/templates/%s/email/account_deletion.html", request.Lang)
+	baseTemplatePath := "../internal/templates/base_template_email1.html"
+	childPath := fmt.Sprintf("../internal/templates/%s/email/account_deletion.html", request.Lang)
 	newMail.Subject = "Account Deletion Successful"
 	if request.Lang == helper.INDONESIA {
 		newMail.Subject = "Penghapusan Akun Berhasil"
 	}
-	tmpl, err := template.ParseFiles(templatePath)
+	tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
 		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
 	}
 
 	bodyBuilder := new(strings.Builder)
-	err = tmpl.Execute(bodyBuilder, map[string]string{
-		"Name":        newUser.Name.FirstName,
+	err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]string{
+		"FirstName":   newUser.Name.FirstName,
 		"Year":        time.Now().Format("2006"),
 		"CompanyName": newApp.AppName,
 		"LogoImage":   logoImageBase64,

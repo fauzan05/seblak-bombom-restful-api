@@ -1,0 +1,16 @@
+{{define "title"}}Payment Successful{{end}}
+{{define "content"}}
+<h1>Payment Successful!</h1>
+<p>Thank you, <span class="capitalize">{{.FirstName}}</span>—we have received your payment.</p>
+
+<div class="order-details">
+    <div><strong>Invoice No.:</strong> {{.Invoice}}</div>
+    <div><strong>Date:</strong> {{.Date}}</div>
+    <div><strong>Payment Method:</strong> <span class="capitalize">{{.PaymentMethod}}</span></div>
+    <div><strong>Order Status:</strong> <span style="color:#17a2b8;" class="capitalize">{{.OrderStatus}}</span></div>
+</div>
+
+<p>Your order is now being processed. We’ll notify you as soon as it ships.</p>
+
+<a href="{{.OrderTrackingURL}}" class="btn-track">Track Order</a>
+{{end}}
