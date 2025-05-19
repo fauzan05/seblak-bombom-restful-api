@@ -34,7 +34,7 @@ type VerifyEmailRegisterRequest struct {
 	VerificationToken string           `json:"verification_token" validate:"required,max=100"`
 	Lang              helper.Languange `json:"-"`
 	TimeZone          time.Location    `json:"-"`
-	BaseURL           string           `json:"-"`
+	BaseFrontEndURL   string           `json:"-"`
 }
 
 type VerifyUserRequest struct {

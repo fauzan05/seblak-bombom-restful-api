@@ -308,7 +308,7 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
 		}
 
-		loginURL := fmt.Sprintf("%s/login", request.BaseURL)
+		loginURL := fmt.Sprintf("%s/login", request.BaseFrontEndURL)
 		bodyBuilder := new(strings.Builder)
 		err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]string{
 			"FirstName":   newUser.Name.FirstName,

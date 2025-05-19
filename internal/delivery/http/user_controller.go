@@ -81,7 +81,7 @@ func (c *UserController) VerifyEmailRegistration(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	request.TimeZone = *loc
-	request.BaseURL = c.FrontEndConfig.BaseURL
+	request.BaseFrontEndURL = c.FrontEndConfig.BaseURL
 	response, err := c.UseCase.VerifyEmailRegistration(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to verify email registration an user : %+v", err)

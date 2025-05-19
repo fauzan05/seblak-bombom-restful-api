@@ -1,16 +1,65 @@
 {{define "title"}}Payment Successful{{end}}
 {{define "content"}}
-<h1>Payment Successful!</h1>
-<p>Thank you, <span class="capitalize">{{.FirstName}}</span>—we have received your payment.</p>
+<style>
+    /* Child‑specific styling */
+    .order-details {
+        margin: 1.5rem 0;
+        font-size: .875rem;
+        border: 1px solid var(--badge-bg);
+        border-radius: .75rem;
+        padding: 1rem 1.25rem;
+        background: #fff;
+    }
+
+    .order-details div+div {
+        margin-top: .5rem;
+    }
+
+    .order-details strong {
+        color: #374151;
+        font-weight: 500;
+    }
+
+    .btn-track {
+        display: inline-block;
+        margin-top: 1.5rem;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+        padding: .75rem 1.25rem;
+        border-radius: .75rem;
+        text-decoration: none;
+        transition: background .2s ease;
+    }
+
+    .btn-track:hover {
+        background: var(--primary-dark);
+    }
+</style>
+
+<h1 style="font-size:1.25rem;font-weight:700;margin-bottom:.75rem;">
+    Payment Successful!
+</h1>
+
+<p style="margin-bottom:1.25rem;">
+    Thank you, <span class="capitalize">{{.FirstName}}</span> — we have received your payment.
+</p>
 
 <div class="order-details">
-    <div><strong>Invoice No.:</strong> {{.Invoice}}</div>
+    <div><strong>Invoice&nbsp;Number:</strong> {{.Invoice}}</div>
     <div><strong>Date:</strong> {{.Date}}</div>
-    <div><strong>Payment Method:</strong> <span class="capitalize">{{.PaymentMethod}}</span></div>
-    <div><strong>Order Status:</strong> <span style="color:#17a2b8;" class="capitalize">{{.OrderStatus}}</span></div>
+    <div><strong>Payment&nbsp;Method:</strong> <span class="capitalize">{{.PaymentMethod}}</span></div>
+    <div><strong>Order&nbsp;Status:</strong>
+        <span
+            style="display:inline-block;padding:0 .5rem;border-radius:9999px;background:var(--badge-bg);color:var(--primary-dark);font-size:.75rem;font-weight:600;">
+            PAID
+        </span>
+    </div>
 </div>
 
-<p>Your order is now being processed. We’ll notify you as soon as it ships.</p>
+<p style="font-size:.875rem;color:#374151;">
+    Your order is now being processed. We’ll notify you as soon as it ships.
+</p>
 
 <a href="{{.OrderTrackingURL}}" class="btn-track">Track Order</a>
 {{end}}

@@ -1,99 +1,185 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" /> <!-- ====== Base Styles ====== -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pembayaran Berhasil</title>
     <style>
         :root {
-            --brand: #ff5e57;
-            --bg: #fef7f5;
-            --text: #333;
-            --muted: #999;
-            --radius: 8px;
+            --primary: #ff5e57;
+            --primary-dark: #e14b46;
+            --bg: #fff8f8;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --radius: 1.5rem;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --badge-bg: #ffe5e3;
         }
 
-        /* Page */
+        .success {
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --bg: #f0fdf4;
+            --badge-bg: #dcfce7;
+        }
+
+        .error {
+            --primary: #ef4444;
+            --primary-dark: #dc2626;
+            --bg: #fef2f2;
+            --badge-bg: #fee2e2;
+        }
+
+        .info {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --bg: #eff6ff;
+            --badge-bg: #dbeafe;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
+            -webkit-font-smoothing: antialiased;
             margin: 0;
+            padding: 2rem
         }
 
-        /* Container */
         .notif-container {
             max-width: 600px;
             margin: 0 auto;
-            background: #fff;
+            background: var(--card-bg);
             border-radius: var(--radius);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
+            box-shadow: var(--shadow);
             overflow: hidden;
+            animation: fade-in .6s ease-out both
         }
 
-        /* Logo */
         .logo {
-            text-align: center;
-            margin: 32px 0 16px;
+            display: flex;
+            justify-content: center;
+            padding: 2rem 0 1rem
         }
 
         .logo img {
-            width: 90px;
+            width: 90px
         }
 
-        /* Header strip (optional; hide by omitting block) */
         .header {
-            background: var(--brand);
+            background: var(--primary);
             color: #fff;
             text-align: center;
-            padding: 24px;
+            padding: 1.5rem 2rem
         }
 
         .header h1 {
             margin: 0;
-            font-size: 24px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.2px
         }
 
-        /* Body/content area */
         .content {
-            padding: 24px;
+            padding: 2rem
         }
 
         .content p,
         .content li {
-            font-size: 16px;
+            font-size: 1rem;
             line-height: 1.6;
+            color: var(--text)
         }
 
-        /* Footer */
         .footer {
             text-align: center;
-            padding: 16px;
-            font-size: 13px;
-            color: var(--muted);
+            padding: 1rem;
+            font-size: .8125rem;
+            color: var(--muted)
         }
 
-        /* Helpers */
         .capitalize {
-            text-transform: capitalize;
+            text-transform: capitalize
         }
-    </style> <!-- Dynamic title; overridable in child template -->
-    <title>Password Reset Successful</title>
+
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+    </style>
 </head>
 
-<body>
-    <div class="notif-container"> <!-- ====== Logo ====== -->
-        <div class="logo"> <img src="http://localhost/api/image/application/6a4bbd1f17fb907d.jpg" alt="Company Logo">
-        </div> <!-- ====== Optional header strip ====== --> <!-- ====== Main content ====== -->
+<body class="">
+    <div class="notif-container">
+        <div class="logo"><img src="http://localhost/api/image/application/f9c5b8cbe8dfcfc8.jpg"
+                alt="Logo Seblak BomBom New"></div>
         <div class="content">
-            <h1 class="title">Password Successfully Reset</h1>
-            <p class="message"> Hi <strong class="capitalize">Fauzan</strong>, your password has been successfully
-                changed at 18 May 2025 23:47 WIB. </p>
-            <div style="margin-top: 30px; color: #555; font-size: 15px;">
-                <p>If you did not initiate this change, please contact Admin immediately to secure your account.</p>
+            <style>
+                .order-details {
+                    margin: 1.5rem 0;
+                    font-size: .875rem;
+                    border: 1px solid var(--badge-bg);
+                    border-radius: .75rem;
+                    padding: 1rem 1.25rem;
+                    background: #fff;
+                }
+
+                .order-details div+div {
+                    margin-top: .5rem;
+                }
+
+                .order-details strong {
+                    color: #374151;
+                    font-weight: 500;
+                }
+
+                .btn-track {
+                    display: inline-block;
+                    margin-top: 1.5rem;
+                    background: var(--primary);
+                    color: #fff;
+                    font-weight: 600;
+                    padding: .75rem 1.25rem;
+                    border-radius: .75rem;
+                    text-decoration: none;
+                    transition: background .2s ease;
+                }
+
+                .btn-track:hover {
+                    background: var(--primary-dark);
+                }
+            </style>
+            <h1 style="font-size:1.25rem;font-weight:700;margin-bottom:.75rem;"> Pembayaran Berhasil! </h1>
+            <p style="margin-bottom:1.25rem;"> Terima kasih, <span class="capitalize">susi</span> — pembayaran Anda
+                telah kami terima. </p>
+            <div class="order-details">
+                <div><strong>Nomor Invoice:</strong> INV/20250519/1747624912/ORDER/4/CUST/4</div>
+                <div><strong>Tanggal:</strong> 19 May 2025 10:21 WIB</div>
+                <div><strong>Metode Pembayaran:</strong> <span class="capitalize">WALLET</span></div>
+                <div><strong>Status Pesanan:</strong> <span
+                        style="display:inline-block;padding:0 .5rem;border-radius:9999px;background:var(--badge-bg);color:var(--primary-dark);font-size:.75rem;font-weight:600;">
+                        LUNAS </span> </div>
             </div>
-        </div> <!-- ====== Footer ====== -->
-        <div class="footer"> &copy; 2025 <span class="capitalize">Seblak BomBom New</span>. All rights reserved. </div>
+            <p style="font-size:.875rem;color:#374151;"> Pesanan Anda sedang kami proses. Kami akan mengirimkan
+                notifikasi begitu pesanan dikirim. </p> <a href="http://localhost:8000/orders/4" class="btn-track">Lacak
+                Pesanan</a>
+        </div>
+        <div class="footer">&copy; 2025 <span class="capitalize">Seblak BomBom New</span>. All rights reserved. </div>
     </div>
 </body>
 

@@ -52,6 +52,7 @@ type CreateOrderRequest struct {
 	OrderProducts   []CreateOrderProductRequest `json:"order_products" validate:"required"`
 	Lang            helper.Languange            `json:"-"`
 	TimeZone        time.Location               `json:"-"`
+	BaseFrontEndURL string                      `json:"-"`
 }
 
 type GetOrderByCurrentRequest struct {

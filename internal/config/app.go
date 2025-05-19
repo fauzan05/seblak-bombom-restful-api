@@ -86,7 +86,7 @@ func Bootstrap(config *BootstrapConfig) {
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
-	orderController := http.NewOrderController(orderUseCase, config.Log)
+	orderController := http.NewOrderController(orderUseCase, config.Log, config.FrontEndConfig)
 	discountCouponController := http.NewDiscountCouponController(discountCouponUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)

@@ -434,6 +434,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 	}
+
 	if newOrder.PaymentStatus == helper.PAID_PAYMENT {
 		newMail := new(model.Mail)
 		newMail.To = []string{newOrder.Email}
@@ -442,15 +443,16 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			newMail.Subject = "Pembayaran Lunas"
 		}
 
-		templatePath := fmt.Sprintf("../internal/templates/%s/email/order_paid_payment.html", request.Lang)
-		tmpl, err := template.ParseFiles(templatePath)
+		baseTemplatePath := "../internal/templates/base_template_email1.html"
+		childPath := fmt.Sprintf("../internal/templates/%s/email/order_paid_payment.html", request.Lang)
+		tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
 		}
 
 		bodyBuilder := new(strings.Builder)
-		err = tmpl.Execute(bodyBuilder, map[string]any{
+		err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]any{
 			"CustomerName":   newOrder.FirstName + " " + newOrder.LastName,
 			"Invoice":        newOrder.Invoice,
 			"Date":           newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
@@ -485,9 +487,34 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newNotification.Title = newMail.Subject
 		newNotification.IsRead = false
 		newNotification.Type = helper.TRANSACTION
-		// newNotification.BodyContent = 
+		baseTemplatePath = "../internal/templates/base_template_notification1.html"
+		childPath = fmt.Sprintf("../internal/templates/%s/notification/order_paid_payment.html", request.Lang)
+		tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
+		if err != nil {
+			c.Log.Warnf("failed to parse template file html : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
+		}
 
-		// newNotification
+		logoImagePath = fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
+		orderTrackingURL := fmt.Sprintf("%s/orders/%d", request.BaseFrontEndURL, newOrder.ID)
+		bodyBuilder = new(strings.Builder)
+		err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]string{
+			"FirstName":        newOrder.FirstName,
+			"Year":             time.Now().Format("2006"),
+			"CompanyName":      newApp.AppName,
+			"LogoImagePath":    logoImagePath,
+			"Date":             newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
+			"Invoice":          newOrder.Invoice,
+			"PaymentMethod":    string(newOrder.PaymentMethod),
+			"OrderTrackingURL": orderTrackingURL,
+		})
+
+		if err != nil {
+			c.Log.Warnf("failed to execute template file html : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
+		}
+
+		newNotification.BodyContent = bodyBuilder.String()
 		if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
 			c.Log.Warnf("failed to create notification into database : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create notification into database : %+v", err))

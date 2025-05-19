@@ -17,14 +17,16 @@ import (
 )
 
 type OrderController struct {
-	Log     *logrus.Logger
-	UseCase *usecase.OrderUseCase
+	Log            *logrus.Logger
+	UseCase        *usecase.OrderUseCase
+	FrontEndConfig *model.FrontEndConfig
 }
 
-func NewOrderController(useCase *usecase.OrderUseCase, logger *logrus.Logger) *OrderController {
+func NewOrderController(useCase *usecase.OrderUseCase, logger *logrus.Logger, frontEndConfig *model.FrontEndConfig) *OrderController {
 	return &OrderController{
-		Log:     logger,
-		UseCase: useCase,
+		Log:            logger,
+		UseCase:        useCase,
+		FrontEndConfig: frontEndConfig,
 	}
 }
 
@@ -65,6 +67,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	}
 
 	request.CurrentBalance = auth.Wallet.Balance
+	request.BaseFrontEndURL = c.FrontEndConfig.BaseURL
 	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to create a new order : %+v", err)
