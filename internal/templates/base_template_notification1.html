@@ -1,0 +1,160 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{block "title" .}}Notifikasi{{end}}</title>
+
+    <!-- ===== Base Notification Template v2 (kekinian) ===== -->
+    <style>
+        :root {
+            --primary: #ff5e57;
+            --primary-dark: #e14b46;
+            --bg: #fff8f8;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --radius: 1.5rem;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --badge-bg: #ffe5e3;
+        }
+
+        /* Variant mapping (success / error / info) */
+        .success {
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --bg: #f0fdf4;
+            --badge-bg: #dcfce7;
+        }
+
+        .error {
+            --primary: #ef4444;
+            --primary-dark: #dc2626;
+            --bg: #fef2f2;
+            --badge-bg: #fee2e2;
+        }
+
+        .info {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --bg: #eff6ff;
+            --badge-bg: #dbeafe;
+        }
+
+        /* Reset & base */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 2rem
+        }
+
+        .notif-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            animation: fade-in .6s ease-out both
+        }
+
+        /* Logo */
+        .logo {
+            display: flex;
+            justify-content: center;
+            padding: 2rem 0 1rem
+        }
+
+        .logo img {
+            width: 90px
+        }
+
+        /* Optional top strip header */
+        .header {
+            background: var(--primary);
+            color: #fff;
+            text-align: center;
+            padding: 1.5rem 2rem
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.2px
+        }
+
+        /* Content */
+        .content {
+            padding: 2rem
+        }
+
+        .content p,
+        .content li {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text)
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: .8125rem;
+            color: var(--muted)
+        }
+
+        .capitalize {
+            text-transform: capitalize
+        }
+
+        /* Fade */
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+    </style>
+</head>
+<!-- Tambahkan class success | error | info pada <body> untuk switch tema -->
+
+<body class="{{.Variant}}">
+    <div class="notif-container">
+        <!-- Logo -->
+        {{if .LogoImagePath}}
+        <div class="logo"><img src="{{.LogoImagePath}}" alt="Logo {{.CompanyName}}"></div>
+        {{end}}
+
+        <!-- Header strip (opsional) -->
+        {{block "header" .}}{{end}}
+
+        <!-- Main content -->
+        <div class="content">
+            {{block "content" .}}{{end}}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">&copy; {{.Year}} <span class="capitalize">{{.CompanyName}}</span>. All rights reserved.
+        </div>
+    </div>
+</body>
+
+</html>
+{{end}}

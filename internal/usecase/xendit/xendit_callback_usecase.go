@@ -2,10 +2,14 @@ package usecase
 
 import (
 	"fmt"
+	"html/template"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/repository"
+	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -26,13 +30,17 @@ type XenditCallbackUseCase struct {
 	WalletRepository            *repository.WalletRepository
 	XenditPayoutRepository      *repository.XenditPayoutRepository
 	PayoutRepository            *repository.PayoutRepository
+	ApplicationRepository       *repository.ApplicationRepository
+	NotificationRepository      *repository.NotificationRepository
+	Email                       *mailer.EmailWorker
 }
 
 func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate,
 	orderRepository *repository.OrderRepository, xenditTransactionRepository *repository.XenditTransctionRepository,
 	xenditClient *xendit.APIClient, xenditPayoutRepository *repository.XenditPayoutRepository,
 	userRepository *repository.UserRepository, walletRepository *repository.WalletRepository,
-	payoutRepository *repository.PayoutRepository) *XenditCallbackUseCase {
+	payoutRepository *repository.PayoutRepository, applicationRepository *repository.ApplicationRepository,
+	notificationRepository *repository.NotificationRepository, email *mailer.EmailWorker) *XenditCallbackUseCase {
 	return &XenditCallbackUseCase{
 		DB:                          db,
 		Log:                         log,
@@ -44,6 +52,9 @@ func NewXenditCallbackUseCase(db *gorm.DB, log *logrus.Logger, validate *validat
 		UserRepository:              userRepository,
 		WalletRepository:            walletRepository,
 		PayoutRepository:            payoutRepository,
+		ApplicationRepository:       applicationRepository,
+		NotificationRepository:      notificationRepository,
+		Email:                       email,
 	}
 }
 
@@ -73,7 +84,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 			orderId := newXenditTransaction.OrderId
 			updateXenditTransaction := map[string]any{
 				"status":     status,
-				"updated_at": updatedAt,
+				"updated_at": updatedAt.ToTime(),
 			}
 
 			*newXenditTransaction = entity.XenditTransactions{
@@ -86,20 +97,42 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 			}
 
 			var payment_status helper.PaymentStatus
+			var is_send_email bool
+			var email_subject string
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED) {
+				is_send_email = true
 				payment_status = helper.PAID_PAYMENT
+				email_subject = "Payment Successfull"
+				if request.Lang == helper.INDONESIA {
+					email_subject = "Pembayaran Berhasil"
+				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_CANCELED) {
+				is_send_email = true
 				payment_status = helper.CANCELLED_PAYMENT
+				email_subject = "Payment Cancelled"
+				if request.Lang == helper.INDONESIA {
+					email_subject = "Pembayaran Dibatalkan"
+				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_FAILED) {
+				is_send_email = true
 				payment_status = helper.FAILED_PAYMENT
+				email_subject = "Payment Failed"
+				if request.Lang == helper.INDONESIA {
+					email_subject = "Pembayaran Gagal"
+				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_EXPIRED) {
+				is_send_email = true
 				payment_status = helper.EXPIRED_PAYMENT
+				email_subject = "Payment Expired"
+				if request.Lang == helper.INDONESIA {
+					email_subject = "Pembayaran Kadaluwarsa"
+				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_PENDING) {
@@ -108,7 +141,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 
 			updateOrderStatus := map[string]any{
 				"payment_status": payment_status,
-				"updated_at":     updatedAt,
+				"updated_at":     updatedAt.ToTime(),
 			}
 
 			newOrder := new(entity.Order)
@@ -116,6 +149,139 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 			if err := c.OrderRepository.UpdateCustomColumns(tx, newOrder, updateOrderStatus); err != nil {
 				c.Log.Warnf("failed to update order status into database : %+v", err)
 				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update order status into database : %+v", err))
+			}
+
+			if is_send_email {
+				if err := c.OrderRepository.FindWith2Preloads(tx, newOrder, "OrderProducts", "OrderProducts.Product"); err != nil {
+					c.Log.Warnf("failed to find newly created order : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly created order : %+v", err))
+				}
+
+				productsSelected := []map[string]any{}
+				for _, product := range newOrder.OrderProducts {
+					var productImageBase64 string
+					productImagePath := fmt.Sprintf("../uploads/images/products/%s", product.ProductFirstImagePosition)
+					productImageBase64, err := helper.ImageToBase64(productImagePath)
+					if err != nil {
+						c.Log.Warnf("failed to convert product image to base64 : %+v", err)
+						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert product image to base64 : %+v", err))
+					}
+
+					productImage := map[string]any{
+						"ProductImageFilename": product.ProductFirstImagePosition,
+						"ProductImage":         productImageBase64,
+						"ProductName":          product.ProductName,
+						"Quantity":             product.Quantity,
+						"Price":                helper.FormatNumberFloat32(product.Price),
+					}
+
+					productsSelected = append(productsSelected, productImage)
+				}
+
+				newApp := new(entity.Application)
+				if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
+					c.Log.Warnf("failed to find application from database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
+				}
+				if newApp.LogoFilename == "" {
+					c.Log.Warnf("application logo has not uploaded yet!")
+					return fiber.NewError(fiber.StatusBadRequest, "application logo has not uploaded yet!")
+				}
+
+				logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+				logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+				if err != nil {
+					c.Log.Warnf("failed to convert logo to base64 : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
+				}
+
+				newMail := new(model.Mail)
+				newMail.To = []string{newOrder.Email}
+				newMail.Subject = email_subject
+				baseTemplatePath := "../internal/templates/base_template_email1.html"
+				childPath := fmt.Sprintf("../internal/templates/%s/email/order_payment.html", request.Lang)
+				tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
+				if err != nil {
+					c.Log.Warnf("failed to parse template file html : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
+				}
+
+				paymentLink := fmt.Sprintf("%s/payment/orders/%d/details", request.BaseFrontEndURL, newOrder.ID)
+				orderTrackingURL := fmt.Sprintf("%s/orders/%d/details", request.BaseFrontEndURL, newOrder.ID)
+				bodyBuilder := new(strings.Builder)
+				err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]any{
+					"CustomerName":     newOrder.FirstName + " " + newOrder.LastName,
+					"Invoice":          newOrder.Invoice,
+					"Date":             newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
+					"PaymentMethod":    string(newOrder.PaymentMethod),
+					"Items":            productsSelected,
+					"LogoImage":        logoImageBase64,
+					"CompanyTitle":     newApp.AppName,
+					"TotalAmount":      helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
+					"Year":             time.Now().Format("2006"),
+					"CustomerNotes":    newOrder.Note,
+					"ShippingMethod":   newOrder.IsDelivery,
+					"ShippingCost":     helper.FormatNumberFloat32(newOrder.DeliveryCost),
+					"ServiceFee":       helper.FormatNumberFloat32(newOrder.ServiceFee),
+					"Discount":         helper.FormatNumberFloat32(newOrder.TotalDiscount),
+					"Subject":          newMail.Subject,
+					"PaymentStatus":    newOrder.PaymentStatus,
+					"PaymentLink":      paymentLink,
+					"OrderTrackingURL": orderTrackingURL,
+				})
+				if err != nil {
+					c.Log.Warnf("failed to execute template file html : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
+				}
+				newMail.Template = *bodyBuilder
+				c.Email.Mailer.SenderName = fmt.Sprintf("System %s", newApp.AppName)
+				// send email
+				select {
+				case c.Email.MailQueue <- *newMail:
+				default:
+					c.Log.Warnf("email queue full, failed to send to %s", newOrder.Email)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("email queue full, failed to send to %s", newOrder.Email))
+				}
+
+				newNotification := new(entity.Notification)
+				newNotification.UserID = newOrder.UserId
+				newNotification.Title = newMail.Subject
+				newNotification.IsRead = false
+				newNotification.Type = helper.TRANSACTION
+				baseTemplatePath = "../internal/templates/base_template_notification1.html"
+				childPath = fmt.Sprintf("../internal/templates/%s/notification/order_payment.html", request.Lang)
+				tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
+				if err != nil {
+					c.Log.Warnf("failed to parse template file html : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
+				}
+
+				logoImagePath = fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
+				bodyBuilder = new(strings.Builder)
+				err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]string{
+					"FirstName":        newOrder.FirstName,
+					"Year":             time.Now().Format("2006"),
+					"CompanyName":      newApp.AppName,
+					"LogoImagePath":    logoImagePath,
+					"Date":             newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
+					"Invoice":          newOrder.Invoice,
+					"PaymentMethod":    string(newOrder.PaymentMethod),
+					"Subject":          newMail.Subject,
+					"PaymentStatus":    string(newOrder.PaymentStatus),
+					"PaymentLink":      paymentLink,
+					"OrderTrackingURL": orderTrackingURL,
+				})
+
+				if err != nil {
+					c.Log.Warnf("failed to execute template file html : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
+				}
+
+				newNotification.BodyContent = bodyBuilder.String()
+				if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
+					c.Log.Warnf("failed to create notification into database : %+v", err)
+					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create notification into database : %+v", err))
+				}
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package model
 
 import (
 	"seblak-bombom-restful-api/internal/helper"
+	"time"
 )
 
 type OrderResponse struct {
@@ -34,22 +35,24 @@ type OrderResponse struct {
 }
 
 type CreateOrderRequest struct {
-	DiscountId      uint64                      `json:"discount_id"`
-	UserId          uint64                      `json:"user_id" validate:"required"`
-	FirstName       string                      `json:"first_name" validate:"required"`
-	LastName        string                      `json:"last_name" validate:"required"`
-	Email           string                      `json:"email" validate:"required"`
-	Phone           string                      `json:"phone" validate:"required"`
-	PaymentMethod   helper.PaymentMethod        `json:"payment_method" validate:"required"`
-	ChannelCode     helper.ChannelCode          `json:"channel_code" validate:"required"`
-	PaymentGateway  helper.PaymentGateway       `json:"payment_gateway" validate:"required"`
-	IsDelivery      bool                        `json:"is_delivery"`
-	DeliveryId      uint64                      `json:"delivery_id"`
-	CompleteAddress string                      `json:"complete_address" validate:"required"`
-	Note            string                      `json:"note"`
-	CurrentBalance  float32                     `json:"current_balance"`
-	OrderProducts   []CreateOrderProductRequest `json:"order_products" validate:"required"`
-	Lang            helper.Languange            `json:"-"`
+	DiscountId      uint64                 `json:"discount_id"`
+	UserId          uint64                 `json:"user_id" validate:"required"`
+	FirstName       string                 `json:"first_name" validate:"required"`
+	LastName        string                 `json:"last_name" validate:"required"`
+	Email           string                 `json:"email" validate:"required"`
+	Phone           string                 `json:"phone" validate:"required"`
+	PaymentMethod   helper.PaymentMethod   `json:"payment_method" validate:"required"`
+	ChannelCode     helper.ChannelCode     `json:"channel_code" validate:"required"`
+	PaymentGateway  helper.PaymentGateway  `json:"payment_gateway" validate:"required"`
+	IsDelivery      bool                   `json:"is_delivery"`
+	DeliveryId      uint64                 `json:"delivery_id"`
+	CompleteAddress string                 `json:"complete_address" validate:"required"`
+	Note            string                 `json:"note"`
+	CurrentBalance  float32                `json:"current_balance"`
+	OrderProducts   []OrderProductResponse `json:"order_products" validate:"required"`
+	Lang            helper.Languange       `json:"-"`
+	TimeZone        time.Location          `json:"-"`
+	BaseFrontEndURL string                 `json:"-"`
 }
 
 type GetOrderByCurrentRequest struct {
@@ -60,6 +63,7 @@ type UpdateOrderRequest struct {
 	ID          uint64             `json:"-" validate:"required"` //order id
 	OrderStatus helper.OrderStatus `json:"order_status"`
 	Lang        helper.Languange   `json:"-"`
+	TimeZone    time.Location      `json:"-"`
 }
 
 type GetOrdersByUserIdRequest struct {

@@ -35,7 +35,7 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -127,7 +127,7 @@ func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -213,7 +213,7 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -305,7 +305,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDeliveryDeleted(t *testing.T) {
 		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -363,7 +363,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -462,7 +462,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.
 			ChannelCode:    helper.WALLET_CHANNEL_CODE,
 			IsDelivery:     true,
 			Note:           "Yang cepet ya!",
-			OrderProducts: []model.CreateOrderProductRequest{
+			OrderProducts: []model.OrderProductResponse{
 				{
 					ProductId: product.ID,
 					Quantity:  2,
@@ -551,7 +551,7 @@ func TestCreateOrderBalanceInsufficient(t *testing.T) {
 		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -602,7 +602,7 @@ func TestCreateOrderDiscountNotFound(t *testing.T) {
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -662,7 +662,7 @@ func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -722,7 +722,7 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,
@@ -781,7 +781,7 @@ func TestCreateOrderDiscountMinOrder(t *testing.T) {
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  1,
@@ -837,7 +837,7 @@ func TestCreateOrderPaymentMethodNotValid(t *testing.T) {
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  4,
@@ -893,7 +893,7 @@ func TestCreateOrderChannelCodeNotValid(t *testing.T) {
 		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  4,
@@ -949,7 +949,7 @@ func TestCreateOrderPaymentGatewayNotValid(t *testing.T) {
 		PaymentGateway: "LALA",
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  4,
@@ -1005,7 +1005,7 @@ func TestCreateOrderWalletWrongPaymentMethod(t *testing.T) {
 		ChannelCode:    helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  4,
@@ -1061,7 +1061,7 @@ func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
 		ChannelCode:    helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  4,

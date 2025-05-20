@@ -9,7 +9,6 @@ type Notification struct {
 	ID          uint64                  `gorm:"primary_key;column:id;autoIncrement"`
 	UserID      uint64                  `gorm:"column:user_id"`
 	Title       string                  `gorm:"column:title"`
-	Message     string                  `gorm:"column:message"`
 	IsRead      bool                    `gorm:"column:is_read"`
 	Type        helper.NotificationType `gorm:"column:type"`
 	BodyContent string                  `gorm:"column:body_content"`

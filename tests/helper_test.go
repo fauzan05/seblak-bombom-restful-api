@@ -691,7 +691,7 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 			ChannelCode:    helper.WALLET_CHANNEL_CODE,
 			IsDelivery:     true,
 			Note:           "Yang cepet ya!",
-			OrderProducts: []model.CreateOrderProductRequest{
+			OrderProducts: []model.OrderProductResponse{
 				{
 					ProductId: product.ID,
 					Quantity:  1,
@@ -838,7 +838,7 @@ func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin str
 		ChannelCode:    helper.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
-		OrderProducts: []model.CreateOrderProductRequest{
+		OrderProducts: []model.OrderProductResponse{
 			{
 				ProductId: product.ID,
 				Quantity:  2,

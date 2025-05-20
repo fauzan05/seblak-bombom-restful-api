@@ -1,48 +1,26 @@
-<!DOCTYPE html>
-<html>
+{{define "title"}}Verifikasi Email{{end}}
+{{define "content"}}
+<h1 style="color: #e2574c; margin-bottom: 10px;">Verifikasi Email Anda</h1>
+<p style="color: #555; font-size: 16px;">Hai <strong class="capitalize">{{.Name}}</strong>, terima kasih telah mendaftar
+    di
+    <strong class="capitalize">{{.CompanyName}}</strong> 🎉
+</p>
 
-<head>
-    <meta charset="UTF-8">
-    <title>Verifikasi Email</title>
-</head>
+<div style="margin-top: 30px;">
+    <p style="font-size: 15px; color: #333;">Untuk menyelesaikan proses pendaftaran dan mengaktifkan akun Anda,
+        silakan verifikasi alamat email dengan menekan tombol di bawah ini:</p>
+</div>
 
-<body
-    style="margin: 0; padding: 0; background-color: #fff7f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <div
-        style="max-width: 600px; margin: auto; padding: 40px 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+<div style="margin-top: 30px; text-align: center;">
+    <a href="{{.VerificationURL}}"
+        style="display: inline-block; padding: 12px 24px; background-color: #e2574c; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
+        Verifikasi Email
+    </a>
+</div>
 
-        <div style="text-align: center;">
-            <img src="data:image/png;base64,{{ .LogoImage }}" alt="Logo Perusahaan" width="100"
-                style="margin-bottom: 20px;" />
-            <h1 style="color: #e2574c; margin-bottom: 10px;">Verifikasi Email Anda</h1>
-            <p style="color: #555; font-size: 16px;">Hai <strong>{{.Name}}</strong>, terima kasih telah mendaftar di
-                <strong>{{.CompanyName}}</strong> 🎉</p>
-        </div>
-
-        <div style="margin-top: 30px;">
-            <p style="font-size: 15px; color: #333;">Untuk menyelesaikan proses pendaftaran dan mengaktifkan akun Anda,
-                silakan verifikasi alamat email dengan menekan tombol di bawah ini:</p>
-        </div>
-
-        <div style="margin-top: 30px; text-align: center;">
-            <a href="{{.VerificationURL}}"
-                style="display: inline-block; padding: 12px 24px; background-color: #e2574c; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                Verifikasi Email
-            </a>
-        </div>
-
-        <div style="margin-top: 30px;">
-            <p style="font-size: 14px; color: #666;">Jika Anda tidak membuat akun, Anda dapat mengabaikan email ini
-                dengan aman.</p>
-            <p style="font-size: 13px; color: #999;">Tautan ini akan kedaluwarsa pada {{.TokenExpiry}}.</p>
-        </div>
-
-        <hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;" />
-        <p style="font-size: 13px; color: #999; text-align: center;">&copy; {{.Year}} {{.CompanyName}}. Seluruh hak
-            cipta dilindungi.</p>
-        <p style="font-size: 13px; color: #bbb; text-align: center;">Email ini dikirim secara otomatis. Mohon untuk
-            tidak membalas.</p>
-    </div>
-</body>
-
-</html>
+<div style="margin-top: 30px;">
+    <p style="font-size: 14px; color: #666;">Jika Anda tidak membuat akun, Anda dapat mengabaikan email ini
+        dengan aman.</p>
+    <p style="font-size: 13px; color: #999;">Tautan ini akan kedaluwarsa pada {{.TokenExpiry}}.</p>
+</div>
+{{end}}

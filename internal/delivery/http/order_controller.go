@@ -17,31 +17,39 @@ import (
 )
 
 type OrderController struct {
-	Log     *logrus.Logger
-	UseCase *usecase.OrderUseCase
+	Log            *logrus.Logger
+	UseCase        *usecase.OrderUseCase
+	FrontEndConfig *model.FrontEndConfig
 }
 
-func NewOrderController(useCase *usecase.OrderUseCase, logger *logrus.Logger) *OrderController {
+func NewOrderController(useCase *usecase.OrderUseCase, logger *logrus.Logger, frontEndConfig *model.FrontEndConfig) *OrderController {
 	return &OrderController{
-		Log:     logger,
-		UseCase: useCase,
+		Log:            logger,
+		UseCase:        useCase,
+		FrontEndConfig: frontEndConfig,
 	}
 }
 
 func (c *OrderController) Create(ctx *fiber.Ctx) error {
-	orderRequest := new(model.CreateOrderRequest)
-	if err := ctx.BodyParser(orderRequest); err != nil {
+	request := new(model.CreateOrderRequest)
+	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	orderRequest.Lang = helper.Languange(getLang)
+	request.Lang = helper.Languange(getLang)
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.TimeZone = *loc
 	auth := middleware.GetCurrentUser(ctx)
-	orderRequest.UserId = auth.ID
-	orderRequest.FirstName = auth.FirstName
-	orderRequest.LastName = auth.LastName
-	orderRequest.Email = auth.Email
-	orderRequest.Phone = auth.Phone
+	request.UserId = auth.ID
+	request.FirstName = auth.FirstName
+	request.LastName = auth.LastName
+	request.Email = auth.Email
+	request.Phone = auth.Phone
 	if auth.Addresses == nil {
 		c.Log.Warnf("address not found/selected!")
 		return fiber.NewError(fiber.StatusBadRequest, "address not found/selected!")
@@ -49,17 +57,18 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 
 	for _, address := range auth.Addresses {
 		if address.IsMain {
-			orderRequest.CompleteAddress = address.CompleteAddress
-			if address.Delivery.ID == 0 && orderRequest.IsDelivery {
+			request.CompleteAddress = address.CompleteAddress
+			if address.Delivery.ID == 0 && request.IsDelivery {
 				c.Log.Warnf("delivery not found, please selected one!")
 				return fiber.NewError(fiber.StatusNotFound, "delivery not found, please selected one!")
 			}
-			orderRequest.DeliveryId = address.Delivery.ID
+			request.DeliveryId = address.Delivery.ID
 		}
 	}
 
-	orderRequest.CurrentBalance = auth.Wallet.Balance
-	response, err := c.UseCase.Add(ctx, orderRequest)
+	request.CurrentBalance = auth.Wallet.Balance
+	request.BaseFrontEndURL = c.FrontEndConfig.BaseURL
+	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to create a new order : %+v", err)
 		return err
@@ -138,15 +147,22 @@ func (c *OrderController) UpdateOrderStatus(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert order_id to integer : %+v", err))
 	}
 
-	orderRequest := new(model.UpdateOrderRequest)
-	orderRequest.ID = uint64(orderId)
-	if err := ctx.BodyParser(orderRequest); err != nil {
+	request := new(model.UpdateOrderRequest)
+	request.ID = uint64(orderId)
+	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
-
+	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	request.Lang = helper.Languange(getLang)
+	getTimeZoneUser := ctx.Query("timezone", "UTC")
+	loc, err := time.LoadLocation(getTimeZoneUser)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.TimeZone = *loc
 	auth := middleware.GetCurrentUser(ctx)
-	response, err := c.UseCase.EditOrderStatus(ctx.Context(), orderRequest, auth)
+	response, err := c.UseCase.EditOrderStatus(ctx.Context(), request, auth)
 	if err != nil {
 		c.Log.Warnf("failed to update order status by selected order : %+v", err)
 		return err

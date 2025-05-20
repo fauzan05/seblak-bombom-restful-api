@@ -116,9 +116,11 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 
 	custId := strconv.FormatUint(selectedOrder.UserId, 10)
 	metadata := map[string]any{
-		"user_id":  selectedOrder.UserId,
-		"order_id": selectedOrder.ID,
-		"notes":    selectedOrder.Note,
+		"user_id":   selectedOrder.UserId,
+		"order_id":  selectedOrder.ID,
+		"notes":     selectedOrder.Note,
+		"time_zone": request.TimeZone.String(),
+		"lang":      request.Lang,
 	}
 
 	paymentRequestParameters := &payment_request.PaymentRequestParameters{
@@ -135,9 +137,9 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 		Metadata:   metadata,
 	}
 
-	orderIdString := strconv.Itoa(int(selectedOrder.ID))
+	idempotencyKey := fmt.Sprintf("%d-%s", selectedOrder.ID, selectedOrder.Invoice)
 	resp, _, resErr := c.XenditClient.PaymentRequestApi.CreatePaymentRequest(ctx.Context()).
-		PaymentRequestParameters(*paymentRequestParameters).IdempotencyKey(orderIdString).
+		PaymentRequestParameters(*paymentRequestParameters).IdempotencyKey(idempotencyKey).
 		Execute()
 
 	if resErr != nil {
