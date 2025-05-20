@@ -2,10 +2,13 @@ package model
 
 import (
 	"seblak-bombom-restful-api/internal/helper"
+	"time"
 )
 
 type CreateXenditTransaction struct {
-	OrderId uint64 `json:"order_id" validate:"required"`
+	OrderId  uint64           `json:"order_id" validate:"required"`
+	Lang     helper.Languange `json:"-"`
+	TimeZone time.Location    `json:"-"`
 }
 
 type CreateXenditQRCode struct {
@@ -45,8 +48,12 @@ type XenditGetPaymentRequestCallbackStatus struct {
 			ID string `json:"id"`
 		} `json:"payment_method" validate:"required"`
 		Status    string             `json:"status" validate:"required"`
+		Metadata  map[string]any     `json:"metadata"`
 		UpdatedAt helper.TimeRFC3339 `json:"updated" validate:"required"`
 	} `json:"data" validate:"required"`
+	Lang            helper.Languange `json:"-"`
+	TimeZone        time.Location    `json:"-"`
+	BaseFrontEndURL string           `json:"-"`
 }
 
 type XenditGetPayoutRequestCallbackStatus struct {

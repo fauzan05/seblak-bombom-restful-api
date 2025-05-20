@@ -5,22 +5,15 @@ import (
 )
 
 type OrderProductResponse struct {
-	ID          uint64             `json:"id,omitempty"`
-	OrderId     uint64             `json:"order_id,omitempty"`
-	ProductId   uint64             `json:"product_id,omitempty"`
-	ProductName string             `json:"product_name,omitempty"`
-	Category    string             `json:"category,omitempty"`
-	Price       float32            `json:"price,omitempty"`
-	Quantity    int                `json:"quantity,omitempty"`
-	Product     ProductResponse    `json:"product,omitempty"`
-	CreatedAt   helper.TimeRFC3339 `json:"created_at,omitempty"`
-	UpdatedAt   helper.TimeRFC3339 `json:"updated_at,omitempty"`
-}
-
-type CreateOrderProductRequest struct {
-	OrderId     uint64  `json:"order_id"`
-	ProductId   uint64  `json:"product_id" validate:"required"`
-	ProductName string  `json:"product_name" validate:"required"`
-	Price       float32 `json:"price" validate:"required"`
-	Quantity    int     `json:"quantity" validate:"required"`
+	ID                        uint64             `json:"id,omitempty"`
+	OrderId                   uint64             `json:"order_id,omitempty"`
+	ProductId                 uint64             `json:"product_id,omitempty"`
+	ProductName               string             `json:"product_name,omitempty"`
+	ProductFirstImagePosition string             `json:"product_first_image_position"`
+	Category                  string             `json:"category,omitempty"`
+	Price                     float32            `json:"price,omitempty"`
+	Quantity                  int                `json:"quantity,omitempty"`
+	Product                   ProductResponse    `json:"product,omitempty"`
+	CreatedAt                 helper.TimeRFC3339 `json:"created_at,omitempty"`
+	UpdatedAt                 helper.TimeRFC3339 `json:"updated_at,omitempty"`
 }

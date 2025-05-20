@@ -77,7 +77,7 @@ func Bootstrap(config *BootstrapConfig) {
 	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountCouponRepository, discountUsageRepository, deliveryRepository, orderProductRepository, walletRepository, xenditTransactionRepository, xenditTransactionQRCodeUseCase, config.XenditClient, applicationRepository, config.Email, notificationRepository)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
 	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, config.Validate, cartRepository, productRepository, cartItemRepository)
-	xenditCallbackUseCase := xenditUseCase.NewXenditCallbackUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient, xenditPayoutRepository, userRepository, walletRepository, payoutRepository)
+	xenditCallbackUseCase := xenditUseCase.NewXenditCallbackUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient, xenditPayoutRepository, userRepository, walletRepository, payoutRepository, applicationRepository, notificationRepository, config.Email)
 	xenditPayoutUseCase := xenditUseCase.NewXenditPayoutUseCase(config.DB, config.Log, config.Validate, xenditPayoutRepository, config.XenditClient, walletRepository, userRepository)
 	payoutUseCase := usecase.NewPayoutUseCase(config.DB, config.Log, config.Validate, payoutRepository, xenditPayoutUseCase, walletRepository, userRepository)
 
@@ -93,7 +93,7 @@ func Bootstrap(config *BootstrapConfig) {
 	midtransSnapOrderController := http.NewMidtransSnapOrderController(midtransSnapOrderUseCase, config.Log)
 	midtransCoreAPIOrderController := http.NewMidtransCoreAPIOrderController(midtransCoreApiOrderUseCase, config.Log)
 	xenditQRCodeTransactionController := xenditController.NewXenditQRCodeTransctionController(xenditTransactionQRCodeUseCase, config.Log, config.DB)
-	xenditCallbackController := xenditController.NewXenditCallbackController(xenditCallbackUseCase, config.Log)
+	xenditCallbackController := xenditController.NewXenditCallbackController(xenditCallbackUseCase, config.Log, config.FrontEndConfig)
 	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
 	cartController := http.NewCartController(cartUseCase, config.Log)
 	xenditPayoutController := xenditController.NewXenditPayoutController(xenditPayoutUseCase, config.Log, config.DB)

@@ -1,0 +1,125 @@
+{{define "title"}}
+{{if eq .PaymentStatus "paid"}}Payment Successful
+{{else if eq .PaymentStatus "pending"}}Payment Pending
+{{else if eq .PaymentStatus "cancelled"}}Payment Cancelled
+{{else if eq .PaymentStatus "expired"}}Payment Expired
+{{else}}Payment Failed
+{{end}}
+{{end}}
+{{define "content"}}
+<style>
+    /* Child‑specific styling */
+    .order-details {
+        margin: 1.5rem 0;
+        font-size: .875rem;
+        border: 1px solid var(--badge-bg);
+        border-radius: .75rem;
+        padding: 1rem 1.25rem;
+        background: #fff;
+    }
+
+    .order-details div+div {
+        margin-top: .5rem;
+    }
+
+    .order-details strong {
+        color: #374151;
+        font-weight: 500;
+    }
+
+    .btn-track {
+        display: inline-block;
+        margin-top: 1.5rem;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+        padding: .75rem 1.25rem;
+        border-radius: .75rem;
+        text-decoration: none;
+        transition: background .2s ease;
+    }
+
+    .btn-track:hover {
+        background: var(--primary-dark);
+    }
+</style>
+
+<h1 style="font-size:1.25rem;font-weight:700;margin-bottom:.75rem;">
+    {{if eq .PaymentStatus "paid"}}Payment Successful!
+    {{else if eq .PaymentStatus "pending"}}Payment Pending!
+    {{else if eq .PaymentStatus "cancelled"}}Payment Cancelled!
+    {{else if eq .PaymentStatus "expired"}}Payment Expired!
+    {{else}}Payment Failed!
+    {{end}}
+</h1>
+
+<p style="margin-bottom:1.25rem;">
+    {{if eq .PaymentStatus "paid"}}
+    Thank you, <span class="capitalize">{{.FirstName}}</span> — we have received your payment.
+    {{else if eq .PaymentStatus "pending"}}
+    Hi <span class="capitalize">{{.FirstName}}</span>, we haven’t received your payment yet. Please complete it to avoid
+    cancellation.
+    {{else if eq .PaymentStatus "cancelled"}}
+    Your payment was cancelled. Feel free to place a new order anytime.
+    {{else if eq .PaymentStatus "expired"}}
+    The payment link has expired. Please create a new order if you’re still interested.
+    {{else}} {{/* failed */}}
+    Payment failed. Please check your payment method or contact customer support.
+    {{end}}
+</p>
+
+<div class="order-details">
+    <div><strong>Invoice&nbsp;Number:</strong> {{.Invoice}}</div>
+    <div><strong>Date:</strong> {{.Date}}</div>
+    <div><strong>Payment&nbsp;Method:</strong> <span class="capitalize">{{.PaymentMethod}}</span></div>
+    <div><strong>Order&nbsp;Status:</strong>
+        {{if eq .PaymentStatus "paid"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--badge-bg);
+                 color:var(--primary-dark);font-size:.75rem;font-weight:600;">PAID</span>
+        {{else if eq .PaymentStatus "pending"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--warn);
+                 color:#212529;font-size:.75rem;font-weight:600;">PENDING</span>
+        {{else if eq .PaymentStatus "cancelled"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--danger);
+                 color:#fff;font-size:.75rem;font-weight:600;">CANCELLED</span>
+        {{else if eq .PaymentStatus "expired"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--grey);
+                 color:#fff;font-size:.75rem;font-weight:600;">EXPIRED</span>
+        {{else}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--grey);
+                 color:#fff;font-size:.75rem;font-weight:600;">FAILED</span>
+        {{end}}
+    </div>
+</div>
+
+{{if eq .PaymentStatus "paid"}}
+<p style="font-size:.875rem;color:#374151;">
+    Your order is being processed. We’ll notify you as soon as it ships.
+</p>
+<a href="{{.OrderTrackingURL}}" class="btn-track">Track Order</a>
+
+{{else if eq .PaymentStatus "pending"}}
+<p style="font-size:.875rem;color:#374151;">
+    We haven’t received your payment yet. Please complete it soon to avoid cancellation.
+</p>
+<a href="{{.PaymentLink}}" class="btn-track" style="background:#ffc107;color:#212529;">
+    Complete Payment
+</a>
+
+{{else if eq .PaymentStatus "cancelled"}}
+<p style="font-size:.875rem;color:#374151;">
+    Your payment was cancelled. Feel free to place a new order anytime.
+</p>
+
+{{else if eq .PaymentStatus "expired"}}
+<p style="font-size:.875rem;color:#374151;">
+    The payment link has expired. Please create a new order if you’re still interested.
+</p>
+
+{{else}} {{/* failed */}}
+<p style="font-size:.875rem;color:#374151;">
+    Payment failed. Please check your payment method or contact customer support.
+</p>
+{{end}}
+
+{{end}}

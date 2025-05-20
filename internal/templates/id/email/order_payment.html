@@ -1,4 +1,12 @@
-{{define "title"}}Invoice <span class="capitalize">{{.CompanyName}}</span> - Pembayaran Lunas{{end}}
+{{define "title"}}Invoice <span class="capitalize">{{.CompanyName}}</span> -
+{{if eq .PaymentStatus "paid"}}Pembayaran Lunas
+{{else if eq .PaymentStatus "cancelled"}}Pembayaran Dibatalkan
+{{else if eq .PaymentStatus "expired"}}Pembayaran Kadaluwarsa
+{{else if eq .PaymentStatus "pending"}}Menunggu Pembayaran
+{{else}}Pembayaran Gagal
+{{end}}
+{{end}}
+
 {{define "content"}}
 <style>
   .invoice-box {
@@ -22,6 +30,27 @@
 
   .status-paid {
     color: #28a745;
+    font-weight: bold;
+  }
+
+  .status-cancelled {
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .status-expired {
+    color: #fd7e14;
+    font-weight: bold;
+  }
+
+  .status-failed {
+    color: #6c757d;
+    font-weight: bold;
+  }
+
+  .status-pending {
+    color: #ffc107;
+    /* kuning amber */
     font-weight: bold;
   }
 
@@ -71,10 +100,38 @@
     text-align: center;
     color: #666;
   }
+
+  .pay-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 6px;
+    background: #ffc107;
+    /* kuning “pending” */
+    color: #212529;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity .2s ease;
+  }
+
+  .pay-btn:hover {
+    opacity: .85;
+  }
 </style>
 
 <h1 class="capitalize">{{.CompanyName}}</h1>
-<h2>Status: <span class="status-paid">LUNAS</span></h2>
+<h2>Status:
+  {{if eq .PaymentStatus "paid"}}
+  <span class="status-paid">LUNAS</span>
+  {{else if eq .PaymentStatus "cancelled"}}
+  <span class="status-cancelled">DIBATALKAN</span>
+  {{else if eq .PaymentStatus "expired"}}
+  <span class="status-expired">KADALUWARSA</span>
+  {{else if eq .PaymentStatus "pending"}}
+  <span class="status-pending">MENUNGGU</span>
+  {{else}}
+  <span class="status-failed">GAGAL</span>
+  {{end}}
+</h2>
 
 <table class="info-table">
   <tr>
@@ -152,6 +209,18 @@
 </table>
 
 <p class="footer-message">
-  Terima kasih telah memesan di <span class="capitalize">{{.CompanyName}}</span>. Pesanan Anda sedang kami proses 😉.
+  {{if eq .PaymentStatus "paid"}}
+  Terima kasih telah berbelanja di <span class="capitalize">{{.CompanyName}}</span>. Pesanan Anda sedang kami proses 😉.
+  {{else if eq .PaymentStatus "cancelled"}}
+  Pembayaran Anda dibatalkan. Silakan lakukan pemesanan ulang kapan saja.
+  {{else if eq .PaymentStatus "expired"}}
+  Tautan pembayaran sudah kedaluwarsa. Silakan buat pesanan baru.
+  {{else if eq .PaymentStatus "failed"}}
+  Pembayaran gagal. Periksa metode pembayaran Anda atau hubungi Admin.
+  {{else if eq .PaymentStatus "pending"}}
+  Kami belum menerima pembayaran Anda. Selesaikan segera agar pesanan tidak dibatalkan.
+  <br><br>
+  <a href="{{.PaymentLink}}" class="pay-btn">Selesaikan Pembayaran</a>
+  {{end}}
 </p>
 {{end}}

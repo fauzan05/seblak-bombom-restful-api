@@ -1,0 +1,125 @@
+{{define "title"}}
+{{if eq .PaymentStatus "paid"}}Pembayaran Berhasil
+{{else if eq .PaymentStatus "pending"}}Pembayaran Menunggu
+{{else if eq .PaymentStatus "cancelled"}}Pembayaran Dibatalkan
+{{else if eq .PaymentStatus "expired"}}Pembayaran Kedaluwarsa
+{{else}}Pembayaran Gagal
+{{end}}
+{{end}}
+{{define "content"}}
+<style>
+    /* --- spesifik untuk child ini --- */
+    .order-details {
+        margin: 1.5rem 0;
+        font-size: .875rem;
+        border: 1px solid var(--badge-bg);
+        border-radius: .75rem;
+        padding: 1rem 1.25rem;
+        background: #fff;
+    }
+
+    .order-details div+div {
+        margin-top: .5rem;
+    }
+
+    .order-details strong {
+        color: #374151;
+        font-weight: 500;
+    }
+
+    .btn-track {
+        display: inline-block;
+        margin-top: 1.5rem;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+        padding: .75rem 1.25rem;
+        border-radius: .75rem;
+        text-decoration: none;
+        transition: background .2s ease;
+    }
+
+    .btn-track:hover {
+        background: var(--primary-dark);
+    }
+</style>
+
+<h1 style="font-size:1.25rem;font-weight:700;margin-bottom:.75rem;">
+    {{if eq .PaymentStatus "paid"}}Pembayaran Berhasil!
+    {{else if eq .PaymentStatus "pending"}}Pembayaran Menunggu!
+    {{else if eq .PaymentStatus "cancelled"}}Pembayaran Dibatalkan!
+    {{else if eq .PaymentStatus "expired"}}Pembayaran Kedaluwarsa!
+    {{else}}Pembayaran Gagal!
+    {{end}}
+</h1>
+
+<p style="margin-bottom:1.25rem;">
+    {{if eq .PaymentStatus "paid"}}
+    Terima kasih, <span class="capitalize">{{.FirstName}}</span> — pembayaran Anda telah kami terima.
+    {{else if eq .PaymentStatus "pending"}}
+    Halo <span class="capitalize">{{.FirstName}}</span>, kami belum menerima pembayaran Anda. Mohon selesaikan agar
+    pesanan tidak dibatalkan.
+    {{else if eq .PaymentStatus "cancelled"}}
+    Pembayaran Anda dibatalkan. Silakan lakukan pemesanan ulang kapan saja.
+    {{else if eq .PaymentStatus "expired"}}
+    Tautan pembayaran kedaluwarsa. Silakan buat pesanan baru jika masih berminat.
+    {{else}} {{/* failed */}}
+    Pembayaran gagal. Silakan periksa metode pembayaran atau hubungi layanan bantuan.
+    {{end}}
+</p>
+
+<div class="order-details">
+    <div><strong>Nomor Invoice:</strong> {{.Invoice}}</div>
+    <div><strong>Tanggal:</strong> {{.Date}}</div>
+    <div><strong>Metode Pembayaran:</strong> <span class="capitalize">{{.PaymentMethod}}</span></div>
+    <div><strong>Status Pesanan:</strong>
+        {{if eq .PaymentStatus "paid"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--badge-bg);
+                 color:var(--primary-dark);font-size:.75rem;font-weight:600;">LUNAS</span>
+        {{else if eq .PaymentStatus "pending"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--warn);
+                 color:#212529;font-size:.75rem;font-weight:600;">MENUNGGU</span>
+        {{else if eq .PaymentStatus "cancelled"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--danger);
+                 color:#fff;font-size:.75rem;font-weight:600;">DIBATALKAN</span>
+        {{else if eq .PaymentStatus "expired"}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--grey);
+                 color:#fff;font-size:.75rem;font-weight:600;">KADALUWARSA</span>
+        {{else}}
+        <span style="padding:0 .5rem;border-radius:9999px;background:var(--grey);
+                 color:#fff;font-size:.75rem;font-weight:600;">GAGAL</span>
+        {{end}}
+    </div>
+</div>
+
+{{if eq .PaymentStatus "paid"}}
+<p style="font-size:.875rem;color:#374151;">
+    Pesanan Anda sedang kami proses. Kami akan mengirimkan notifikasi begitu pesanan dikirim.
+</p>
+<a href="{{.OrderTrackingURL}}" class="btn-track">Lacak Pesanan</a>
+
+{{else if eq .PaymentStatus "pending"}}
+<p style="font-size:.875rem;color:#374151;">
+    Kami belum menerima pembayaran Anda. Mohon selesaikan segera agar pesanan tidak dibatalkan.
+</p>
+<a href="{{.PaymentLink}}" class="btn-track" style="background:#ffc107;color:#212529;">
+    Selesaikan Pembayaran
+</a>
+
+{{else if eq .PaymentStatus "cancelled"}}
+<p style="font-size:.875rem;color:#374151;">
+    Pembayaran dibatalkan. Silakan lakukan pemesanan ulang kapan saja.
+</p>
+
+{{else if eq .PaymentStatus "expired"}}
+<p style="font-size:.875rem;color:#374151;">
+    Tautan pembayaran kedaluwarsa. Silakan buat pesanan baru jika masih berminat.
+</p>
+
+{{else}} {{/* failed */}}
+<p style="font-size:.875rem;color:#374151;">
+    Pembayaran gagal. Periksa metode pembayaran Anda atau hubungi layanan bantuan.
+</p>
+{{end}}
+
+{{end}}

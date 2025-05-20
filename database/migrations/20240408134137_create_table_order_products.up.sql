@@ -3,6 +3,7 @@ CREATE TABLE order_products (
     order_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
     product_name VARCHAR(255) NOT NULL,
+    product_first_image_position TEXT NOT NULL,
     category VARCHAR(100) NOT NULL,
     price DECIMAL(15, 2) NOT NULL,
     quantity INTEGER NOT NULL,

@@ -1,4 +1,12 @@
-{{define "title"}}Invoice <span class="capitalize">{{.CompanyName}}</span> - Paid Payment{{end}}
+{{define "title"}}Invoice <span class="capitalize">{{.CompanyName}}</span> -
+{{if eq .PaymentStatus "paid"}}Paid Payment
+{{else if eq .PaymentStatus "cancelled"}}Cancelled Payment
+{{else if eq .PaymentStatus "expired"}}Expired Payment
+{{else if eq .PaymentStatus "pending"}}Pending Payment
+{{else}}Payment Failed
+{{end}}
+{{end}}
+
 {{define "content"}}
 <style>
   .invoice-box {
@@ -22,6 +30,27 @@
 
   .status-paid {
     color: #28a745;
+    font-weight: bold;
+  }
+
+  .status-cancelled {
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .status-expired {
+    color: #fd7e14;
+    font-weight: bold;
+  }
+
+  .status-failed {
+    color: #6c757d;
+    font-weight: bold;
+  }
+
+  .status-pending {
+    color: #ffc107;
+    /* kuning amber */
     font-weight: bold;
   }
 
@@ -71,10 +100,38 @@
     text-align: center;
     color: #666;
   }
+
+  .pay-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 6px;
+    background: #ffc107;
+    /* kuning “pending” */
+    color: #212529;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity .2s ease;
+  }
+
+  .pay-btn:hover {
+    opacity: .85;
+  }
 </style>
 
 <h1 class="capitalize">{{.CompanyName}}</h1>
-<h2>Status: <span class="status-paid">PAID</span></h2>
+<h2>Status:
+  {{if eq .PaymentStatus "paid"}}
+  <span class="status-paid">PAID</span>
+  {{else if eq .PaymentStatus "cancelled"}}
+  <span class="status-cancelled">CANCELLED</span>
+  {{else if eq .PaymentStatus "expired"}}
+  <span class="status-expired">EXPIRED</span>
+  {{else if eq .PaymentStatus "pending"}}
+  <span class="status-pending">PENDING</span>
+  {{else}}
+  <span class="status-failed">FAILED</span>
+  {{end}}
+</h2>
 
 <table class="info-table">
   <tr>
@@ -152,6 +209,18 @@
 </table>
 
 <p class="footer-message">
+  {{if eq .PaymentStatus "paid"}}
   Thank you for ordering at <span class="capitalize">{{.CompanyName}}</span>. We are currently processing your order 😉.
+  {{else if eq .PaymentStatus "cancelled"}}
+  Your payment was cancelled. Feel free to reorder anytime.
+  {{else if eq .PaymentStatus "expired"}}
+  The payment link has expired. Please start a new order.
+  {{else if eq .PaymentStatus "failed"}}
+  Payment failed. Please check your method or contact Admin.
+  {{else if eq .PaymentStatus "pending"}}
+  We haven’t received your payment yet. Please complete it to avoid cancellation.
+  <br><br>
+  <a href="{{.PaymentLink}}" class="pay-btn">Complete Payment</a>
+  {{end}}
 </p>
 {{end}}

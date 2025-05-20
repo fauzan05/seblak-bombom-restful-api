@@ -86,7 +86,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 	newOrder := new(entity.Order)
 	orderProducts := []entity.OrderProduct{}
-	productSelected := []map[string]any{}
+	productsSelected := []map[string]any{}
 	var totalPriceOrderProduct float32
 	// temukan produk untuk memastikan ketersediaan dan masukkan data produk ke slice OrderProduct serta mengkalkulasikan tagihannya
 	for _, orderProductRequest := range request.OrderProducts {
@@ -107,7 +107,6 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		for _, image := range newProduct.Images {
 			if image.Position == 1 {
 				imageSelectedFileName = image.FileName
-				// productImagePath = fmt.Sprintf("%s://%s/api/image/products/%s", ctx.Protocol(), ctx.Hostname(), image.FileName)
 				productImagePath := fmt.Sprintf("../uploads/images/products/%s", image.FileName)
 				imageBase64, err := helper.ImageToBase64(productImagePath)
 				if err != nil {
@@ -119,7 +118,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			break
 		}
 
-		productImage := map[string]any{
+		productSelected := map[string]any{
 			"ProductImageFilename": imageSelectedFileName,
 			"ProductImage":         productImageBase64,
 			"ProductName":          newProduct.Name,
@@ -127,7 +126,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			"Price":                helper.FormatNumberFloat32(newProduct.Price),
 		}
 
-		productSelected = append(productSelected, productImage)
+		productsSelected = append(productsSelected, productSelected)
 
 		if newProduct.Stock < 1 {
 			c.Log.Warnf("product out of stock : %+v", err)
@@ -148,11 +147,12 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		}
 
 		orderProduct := entity.OrderProduct{
-			ProductId:   orderProductRequest.ProductId,
-			ProductName: newProduct.Name,
-			Category:    newProduct.Category.Name,
-			Price:       newProduct.Price,
-			Quantity:    orderProductRequest.Quantity,
+			ProductId:                 orderProductRequest.ProductId,
+			ProductName:               newProduct.Name,
+			ProductFirstImagePosition: imageSelectedFileName,
+			Category:                  newProduct.Category.Name,
+			Price:                     newProduct.Price,
+			Quantity:                  orderProductRequest.Quantity,
 		}
 		orderProducts = append(orderProducts, orderProduct)
 		newOrder.TotalFinalPrice += orderProduct.Price * float32(orderProduct.Quantity)
@@ -390,6 +390,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	if newOrder.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT && newOrder.PaymentMethod == helper.PAYMENT_METHOD_QR_CODE {
 		newXenditQRCodeRequest := new(model.CreateXenditTransaction)
 		newXenditQRCodeRequest.OrderId = newOrder.ID
+		newXenditQRCodeRequest.Lang = request.Lang
+		newXenditQRCodeRequest.TimeZone = request.TimeZone
 		result, err := c.XenditTransactionQRCodeUseCase.Add(ctx, newXenditQRCodeRequest, tx)
 		if err != nil {
 			c.Log.Warn(err)
@@ -438,35 +440,41 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	if newOrder.PaymentStatus == helper.PAID_PAYMENT {
 		newMail := new(model.Mail)
 		newMail.To = []string{newOrder.Email}
-		newMail.Subject = "Paid Payment"
+		newMail.Subject = "Payment Successfull"
 		if request.Lang == helper.INDONESIA {
-			newMail.Subject = "Pembayaran Lunas"
+			newMail.Subject = "Pembayaran Berhasil"
 		}
 
 		baseTemplatePath := "../internal/templates/base_template_email1.html"
-		childPath := fmt.Sprintf("../internal/templates/%s/email/order_paid_payment.html", request.Lang)
+		childPath := fmt.Sprintf("../internal/templates/%s/email/order_payment.html", request.Lang)
 		tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
 		}
 
+		paymentLink := fmt.Sprintf("%s/payment/orders/%d/details", request.BaseFrontEndURL, newOrder.ID)
+		orderTrackingURL := fmt.Sprintf("%s/orders/%d/details", request.BaseFrontEndURL, newOrder.ID)
 		bodyBuilder := new(strings.Builder)
 		err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]any{
-			"CustomerName":   newOrder.FirstName + " " + newOrder.LastName,
-			"Invoice":        newOrder.Invoice,
-			"Date":           newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
-			"PaymentMethod":  string(newOrder.PaymentMethod),
-			"Items":          productSelected,
-			"LogoImage":      logoImageBase64,
-			"CompanyTitle":   newApp.AppName,
-			"TotalAmount":    helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
-			"Year":           time.Now().Format("2006"),
-			"CustomerNotes":  newOrder.Note,
-			"ShippingMethod": newOrder.IsDelivery,
-			"ShippingCost":   helper.FormatNumberFloat32(newOrder.DeliveryCost),
-			"ServiceFee":     helper.FormatNumberFloat32(newOrder.ServiceFee),
-			"Discount":       helper.FormatNumberFloat32(newOrder.TotalDiscount),
+			"CustomerName":     newOrder.FirstName + " " + newOrder.LastName,
+			"Invoice":          newOrder.Invoice,
+			"Date":             newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
+			"PaymentMethod":    string(newOrder.PaymentMethod),
+			"Items":            productsSelected,
+			"LogoImage":        logoImageBase64,
+			"CompanyTitle":     newApp.AppName,
+			"TotalAmount":      helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
+			"Year":             time.Now().Format("2006"),
+			"CustomerNotes":    newOrder.Note,
+			"ShippingMethod":   newOrder.IsDelivery,
+			"ShippingCost":     helper.FormatNumberFloat32(newOrder.DeliveryCost),
+			"ServiceFee":       helper.FormatNumberFloat32(newOrder.ServiceFee),
+			"Discount":         helper.FormatNumberFloat32(newOrder.TotalDiscount),
+			"Subject":          newMail.Subject,
+			"PaymentStatus":    newOrder.PaymentStatus,
+			"PaymentLink":      paymentLink,
+			"OrderTrackingURL": orderTrackingURL,
 		})
 		if err != nil {
 			c.Log.Warnf("failed to execute template file html : %+v", err)
@@ -488,7 +496,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newNotification.IsRead = false
 		newNotification.Type = helper.TRANSACTION
 		baseTemplatePath = "../internal/templates/base_template_notification1.html"
-		childPath = fmt.Sprintf("../internal/templates/%s/notification/order_paid_payment.html", request.Lang)
+		childPath = fmt.Sprintf("../internal/templates/%s/notification/order_payment.html", request.Lang)
 		tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -496,7 +504,6 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		}
 
 		logoImagePath = fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-		orderTrackingURL := fmt.Sprintf("%s/orders/%d", request.BaseFrontEndURL, newOrder.ID)
 		bodyBuilder = new(strings.Builder)
 		err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]string{
 			"FirstName":        newOrder.FirstName,
@@ -506,6 +513,9 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			"Date":             newOrder.CreatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
 			"Invoice":          newOrder.Invoice,
 			"PaymentMethod":    string(newOrder.PaymentMethod),
+			"Subject":          newMail.Subject,
+			"PaymentStatus":    string(newOrder.PaymentStatus),
+			"PaymentLink":      paymentLink,
 			"OrderTrackingURL": orderTrackingURL,
 		})
 

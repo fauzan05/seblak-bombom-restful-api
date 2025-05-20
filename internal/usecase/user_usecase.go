@@ -158,7 +158,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		baseURL := fmt.Sprintf("%s://%s/api/users/verify-email/%s", ctx.Protocol(), ctx.Hostname(), newUser.VerificationToken)
 		params := url.Values{}
 		params.Set("lang", string(request.Lang))
-		params.Set("timezone", request.TimeZone.String())
+	params.Set("timezone", request.TimeZone.String())
 
 		verifyURL := baseURL
 		if encoded := params.Encode(); encoded != "" {
