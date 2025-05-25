@@ -777,6 +777,14 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 				c.Log.Warnf("failed to update wallet balance : %+v", err)
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
 			}
+
+			is_send_email = true
+			mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Rejected", newOrder.ID)
+			mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Rejected by Admin", newOrder.ID)
+			if request.Lang == helper.INDONESIA {
+				mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Ditolak", newOrder.ID)
+				mail_subject_admin = fmt.Sprintf("Order ID %d Telah Ditolak oleh Admin", newOrder.ID)
+			}
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
@@ -820,6 +828,13 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
+		is_send_email = true
+		mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Received", newOrder.ID)
+		mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Received by Admin", newOrder.ID)
+		if request.Lang == helper.INDONESIA {
+			mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Diterima", newOrder.ID)
+			mail_subject_admin = fmt.Sprintf("Order ID %d Telah Diterima oleh Admin", newOrder.ID)
+		}
 	}
 
 	if request.OrderStatus == helper.READY_FOR_PICKUP {
@@ -919,6 +934,22 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		}
 
 		newOrder.OrderStatus = request.OrderStatus
+		is_send_email = true
+		mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Picked Up", newOrder.ID)
+		mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Picked Up by Customer", newOrder.ID)
+		if request.Lang == helper.INDONESIA {
+			mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Diambil", newOrder.ID)
+			mail_subject_admin = fmt.Sprintf("Pesanan dengan ID %d Telah Diambil oleh Pelanggan", newOrder.ID)
+
+		}
+		if newOrder.IsDelivery {
+			mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Delivered", newOrder.ID)
+			mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Delivered", newOrder.ID)
+			if request.Lang == helper.INDONESIA {
+				mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Sampai Di Tujuan", newOrder.ID)
+				mail_subject_admin = fmt.Sprintf("Order ID %d Telah Sampai Di Tujuan", newOrder.ID)
+			}
+		}
 	}
 
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
@@ -956,6 +987,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		orderTrackingURL := fmt.Sprintf("%s/orders/%d/details", request.BaseFrontEndURL, newOrder.ID)
 		data := map[string]any{
 			"CustomerName":      newOrder.FirstName + " " + newOrder.LastName,
+			"CustomerPhone":     newOrder.Phone,
 			"Invoice":           newOrder.Invoice,
 			"Date":              newOrder.UpdatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
 			"PaymentMethod":     string(newOrder.PaymentMethod),

@@ -106,22 +106,29 @@
 <h2>Order Status:
     {{if eq .OrderStatus "pending_order"}}
     <span class="order-status-pending">AWAITING CONFIRMATION</span>
+
     {{else if eq .OrderStatus "order_received"}}
-    <span class="order-status-received">RECEIVED</span>
+    <span class="order-status-received">ORDER RECEIVED</span>
+
     {{else if eq .OrderStatus "order_being_delivered"}}
     <span class="order-status-being-delivered">OUT FOR DELIVERY</span>
+
     {{else if eq .OrderStatus "order_delivered"}}
-    {{if eq .IsDelivery}}
-    <span class="order-status-delivered">ORDER DELIVERED</span>
+    {{if .IsDelivery}}
+    <span class="order-status-delivered">DELIVERED</span>
     {{else}}
-    <span class="order-status-picked-up">ORDER PICKED UP</span>
+    <span class="order-status-picked-up">PICKED UP</span>
     {{end}}
+
     {{else if eq .OrderStatus "ready_for_pickup"}}
     <span class="order-status-ready">READY FOR PICKUP</span>
+
     {{else if eq .OrderStatus "order_rejected"}}
-    <span class="order-status-rejected">REJECTED</span>
+    <span class="order-status-rejected">ORDER REJECTED</span>
+
     {{else if eq .OrderStatus "order_cancelled"}}
-    <span class="order-status-cancelled">CANCELLED</span>
+    <span class="order-status-cancelled">ORDER CANCELLED</span>
+
     {{end}}
 </h2>
 
@@ -156,8 +163,25 @@
             {{else}}FAILED{{end}}
         </td>
     </tr>
+    {{if .CustomerPhone}}
+    <tr>
+        <td>Customer Phone</td>
+        <td>{{.CustomerPhone}}</td>
+    </tr>
+    {{end}}
 </table>
 
+{{if eq .OrderStatus "order_rejected"}}
+<div style="margin-top: 20px;">
+    <strong>Rejection Reason:</strong>
+    <div
+        style="background-color: #fcfcfc; border: 1px solid #ddd; padding: 10px; border-radius: 5px; font-size: 14px; margin-top: 5px;">
+        {{.CancellationNotes}}
+    </div>
+</div>
+{{end}}
+
+{{if eq .OrderStatus "order_cancelled"}}
 <div style="margin-top: 20px;">
     <strong>Cancellation Reason:</strong>
     <div
@@ -165,6 +189,7 @@
         {{.CancellationNotes}}
     </div>
 </div>
+{{end}}
 
 <p style="margin-top: 10px; font-size: 14px;">
     For more details about this order, please visit the order detail page below.

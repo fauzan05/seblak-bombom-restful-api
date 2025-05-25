@@ -114,22 +114,29 @@
 <h2>Status Pesanan:
     {{if eq .OrderStatus "pending_order"}}
     <span class="order-status-pending">MENUNGGU KONFIRMASI</span>
+
     {{else if eq .OrderStatus "order_received"}}
-    <span class="order-status-received">DITERIMA</span>
+    <span class="order-status-received">PESANAN DITERIMA</span>
+
     {{else if eq .OrderStatus "order_being_delivered"}}
-    <span class="order-status-being-delivered">SEDANG DIANTAR</span>
+    <span class="order-status-being-delivered">DALAM PENGIRIMAN</span>
+
     {{else if eq .OrderStatus "order_delivered"}}
-    {{if eq .IsDelivery}}
-    <span class="order-status-delivered">PESANAN SAMPAI</span>
+    {{if .IsDelivery}}
+    <span class="order-status-delivered">TELAH DITERIMA</span>
     {{else}}
-    <span class="order-status-picked-up">PESANAN DIAMBIL</span>
+    <span class="order-status-picked-up">TELAH DIAMBIL</span>
     {{end}}
+
     {{else if eq .OrderStatus "ready_for_pickup"}}
     <span class="order-status-ready">SIAP DIAMBIL</span>
+
     {{else if eq .OrderStatus "order_rejected"}}
-    <span class="order-status-rejected">DITOLAK</span>
+    <span class="order-status-rejected">PESANAN DITOLAK</span>
+
     {{else if eq .OrderStatus "order_cancelled"}}
-    <span class="order-status-cancelled">DIBATALKAN</span>
+    <span class="order-status-cancelled">PESANAN DIBATALKAN</span>
+
     {{end}}
 </h2>
 
@@ -152,7 +159,7 @@
     </tr>
     <tr>
         <td>Nominal Yang Dibayarkan</td>
-        <td>{{.TotalAmount}}</td>
+        <td>Rp{{.TotalAmount}}</td>
     </tr>
     <tr>
         <td>Status Pembayaran</td>
@@ -164,8 +171,15 @@
             {{else}}GAGAL{{end}}
         </td>
     </tr>
+    {{if .CustomerPhone}}
+    <tr>
+        <td>Nomor Telepon Pelanggan</td>
+        <td>{{.CustomerPhone}}</td>
+    </tr>
+    {{end}}
 </table>
 
+{{if eq .OrderStatus "order_cancelled"}}
 <div style="margin-top: 20px;">
     <strong>Alasan Pembatalan:</strong>
     <div
@@ -173,6 +187,17 @@
         {{.CancellationNotes}}
     </div>
 </div>
+{{end}}
+
+{{if eq .OrderStatus "order_rejected"}}
+<div style="margin-top: 20px;">
+    <strong>Alasan Penolakan:</strong>
+    <div
+        style="background-color: #fcfcfc; border: 1px solid #ddd; padding: 10px; border-radius: 5px; font-size: 14px; margin-top: 5px;">
+        {{.CancellationNotes}}
+    </div>
+</div>
+{{end}}
 
 <p style="margin-top: 10px; font-size: 14px;">
     Untuk informasi lebih lengkap mengenai pesanan ini, silakan kunjungi halaman detail pesanan berikut.
