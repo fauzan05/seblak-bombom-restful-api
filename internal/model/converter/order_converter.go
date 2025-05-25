@@ -29,6 +29,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		Note:              order.Note,
 		TotalProductPrice: order.TotalProductPrice,
 		TotalFinalPrice:   order.TotalFinalPrice,
+		CancellationNotes: order.CancellationNotes,
 		CreatedAt:         helper.TimeRFC3339(order.CreatedAt),
 		UpdatedAt:         helper.TimeRFC3339(order.UpdatedAt),
 		OrderProducts:     *OrderProductsToResponse(&order.OrderProducts),

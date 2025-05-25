@@ -39,6 +39,7 @@ const (
 	ORDER_REJECTED               OrderStatus = "order_rejected"
 	ORDER_CANCELLED              OrderStatus = "order_cancelled"
 	ORDER_CANCELLATION_REQUESTED OrderStatus = "order_cancellation_requested"
+	DELIVERY_FAILED              OrderStatus = "delivery_failed"
 
 	// discount type
 	NOMINAL DiscountType = "nominal"

@@ -28,6 +28,7 @@ type OrderResponse struct {
 	ServiceFee        float32                    `json:"service_fee"`
 	TotalProductPrice float32                    `json:"total_product_price"`
 	TotalFinalPrice   float32                    `json:"total_final_price"`
+	CancellationNotes string                     `json:"cancellation_notes"`
 	CreatedAt         helper.TimeRFC3339         `json:"created_at"`
 	UpdatedAt         helper.TimeRFC3339         `json:"updated_at"`
 	OrderProducts     []OrderProductResponse     `json:"order_products"`
@@ -60,10 +61,12 @@ type GetOrderByCurrentRequest struct {
 }
 
 type UpdateOrderRequest struct {
-	ID          uint64             `json:"-" validate:"required"` //order id
-	OrderStatus helper.OrderStatus `json:"order_status"`
-	Lang        helper.Languange   `json:"-"`
-	TimeZone    time.Location      `json:"-"`
+	ID                uint64             `json:"-" validate:"required"` //order id
+	OrderStatus       helper.OrderStatus `json:"order_status"`
+	CancellationNotes string             `json:"cancellation_notes"`
+	Lang              helper.Languange   `json:"-"`
+	TimeZone          time.Location      `json:"-"`
+	BaseFrontEndURL   string             `json:"-"`
 }
 
 type GetOrdersByUserIdRequest struct {
