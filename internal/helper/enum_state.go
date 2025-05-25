@@ -18,6 +18,8 @@ type PayoutMethod string
 type PDFPageSize string
 type PDFOrientation string
 type Languange string
+type WalletTransactionSource string
+type WalletTransactionType string
 
 const (
 	// role
@@ -60,16 +62,6 @@ const (
 	PAYMENT_GATEWAY_MIDTRANS PaymentGateway = "MIDTRANS"
 	PAYMENT_GATEWAY_XENDIT   PaymentGateway = "XENDIT"
 	PAYMENT_GATEWAY_SYSTEM   PaymentGateway = "SYSTEM"
-
-	CAPTURE        TransactionStatus = "capture"
-	SETTLEMENT     TransactionStatus = "settlement"
-	PENDING        TransactionStatus = "pending"
-	DENY           TransactionStatus = "deny"
-	CANCEL         TransactionStatus = "cancel"
-	EXPIRE         TransactionStatus = "expire"
-	REFUND         TransactionStatus = "refund"
-	PARTIAL_REFUND TransactionStatus = "partial_refund"
-	AUTHORIZE      TransactionStatus = "authorize"
 
 	GET    RequestMethod = "GET"
 	POST   RequestMethod = "POST"
@@ -118,6 +110,16 @@ const (
 
 	INDONESIA Languange = "id"
 	ENGLISH   Languange = "en"
+
+	XENDIT        WalletTransactionSource = "xendit"
+	CASH          WalletTransactionSource = "cash"
+	REFUND_WALLET WalletTransactionSource = "refund_wallet"
+	REFUND_XENDIT WalletTransactionSource = "refund_xendit"
+
+	TOP_UP        WalletTransactionType = "top_up"
+	ORDER_PAYMENT WalletTransactionType = "order_payment"
+	REFUND        WalletTransactionType = "refund"
+	WITHDRAW      WalletTransactionType = "withdraw"
 )
 
 func IsValidChannelCode(pm ChannelCode) bool {

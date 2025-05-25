@@ -55,20 +55,6 @@
             }
         }
     },
-    "midtrans": {
-        "production": {
-            "merchant_id": "",
-            "client_key": "",
-            "server_key": "",
-            "is_prod": true
-        },
-        "sandbox": {
-            "merchant_id": "",
-            "client_key": "",
-            "server_key": "",
-            "is_prod": false
-        }
-    },
     "xendit": {
         "test": {
             "api_key": {
@@ -91,9 +77,9 @@
         "prod": {}
     },
     "auth_admin": {
-        "admin_creation_key": ""
+        "admin_creation_key": "example-key"
     },
     "front_end": {
-        "base_url": ""
+        "base_url": "example-url"
     }
 }

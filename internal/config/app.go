@@ -51,8 +51,6 @@ func Bootstrap(config *BootstrapConfig) {
 	deliveryRepository := repository.NewDeliveryRepository(config.Log)
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
-	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
-	midtransCoreAPIOrderRepository := repository.NewMidtransCoreAPIOrderRepository(config.Log)
 	xenditTransactionRepository := repository.NewXenditTransactionRepository(config.Log)
 	applicationRepository := repository.NewApplicationRepository(config.Log)
 	cartRepository := repository.NewCartRepository(config.Log)
@@ -71,8 +69,6 @@ func Bootstrap(config *BootstrapConfig) {
 	discountCouponUseCase := usecase.NewDiscountCouponUseCase(config.DB, config.Log, config.Validate, discountCouponRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
-	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository, productRepository)
-	midtransCoreApiOrderUseCase := usecase.NewMidtransCoreAPIOrderUseCase(config.Log, config.Validate, orderRepository, config.CoreAPIClient, config.DB, midtransCoreAPIOrderRepository, productRepository)
 	xenditTransactionQRCodeUseCase := xenditUseCase.NewXenditTransactionQRCodeUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient)
 	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountCouponRepository, discountUsageRepository, deliveryRepository, orderProductRepository, walletRepository, xenditTransactionRepository, xenditTransactionQRCodeUseCase, config.XenditClient, applicationRepository, config.Email, notificationRepository)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
@@ -90,8 +86,6 @@ func Bootstrap(config *BootstrapConfig) {
 	discountCouponController := http.NewDiscountCouponController(discountCouponUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
-	midtransSnapOrderController := http.NewMidtransSnapOrderController(midtransSnapOrderUseCase, config.Log)
-	midtransCoreAPIOrderController := http.NewMidtransCoreAPIOrderController(midtransCoreApiOrderUseCase, config.Log)
 	xenditQRCodeTransactionController := xenditController.NewXenditQRCodeTransctionController(xenditTransactionQRCodeUseCase, config.Log, config.DB)
 	xenditCallbackController := xenditController.NewXenditCallbackController(xenditCallbackUseCase, config.Log, config.FrontEndConfig)
 	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
@@ -115,8 +109,6 @@ func Bootstrap(config *BootstrapConfig) {
 		DiscountCouponController:          discountCouponController,
 		DeliveryController:                deliveryController,
 		ProductReviewController:           productReviewController,
-		MidtransSnapOrderController:       midtransSnapOrderController,
-		MidtransCoreAPIOrderController:    midtransCoreAPIOrderController,
 		XenditQRCodeTransactionController: xenditQRCodeTransactionController,
 		PayoutController:                  payoutController,
 		XenditCallbackController:          xenditCallbackController,

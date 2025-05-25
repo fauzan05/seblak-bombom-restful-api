@@ -20,8 +20,6 @@ type RouteConfig struct {
 	DiscountCouponController          *http.DiscountCouponController
 	DeliveryController                *http.DeliveryController
 	ProductReviewController           *http.ProductReviewController
-	MidtransSnapOrderController       *http.MidtransSnapOrderController
-	MidtransCoreAPIOrderController    *http.MidtransCoreAPIOrderController
 	XenditQRCodeTransactionController *xenditController.XenditQRCodeTransctionController
 	XenditCallbackController          *xenditController.XenditCallbackController
 	XenditPayoutController            *xenditController.XenditPayoutController
@@ -79,10 +77,6 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// Product
 	api.Get("/products", c.ProductController.GetAll)
 	api.Get("/products/:productId", c.ProductController.Get)
-
-	// Midtrans
-	api.Get("/midtrans/snap/orders/notification", c.MidtransSnapOrderController.GetSnapOrderNotification)
-	api.Get("/midtrans/core-api/orders/notification", c.MidtransCoreAPIOrderController.GetCoreAPIOrderNotification)
 
 	// Images
 	uploadsDir := "../uploads/images"
@@ -145,11 +139,6 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Product review
 	auth.Post("/reviews", c.ProductReviewController.Create)
-
-	// Midtrans
-	auth.Post("/midtrans/snap/orders", c.MidtransSnapOrderController.CreateSnap)
-	auth.Post("/midtrans/core-api/orders", c.MidtransCoreAPIOrderController.CreateCoreAPI)
-	auth.Get("/midtrans/core-api/orders/:orderId", c.MidtransCoreAPIOrderController.GetCoreAPIOrder)
 
 	// Xendit
 	auth.Post("/xendit/orders/qr-code/transaction", c.XenditQRCodeTransactionController.Create)
