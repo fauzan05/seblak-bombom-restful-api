@@ -162,6 +162,7 @@ func (c *OrderController) UpdateOrderStatus(ctx *fiber.Ctx) error {
 	}
 	request.TimeZone = *loc
 	auth := middleware.GetCurrentUser(ctx)
+	request.BaseFrontEndURL = c.FrontEndConfig.BaseURL
 	response, err := c.UseCase.EditOrderStatus(ctx.Context(), request, auth)
 	if err != nil {
 		c.Log.Warnf("failed to update order status by selected order : %+v", err)

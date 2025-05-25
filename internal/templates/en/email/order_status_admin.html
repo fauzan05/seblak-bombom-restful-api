@@ -1,0 +1,176 @@
+{{define "title"}}New Order Update - <span class="capitalize">{{.CompanyName}}</span>{{end}}
+{{define "content"}}
+<style>
+    .status-paid {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .status-cancelled {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .status-expired {
+        color: #fd7e14;
+        font-weight: bold;
+    }
+
+    .status-failed {
+        color: #6c757d;
+        font-weight: bold;
+    }
+
+    .status-pending {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        font-size: 14px;
+    }
+
+    .info-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        vertical-align: middle;
+    }
+
+    .footer-message {
+        margin-top: 30px;
+        font-size: 14px;
+        text-align: center;
+        color: #666;
+    }
+
+    .order-status-pending {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    .order-status-received {
+        color: #17a2b8;
+        font-weight: bold;
+    }
+
+    .order-status-being-delivered {
+        color: #007bff;
+        font-weight: bold;
+    }
+
+    .order-status-delivered {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .order-status-picked-up {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .order-status-ready {
+        color: #6610f2;
+        font-weight: bold;
+    }
+
+    .order-status-rejected {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .order-status-cancelled {
+        color: #6c757d;
+        font-weight: bold;
+    }
+
+    .btn-order-detail {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #e2574c;
+        color: white;
+        font-weight: bold;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn-order-detail:hover {
+        background-color: #c64a40;
+    }
+</style>
+<h1 class="capitalize">{{.CompanyName}}</h1>
+<h2>Order Status:
+    {{if eq .OrderStatus "pending_order"}}
+    <span class="order-status-pending">AWAITING CONFIRMATION</span>
+    {{else if eq .OrderStatus "order_received"}}
+    <span class="order-status-received">RECEIVED</span>
+    {{else if eq .OrderStatus "order_being_delivered"}}
+    <span class="order-status-being-delivered">OUT FOR DELIVERY</span>
+    {{else if eq .OrderStatus "order_delivered"}}
+    {{if eq .IsDelivery}}
+    <span class="order-status-delivered">DELIVERED</span>
+    {{else}}
+    <span class="order-status-picked-up">PICKED UP</span>
+    {{end}}
+    {{else if eq .OrderStatus "ready_for_pickup"}}
+    <span class="order-status-ready">READY FOR PICKUP</span>
+    {{else if eq .OrderStatus "order_rejected"}}
+    <span class="order-status-rejected">REJECTED</span>
+    {{else if eq .OrderStatus "order_cancelled"}}
+    <span class="order-status-cancelled">CANCELLED</span>
+    {{end}}
+</h2>
+
+<table class="info-table">
+    <tr>
+        <td>Invoice Number</td>
+        <td>{{.Invoice}}</td>
+    </tr>
+    <tr>
+        <td>Date</td>
+        <td>{{.Date}}</td>
+    </tr>
+    <tr>
+        <td>Customer Name</td>
+        <td><span class="capitalize">{{.CustomerName}}</span></td>
+    </tr>
+    <tr>
+        <td>Payment Status</td>
+        <td>
+            {{if eq .PaymentStatus "paid"}}PAID
+            {{else if eq .PaymentStatus "cancelled"}}CANCELLED
+            {{else if eq .PaymentStatus "expired"}}EXPIRED
+            {{else if eq .PaymentStatus "pending"}}PENDING
+            {{else}}FAILED{{end}}
+        </td>
+    </tr>
+    {{if .CustomerPhone}}
+    <tr>
+        <td>Customer Phone</td>
+        <td>{{.CustomerPhone}}</td>
+    </tr>
+    {{end}}
+</table>
+
+{{if .CancellationNotes}}
+<div style="margin-top: 20px;">
+    <strong>Cancellation Reason:</strong>
+    <div
+        style="background-color: #fcfcfc; border: 1px solid #ddd; padding: 10px; border-radius: 5px; font-size: 14px; margin-top: 5px;">
+        {{.CancellationNotes}}
+    </div>
+</div>
+{{end}}
+
+<p style="margin-top: 10px; font-size: 14px;">
+    Click the button below to view and manage this order in the admin dashboard.
+</p>
+
+<div style="margin-top: 10px; margin-bottom: 20px;">
+    <a href="{{.OrderTrackingURL}}" class="btn-order-detail">Open in Admin Panel</a>
+</div>
+
+{{end}}

@@ -480,6 +480,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			c.Log.Warnf("failed to execute template file html : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to execute template file html : %+v", err))
 		}
+
 		newMail.Template = *bodyBuilder
 		c.Email.Mailer.SenderName = fmt.Sprintf("System %s", newApp.AppName)
 		// send email
@@ -655,6 +656,10 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		return nil, fiber.NewError(fiber.StatusNotFound, "order not found!")
 	}
 
+	newOrder.CancellationNotes = request.CancellationNotes
+	var is_send_email bool
+	var mail_subject_cust string
+	var mail_subject_admin string
 	// validate first before update order status state into database
 	// if cancelled
 	if request.OrderStatus == helper.ORDER_CANCELLED {
@@ -692,12 +697,19 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			}
 
 			newOrder.OrderStatus = request.OrderStatus
+			is_send_email = true
+			mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Cancelled", newOrder.ID)
+			mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Canceled by Customer", newOrder.ID)
+			if request.Lang == helper.INDONESIA {
+				mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Dibatalkan", newOrder.ID)
+				mail_subject_admin = fmt.Sprintf("Order ID %d Telah Dibatalkan oleh Customer", newOrder.ID)
+			}
 		} else if newOrder.OrderStatus == helper.ORDER_PENDING && newOrder.PaymentStatus != helper.PENDING_PAYMENT {
 			newOrder.PaymentStatus = helper.CANCELLED_PAYMENT
 			newOrder.OrderStatus = request.OrderStatus
 		} else if newOrder.OrderStatus == helper.ORDER_RECEIVED {
-			// memerlukan persetujuan seller
-			newOrder.OrderStatus = helper.ORDER_CANCELLATION_REQUESTED
+			c.Log.Warnf("can't cancel an order that is received!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is received!")
 		} else if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
 			c.Log.Warnf("can't cancel an order that is ready for pickup!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is ready for pickup!")
@@ -708,7 +720,6 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			c.Log.Warnf("can't cancel an order that has been delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that has been delivered!")
 		}
-
 	}
 
 	if request.OrderStatus == helper.ORDER_REJECTED {
@@ -918,6 +929,76 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 	if err := c.OrderRepository.FindWithPreloads(tx, newOrder, "OrderProducts"); err != nil {
 		c.Log.Warnf("failed to find newly created order : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find newly created order : %+v", err))
+	}
+
+	if is_send_email {
+		// kirim email ke customer
+		newApp := new(entity.Application)
+		if err := c.ApplicationRepository.FindFirst(tx, newApp); err != nil {
+			c.Log.Warnf("failed to find application from database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
+		}
+
+		if newApp.LogoFilename == "" {
+			c.Log.Warnf("application logo has not uploaded yet!")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "application logo has not uploaded yet!")
+		}
+
+		logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+		logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+		if err != nil {
+			c.Log.Warnf("failed to convert logo to base64 : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
+		}
+
+		baseTemplatePath := "../internal/templates/base_template_email1.html"
+		childPath := fmt.Sprintf("../internal/templates/%s/email/order_status_customer.html", request.Lang)
+		orderTrackingURL := fmt.Sprintf("%s/orders/%d/details", request.BaseFrontEndURL, newOrder.ID)
+		data := map[string]any{
+			"CustomerName":      newOrder.FirstName + " " + newOrder.LastName,
+			"Invoice":           newOrder.Invoice,
+			"Date":              newOrder.UpdatedAt.In(&request.TimeZone).Format("02 Jan 2006 15:04 MST"),
+			"PaymentMethod":     string(newOrder.PaymentMethod),
+			"LogoImage":         logoImageBase64,
+			"CompanyTitle":      newApp.AppName,
+			"TotalAmount":       helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
+			"Year":              time.Now().Format("2006"),
+			"PaymentStatus":     newOrder.PaymentStatus,
+			"OrderTrackingURL":  orderTrackingURL,
+			"CancellationNotes": newOrder.CancellationNotes,
+			"IsDelivery":        newOrder.IsDelivery,
+			"OrderStatus":       newOrder.OrderStatus,
+		}
+
+		err = c.Email.SendEmail(
+			c.Log,
+			[]string{newOrder.Email},
+			[]string{},
+			mail_subject_cust,
+			baseTemplatePath,
+			childPath,
+			data,
+		)
+		if err != nil {
+			c.Log.Warnf(err.Error())
+			return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		// send admin
+		childPath = fmt.Sprintf("../internal/templates/%s/email/order_status_admin.html", request.Lang)
+		err = c.Email.SendEmail(
+			c.Log,
+			[]string{newApp.Email},
+			[]string{},
+			mail_subject_admin,
+			baseTemplatePath,
+			childPath,
+			data,
+		)
+		if err != nil {
+			c.Log.Warnf(err.Error())
+			return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {

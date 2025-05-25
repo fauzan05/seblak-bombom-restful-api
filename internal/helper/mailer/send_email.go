@@ -3,6 +3,7 @@ package mailer
 import (
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"log"
 	"mime/quotedprintable"
 	"net/smtp"
@@ -11,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type EmailWorker struct {
@@ -112,4 +115,35 @@ func (w *EmailWorker) runWorker(id int) {
 func (w *EmailWorker) Stop() {
 	close(w.MailQueue) // Ini penting untuk keluarin semua goroutine dari loop
 	w.wg.Wait()        // Tunggu semua selesai
+}
+
+func (c *EmailWorker)SendEmail(log *logrus.Logger, to []string, cc []string, subject string, baseTemplatePath string, childTemplatePath string, data map[string]any) error {
+	tmpl, err := template.ParseFiles(baseTemplatePath, childTemplatePath)
+	if err != nil {
+		log.Warnf("failed to parse template file html : %+v", err)
+		return err
+	}
+
+	bodyBuilder := new(strings.Builder)
+	err = tmpl.ExecuteTemplate(bodyBuilder, "base", data)
+	if err != nil {
+		log.Warnf("failed to execute template file html : %+v", err)
+		return err
+	}
+
+	newMail := new(model.Mail)
+	newMail.To = to
+	if len(cc) > 0 {
+		newMail.Cc = cc
+	}
+	newMail.Subject = subject
+	newMail.Template = *bodyBuilder
+	c.Mailer.SenderName = fmt.Sprintf("System %s", data["CompanyTitle"])
+
+	select {
+	case c.MailQueue <- *newMail:
+		return nil
+	default:
+		return fmt.Errorf("email queue full, failed to send to %s", strings.Join(to, ", "))
+	}
 }

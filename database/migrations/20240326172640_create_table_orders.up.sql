@@ -30,6 +30,7 @@ CREATE TABLE orders (
     complete_address TEXT NOT NULL,
     note TEXT NULL,
     service_fee DECIMAL(15, 2) NOT NULL DEFAULT 0,
+    cancellation_notes TEXT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
