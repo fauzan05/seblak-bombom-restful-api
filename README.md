@@ -2,7 +2,7 @@
 
 # Background
 
-Starting from observing my friend's business, I then attempted to create an application to manage his business using the Go programming language. This is a "seblak" sales application where payments can be made onsite or online. For onsite payments, customers only need to come to the location and an admin will input their data manually to indicate whether they have paid or not. Meanwhile, for online payments, customers simply choose from the payment methods provided by Midtrans, and the payment status will be automatically displayed. So the admin no longer needs to manually input data because everything is handled by Midtrans. For delivery distance, we use kilometers as the unit, and there is a menu for delivery service rates along with the delivery status. This application is integrated with the Midtrans payment gateway. Make sure you have read the documentation from Midtrans to understand the payment flow further.
+Starting from observing my friend's business, I then attempted to create an application to manage his business using the Go programming language. This is a "seblak" sales application where payments can be made onsite or online. For onsite payments, customers only need to come to the location and an admin will input their data manually to indicate whether they have paid or not. Meanwhile, for online payments, customers simply choose from the payment methods provided by Xendit, and the payment status will be automatically displayed. So the admin no longer needs to manually input data because everything is handled by Xendit. For delivery distance, we use kilometers as the unit, and there is a menu for delivery service rates along with the delivery status. This application is integrated with the Xendit payment gateway. Make sure you have read the documentation from Xendit to understand the payment flow further.
 
 <br>
 
@@ -23,7 +23,7 @@ Starting from observing my friend's business, I then attempted to create an appl
 - Logrus : https://github.com/sirupsen/logrus
 - Testify : https://github.com/stretchr/testify
 - MySQL : https://github.com/go-sql-driver/mysql
-- Midtrans : https://midtrans.com/
+- Xendit : https://github.com/xendit/xendit-go
 
 ## Software
 - Docker
@@ -120,11 +120,11 @@ docker-compose logs -f
 If you're not using Docker, simply run **go run main.go** in the app directory. Beforehand, make sure the database is running and the database is created according to the configuration in the config.json file in the root directory. Once done, perform operations on the API by referring to api-specs.json to understand the request and response of each endpoint.
 <br>
 
-For testing purposes on the Midtrans endpoint, I recommend using Ngrok because Midtrans Callback Notification, after the user completes the payment, requires the redirection settings to be an active URL (endpoint) accessible over the internet. For example, by exposing a URL like this and entering it in the finish URL section:
+For testing purposes on the Midtrans endpoint, I recommend using Ngrok because Xendit Callback Notification, after the user completes the payment, requires the redirection settings to be an active URL (endpoint) accessible over the internet. For example, by exposing a URL like this and entering it in the finish URL section:
 
-**https://8xx2-xxx-xx2-1xx5-9x1.ngrok-free.app/api/midtrans/snap/orders/notification**
+**https://6901-180-243-9-232.ngrok-free.app/api/xendits/payment-request/notifications/callback**
 
-So after a successful transaction or expiration, Midtrans will automatically perform a callback to that endpoint.
+So after a successful transaction or expiration, Xendit will automatically perform a callback to that endpoint.
 
 # Go Migrate Command
 
