@@ -65,6 +65,7 @@ type UpdateOrderRequest struct {
 	ID                uint64                 `json:"-" validate:"required"` //order id
 	OrderStatus       enum_state.OrderStatus `json:"order_status"`
 	CancellationNotes string                 `json:"cancellation_notes"`
+	RejectionNotes    string                 `json:"rejection_notes"`
 	Lang              enum_state.Languange   `json:"-"`
 	TimeZone          time.Location          `json:"-"`
 	BaseFrontEndURL   string                 `json:"-"`

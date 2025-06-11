@@ -92,14 +92,19 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	// temukan produk untuk memastikan ketersediaan dan masukkan data produk ke slice OrderProduct serta mengkalkulasikan tagihannya
 	for _, orderProductRequest := range request.OrderProducts {
 		if orderProductRequest.Quantity < 0 {
-			c.Log.Warnf("quantity must be positive number : %+v", err)
+			c.Log.Warnf("quantity must be positive number!")
 			return nil, fiber.NewError(fiber.StatusInternalServerError, "quantity must be positive number!")
 		}
 		newProduct := new(entity.Product)
 		newProduct.ID = orderProductRequest.ProductId
 		count, err := c.ProductRepository.FindAndCountProductById(tx, newProduct)
+		if err != nil {
+			c.Log.Warnf("failed to find product by id : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to find product by id : %+v", err))
+		}
+
 		if count < 1 {
-			c.Log.Warnf("product not found : %+v", err)
+			c.Log.Warnf("product not found!")
 			return nil, fiber.NewError(fiber.StatusInternalServerError, "product not found!")
 		}
 
@@ -130,14 +135,14 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		productsSelected = append(productsSelected, productSelected)
 
 		if newProduct.Stock < 1 {
-			c.Log.Warnf("product out of stock : %+v", err)
+			c.Log.Warnf("product out of stock!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "product out of stock!")
 		}
 
 		// pastikan permintaan tidak melebihi stok produk yang terkini
 		newProduct.Stock -= orderProductRequest.Quantity
 		if newProduct.Stock < 0 {
-			c.Log.Warnf("quantity order of product is out of limit : %+v", err)
+			c.Log.Warnf("quantity order of product is out of limit!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "quantity order of product is out of limit")
 		}
 
@@ -385,6 +390,16 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	if err := c.OrderRepository.Update(tx, newOrder); err != nil {
 		c.Log.Warnf("failed to add invoice code : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add invoice code : %+v", err))
+	}
+
+	if request.PaymentMethod != enum_state.PAYMENT_METHOD_WALLET {
+		now := time.Now()
+		err = helper_others.SaveWalletTransaction(tx, request.UserId, &newOrder.ID, newOrder.TotalFinalPrice, enum_state.WALLET_FLOW_TYPE_DEBIT, enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT,
+			request.PaymentMethod, enum_state.WALLET_TRANSACTION_STATUS_COMPLETED, "", invoice, "", nil, &now)
+		if err != nil {
+			c.Log.Warnf("failed to save wallet transaction : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
+		}
 	}
 
 	// jika pembayaran menggunakan xendit,maka panggil xendit usecase
@@ -657,7 +672,14 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		return nil, fiber.NewError(fiber.StatusNotFound, "order not found!")
 	}
 
-	newOrder.CancellationNotes = request.CancellationNotes
+	if request.OrderStatus == enum_state.ORDER_CANCELLED {
+		newOrder.CancellationNotes = request.CancellationNotes
+	}
+
+	if request.OrderStatus == enum_state.ORDER_RECEIVED {
+		newOrder.RejectionNotes = request.RejectionNotes
+	}
+
 	var is_send_email bool
 	var mail_subject_cust string
 	var mail_subject_admin string
@@ -695,6 +717,15 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
 				c.Log.Warnf("failed to update wallet balance : %+v", err)
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
+			}
+
+			err = helper_others.SaveWalletTransaction(tx, findWallet.UserId, &newOrder.ID, newOrder.TotalFinalPrice,
+				enum_state.WALLET_FLOW_TYPE_CREDIT, enum_state.WALLET_TRANSACTION_TYPE_ORDER_REFUND, newOrder.PaymentMethod,
+				enum_state.WALLET_TRANSACTION_STATUS_COMPLETED, "", request.CancellationNotes, request.CancellationNotes, nil, nil)
+
+			if err != nil {
+				c.Log.Warnf("failed to save wallet transaction : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
 			}
 
 			newOrder.OrderStatus = request.OrderStatus
@@ -777,6 +808,16 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			if err := c.WalletRepository.UpdateCustomColumns(tx, newWallet, updateBalance); err != nil {
 				c.Log.Warnf("failed to update wallet balance : %+v", err)
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
+			}
+
+			now := time.Now()
+			err = helper_others.SaveWalletTransaction(tx, findWallet.UserId, &newOrder.ID, newOrder.TotalFinalPrice,
+				enum_state.WALLET_FLOW_TYPE_CREDIT, enum_state.WALLET_TRANSACTION_TYPE_ORDER_REFUND, newOrder.PaymentMethod,
+				enum_state.WALLET_TRANSACTION_STATUS_COMPLETED, "", "", request.RejectionNotes, &currentUser.ID, &now)
+
+			if err != nil {
+				c.Log.Warnf("failed to save wallet transaction : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
 			}
 
 			is_send_email = true

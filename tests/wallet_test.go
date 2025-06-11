@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/model"
 	"strings"
 	"testing"
@@ -12,10 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithDrawWallet(t *testing.T) {
+func TestWithdrawRequestByCustomerWallet(t *testing.T) {
 	ClearAll()
 	DoRegisterAdmin(t)
-	tokenAdmin := DoLoginAdmin(t)
 
 	DoRegisterCustomer(t)
 	tokenCust := DoLoginCustomer(t)
@@ -25,18 +25,23 @@ func TestWithDrawWallet(t *testing.T) {
 
 	customer := GetCurrentUserByToken(t, tokenCust)
 
-	requestBody := model.WithDrawWalletRequest{
+	requestBody := model.WithdrawWalletRequest{
 		UserId: customer.ID,
+		Method: enum_state.WALLET_WITHDRAW_REQUEST_METHOD_CASH,
+		BankName: "",
+		BankAccountNumber: "",
+		BankAccountName: "",
+		Status: enum_state.WALLET_WITHDRAW_REQUEST_STATUS_PENDING,
 		Amount: 93000,
 		Notes: "",
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
-	request := httptest.NewRequest(http.MethodPut, "/api/wallets/withdraw", strings.NewReader(string(bodyJson)))
+	request := httptest.NewRequest(http.MethodPut, "/api/wallets/withdraw-cust", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
-	request.Header.Set("Authorization", tokenAdmin)
+	request.Header.Set("Authorization", tokenCust)
 
 	response, err := app.Test(request)
 	assert.Nil(t, err)

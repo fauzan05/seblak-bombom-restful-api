@@ -29,6 +29,7 @@ type Order struct {
 	TotalProductPrice float32                   `gorm:"column:total_product_price"`
 	TotalFinalPrice   float32                   `gorm:"column:total_final_price"`
 	CancellationNotes string                    `gorm:"cancellation_notes"`
+	RejectionNotes    string                    `gorm:"rejection_notes"`
 	CreatedAt         time.Time                 `gorm:"column:created_at;autoCreateTime;<-:create"`
 	UpdatedAt         time.Time                 `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	OrderProducts     []OrderProduct            `gorm:"foreignKey:order_id;references:id"`

@@ -60,6 +60,7 @@ func Bootstrap(config *BootstrapConfig) {
 	payoutRepository := repository.NewPayoutRepository(config.Log)
 	notificationRepository := repository.NewNotificationRepository(config.Log)
 	passwordResetRepository := repository.NewPasswordResetRepository(config.Log)
+	walletWithdrawRepository := repository.NewWalletWithdrawRequestRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository, cartRepository, notificationRepository, config.Email, applicationRepository, passwordResetRepository)
@@ -76,7 +77,7 @@ func Bootstrap(config *BootstrapConfig) {
 	xenditCallbackUseCase := xenditUseCase.NewXenditCallbackUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient, xenditPayoutRepository, userRepository, walletRepository, payoutRepository, applicationRepository, notificationRepository, config.Email)
 	xenditPayoutUseCase := xenditUseCase.NewXenditPayoutUseCase(config.DB, config.Log, config.Validate, xenditPayoutRepository, config.XenditClient, walletRepository, userRepository)
 	payoutUseCase := usecase.NewPayoutUseCase(config.DB, config.Log, config.Validate, payoutRepository, xenditPayoutUseCase, walletRepository, userRepository)
-	walletUseCase := usecase.NewWalletUseCase(config.DB, config.Log, config.Validate, userRepository, walletRepository)
+	walletUseCase := usecase.NewWalletUseCase(config.DB, config.Log, config.Validate, userRepository, walletRepository, walletWithdrawRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig, config.FrontEndConfig)

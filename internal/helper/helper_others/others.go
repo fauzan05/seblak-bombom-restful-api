@@ -190,14 +190,23 @@ func FormatNumberFloat32(n float32) string {
 	return result
 }
 
-func SaveWalletTransaction(db *gorm.DB, userId uint64, orderId *uint64, amount float32, txType enum_state.WalletTransactionType, source enum_state.WalletTransactionSource, note string) error {
+func SaveWalletTransaction(db *gorm.DB, userId uint64, orderId *uint64, amount float32,
+	flowType enum_state.WalletFlowType, transactionType enum_state.WalletTransactionType,
+	paymentMethod enum_state.PaymentMethod, status enum_state.WalletTransactionStatus,
+	referenceNumber string, note string, adminNote string, processedBy *uint64, processedAt *time.Time) error {
 	newWalletTransaction := &entity.WalletTransactions{
-		UserId:  userId,
-		OrderId: orderId,
-		Amount:  amount,
-		Type:    txType,
-		Source:  source,
-		Note:    note,
+		UserId:          userId,
+		OrderId:         orderId,
+		Amount:          amount,
+		FlowType:        flowType,
+		TransactionType: transactionType,
+		PaymentMethod:   paymentMethod,
+		Status:          status,
+		ReferenceNumber: referenceNumber,
+		Note:            note,
+		AdminNote:       adminNote,
+		ProcessedBy:     processedBy,
+		ProcessedAt:     processedAt,
 	}
 
 	if err := db.Create(newWalletTransaction).Error; err != nil {
