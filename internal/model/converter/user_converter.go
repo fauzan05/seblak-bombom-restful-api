@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -20,8 +20,8 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		Phone:     user.Phone,
 		Addresses: addresses,
 		Role:      user.Role,
-		CreatedAt: helper.TimeRFC3339(user.CreatedAt),
-		UpdatedAt: helper.TimeRFC3339(user.UpdatedAt),
+		CreatedAt: helper_others.TimeRFC3339(user.CreatedAt),
+		UpdatedAt: helper_others.TimeRFC3339(user.UpdatedAt),
 	}
 
 	if user.Wallet != nil {
@@ -39,7 +39,7 @@ func UserTokenToResponse(token *entity.Token) *model.UserTokenResponse {
 	return &model.UserTokenResponse{
 		Token:      token.Token,
 		ExpiryDate: token.ExpiryDate,
-		CreatedAt:  helper.TimeRFC3339(token.CreatedAt),
-		UpdatedAt:  helper.TimeRFC3339(token.UpdatedAt),
+		CreatedAt:  helper_others.TimeRFC3339(token.CreatedAt),
+		UpdatedAt:  helper_others.TimeRFC3339(token.UpdatedAt),
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/model"
 	"strings"
 	"testing"
@@ -18,13 +18,14 @@ import (
 
 func TestRegisterAdmin(t *testing.T) {
 	ClearAll()
+	DoCreateApplicationSettingByAdminToken(t)
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "F3196813@gmail.com",
 		Phone:     "08123456789",
 		Password:  "JohnDoe123#",
-		Role:      helper.ADMIN,
+		Role:      enum_state.ADMIN,
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -32,6 +33,7 @@ func TestRegisterAdmin(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	request.Header.Set("X-Admin-Key", "rahasia-123#")
 
 	response, err := app.Test(request, int(time.Second)*5)
 	assert.Nil(t, err)
@@ -64,7 +66,7 @@ func TestRegisterCustomer(t *testing.T) {
 		Email:     "fauzan.hidayat@binus.ac.id",
 		Phone:     "0982131244",
 		Password:  "Customer1#",
-		Role:      helper.CUSTOMER,
+		Role:      enum_state.CUSTOMER,
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -102,7 +104,7 @@ func TestRegisterError(t *testing.T) {
 		Email:     "",
 		Phone:     "",
 		Password:  "",
-		Role:      helper.ADMIN,
+		Role:      enum_state.ADMIN,
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -134,7 +136,7 @@ func TestRegisterEmailDuplicate(t *testing.T) {
 		Email:     "johndoe@email.com",
 		Phone:     "08123456789",
 		Password:  "johndoe123",
-		Role:      helper.ADMIN,
+		Role:      enum_state.ADMIN,
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -161,9 +163,11 @@ func TestLogin(t *testing.T) {
 	DoRegisterAdmin(t)
 
 	requestBody := model.LoginUserRequest{
-		Email:    "johndoe@email.com",
-		Password: "johndoe123",
+		Email:    "F3196813@gmail.com",
+		Password: "JohnDoe123#",
 	}
+
+	DoVerificationEmail(t, requestBody.Email)
 
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
@@ -291,7 +295,7 @@ func TestGetCurrentUser(t *testing.T) {
 	assert.Equal(t, "Doe", responseBody.Data.LastName)
 	assert.Equal(t, "johndoe@email.com", responseBody.Data.Email)
 	assert.Equal(t, "08123456789", responseBody.Data.Phone)
-	assert.Equal(t, helper.ADMIN, responseBody.Data.Role)
+	assert.Equal(t, enum_state.ADMIN, responseBody.Data.Role)
 	assert.NotNil(t, responseBody.Data.CreatedAt)
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
 }
@@ -936,7 +940,7 @@ func TestForgotPasswordResetPasswordExpired(t *testing.T) {
 	// ubah expired-nya ke -15 menit
 	newPasswordReset := new(entity.PasswordReset)
 	newPasswordReset.ID = responseBody.Data.ID
-	db.Model(newPasswordReset).Update("expires_at", responseBody.Data.ExpiresAt.ToTime().Add((-20 * time.Minute) + (-1 * time.Second)))
+	db.Model(newPasswordReset).Update("expires_at", responseBody.Data.ExpiresAt.ToTime().Add((-20*time.Minute)+(-1*time.Second)))
 	// validate
 	requestBodyValidate := model.PasswordResetRequest{
 		VerificationCode:   responseBody.Data.VerificationCode,

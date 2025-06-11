@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -14,8 +14,8 @@ func ImageToResponse(image *entity.Image) *model.ImageResponse {
 		FileName:  image.FileName,
 		Type:      image.Type,
 		Position:  image.Position,
-		CreatedAt: helper.TimeRFC3339(image.CreatedAt),
-		UpdatedAt: helper.TimeRFC3339(image.UpdatedAt),
+		CreatedAt: helper_others.TimeRFC3339(image.CreatedAt),
+		UpdatedAt: helper_others.TimeRFC3339(image.UpdatedAt),
 	}
 }
 

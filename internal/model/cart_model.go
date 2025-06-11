@@ -1,15 +1,15 @@
 package model
 
 import (
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 )
 
 type CartResponse struct {
-	ID        uint64             `json:"id,omitempty"`
-	UserID    uint64             `json:"user_id,omitempty"`
-	CartItems []CartItemResponse `json:"cart_items"`
-	CreatedAt helper.TimeRFC3339 `json:"created_at,omitempty"`
-	UpdatedAt helper.TimeRFC3339 `json:"updated_at,omitempty"`
+	ID        uint64                    `json:"id,omitempty"`
+	UserID    uint64                    `json:"user_id,omitempty"`
+	CartItems []CartItemResponse        `json:"cart_items"`
+	CreatedAt helper_others.TimeRFC3339 `json:"created_at,omitempty"`
+	UpdatedAt helper_others.TimeRFC3339 `json:"updated_at,omitempty"`
 }
 
 type CreateCartRequest struct {

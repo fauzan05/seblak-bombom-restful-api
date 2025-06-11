@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -12,8 +12,8 @@ func CartItemToResponse(cartItem *entity.CartItem) *model.CartItemResponse {
 		CartId:    cartItem.CartId,
 		Product:   *ProductToResponse(cartItem.Product),
 		Quantity:  cartItem.Quantity,
-		CreatedAt: helper.TimeRFC3339(cartItem.CreatedAt),
-		UpdatedAt: helper.TimeRFC3339(cartItem.UpdatedAt),
+		CreatedAt: helper_others.TimeRFC3339(cartItem.CreatedAt),
+		UpdatedAt: helper_others.TimeRFC3339(cartItem.UpdatedAt),
 	}
 }
 

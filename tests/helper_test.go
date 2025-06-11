@@ -16,7 +16,8 @@ import (
 	"os"
 	"path/filepath"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 	"strconv"
 	"strings"
@@ -30,11 +31,11 @@ func ClearAll() {
 	ClearPasswordResets()
 	ClearDiscountCouponUsages()
 	ClearXenditTransactions()
-	DeleteAllApplicationImages()
+	// DeleteAllApplicationImages()
 	ClearApplicationsSetting()
 	ClearOrderProducts()
 	ClearOrders()
-	DeleteAllProductImages()
+	// DeleteAllProductImages()
 	ClearImages()
 	ClearProducts()
 	ClearCategories()
@@ -172,6 +173,9 @@ func DoLoginAdmin(t *testing.T) string {
 		Email:    "F3196813@gmail.com",
 		Password: "JohnDoe123#",
 	}
+
+	DoVerificationEmail(t, requestBody.Email)
+
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
 
@@ -200,6 +204,9 @@ func DoLoginCustomer(t *testing.T) string {
 		Email:    "fauzan.hidayat@binus.ac.id",
 		Password: "Customer1#",
 	}
+
+	DoVerificationEmail(t, requestBody.Email)
+
 	bodyJson, err := json.Marshal(requestBody)
 	assert.Nil(t, err)
 
@@ -368,9 +375,9 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 			Description:     fmt.Sprintf("Discount Description %+v", i),
 			Code:            fmt.Sprintf("ABC%+v", i),
 			Value:           15,
-			Type:            helper.PERCENT,
-			Start:           helper.TimeRFC3339(startWIB),
-			End:             helper.TimeRFC3339(endWIB),
+			Type:            enum_state.PERCENT,
+			Start:           helper_others.TimeRFC3339(startWIB),
+			End:             helper_others.TimeRFC3339(endWIB),
 			MaxUsagePerUser: 5,
 			UsedCount:       0,
 			MinOrderValue:   20000,
@@ -417,7 +424,7 @@ func DoCreateManyDiscountCoupon(t *testing.T, token string, totalData int, retur
 	return getDiscountCoupon
 }
 
-func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc string, code string, tipe helper.DiscountType, value float32, start helper.TimeRFC3339, end helper.TimeRFC3339, totalMaxUsage int, maxUsagePerUser int, minOrderValue float32, status bool) *model.DiscountCouponResponse {
+func DoCreateDiscountCouponCustom(t *testing.T, token string, name string, desc string, code string, tipe enum_state.DiscountType, value float32, start helper_others.TimeRFC3339, end helper_others.TimeRFC3339, totalMaxUsage int, maxUsagePerUser int, minOrderValue float32, status bool) *model.DiscountCouponResponse {
 	requestBody := model.CreateDiscountCouponRequest{
 		Name:            name,
 		Description:     desc,
@@ -686,9 +693,9 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 	for i := 1; i <= totalOrder; i++ {
 		requestBody := model.CreateOrderRequest{
 			DiscountId:     discountCoupon.ID,
-			PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-			PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-			ChannelCode:    helper.WALLET_CHANNEL_CODE,
+			PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+			PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+			ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 			IsDelivery:     true,
 			Note:           "Yang cepet ya!",
 			OrderProducts: []model.OrderProductResponse{
@@ -718,13 +725,13 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 		assert.Equal(t, http.StatusCreated, response.StatusCode)
 		assert.NotNil(t, responseBody.Data.ID)
 		assert.NotNil(t, responseBody.Data.Invoice)
-		assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+		assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 		assert.Equal(t, discountCoupon.Value, responseBody.Data.DiscountValue)
-		assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-		assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-		assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-		assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-		assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+		assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+		assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+		assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+		assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+		assert.Equal(t, enum_state.ORDER_PENDING, responseBody.Data.OrderStatus)
 		assert.Equal(t, true, responseBody.Data.IsDelivery)
 		assert.Equal(t, float32(getDelivery.Delivery.Cost), responseBody.Data.DeliveryCost)
 		assert.Equal(t, "Yang cepet ya!", responseBody.Data.Note)
@@ -743,13 +750,14 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 }
 
 func DoRegisterAdmin(t *testing.T) {
+	DoCreateApplicationSettingByAdminToken(t)
 	requestBody := model.RegisterUserRequest{
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "F3196813@gmail.com",
 		Phone:     "08123456789",
 		Password:  "JohnDoe123#",
-		Role:      helper.ADMIN,
+		Role:      enum_state.ADMIN,
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -757,6 +765,7 @@ func DoRegisterAdmin(t *testing.T) {
 	request := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(string(bodyJson)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	request.Header.Set("X-Admin-Key", "rahasia-123#")
 	request.Host = "localhost"
 
 	response, err := app.Test(request, int(time.Second)*5)
@@ -786,7 +795,7 @@ func DoRegisterCustomer(t *testing.T) {
 		Email:     "fauzan.hidayat@binus.ac.id",
 		Phone:     "0982131244",
 		Password:  "Customer1#",
-		Role:      helper.CUSTOMER,
+		Role:      enum_state.CUSTOMER,
 	}
 
 	bodyJson, err := json.Marshal(requestBody)
@@ -824,7 +833,7 @@ func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin str
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, tokenAdmin, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, tokenAdmin, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	delivery := DoCreateDelivery(t, tokenAdmin)
 	currentUser := GetCurrentUserByToken(t, tokenCust)
@@ -833,9 +842,9 @@ func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin str
 	product := DoCreateProduct(t, tokenAdmin, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -869,7 +878,7 @@ func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin str
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -877,11 +886,11 @@ func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin str
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_PENDING, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(getDelivery.Delivery.Cost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -904,7 +913,7 @@ func DoCreateOrderAsCustomerWithDeliveryAndDiscount(t *testing.T, tokenAdmin str
 
 	// cek saldo
 	currentUser = GetCurrentUserByToken(t, tokenCust)
-	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+	assert.Equal(t, helper_others.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 
@@ -989,4 +998,99 @@ func DoCreateApplicationSetting(t *testing.T, tokenAdmin string) {
 	assert.Equal(t, "https://www.facebook.com/", responseBody.Data.FacebookLink)
 	assert.NotNil(t, responseBody.Data.CreatedAt)
 	assert.NotNil(t, responseBody.Data.UpdatedAt)
+}
+
+func DoCreateApplicationSettingByAdminToken(t *testing.T) {
+	// Simulasi multipart body
+	var b bytes.Buffer
+	writer := multipart.NewWriter(&b)
+
+	// Tambahkan field JSON sebagai string field biasa
+	_ = writer.WriteField("app_name", "Warung Seblak Jaman Now")
+	_ = writer.WriteField("opening_hours", "07:00:00")
+	_ = writer.WriteField("closing_hours", "20:00:00")
+	_ = writer.WriteField("address", "Ini adalah alamat")
+	_ = writer.WriteField("google_maps_link", "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6")
+	_ = writer.WriteField("description", "Ini adalah deskripsi")
+	_ = writer.WriteField("phone_number", "08133546789")
+	_ = writer.WriteField("email", "seblak@mail.com")
+	_ = writer.WriteField("instagram_name", "fauzan.hidayat-instagram")
+	_ = writer.WriteField("instagram_link", "https://www.instagram.com/")
+	_ = writer.WriteField("twitter_name", "fauzan.hidayat-twitter")
+	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
+	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
+	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
+
+	filePath := "../tests/assets/seblak-logo.jpg"
+	file, err := os.Open(filePath)
+	assert.Nil(t, err)
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	assert.Nil(t, err)
+
+	filename := fileInfo.Name()
+	content, err := io.ReadAll(file)
+	assert.Nil(t, err)
+
+	partHeader := textproto.MIMEHeader{}
+	partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="logo_filename"; filename="%s"`, filename))
+	partHeader.Set("Content-Type", "image/jpeg")
+
+	fileWriter, err := writer.CreatePart(partHeader)
+	assert.Nil(t, err)
+
+	_, err = fileWriter.Write(content)
+	assert.Nil(t, err)
+
+	writer.Close()
+
+	request := httptest.NewRequest(http.MethodPost, "/api/applications-use-admin-key", &b)
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	request.Header.Set("X-Admin-Key", "rahasia-123#")
+
+	response, err := app.Test(request, int(time.Second)*5)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.ApplicationResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.Equal(t, "Warung Seblak Jaman Now", responseBody.Data.AppName)
+	assert.Equal(t, "07:00:00", responseBody.Data.OpeningHours)
+	assert.Equal(t, "20:00:00", responseBody.Data.ClosingHours)
+	assert.Equal(t, "Ini adalah alamat", responseBody.Data.Address)
+	assert.Equal(t, "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6", responseBody.Data.GoogleMapsLink)
+	assert.Equal(t, "Ini adalah deskripsi", responseBody.Data.Description)
+	assert.Equal(t, "08133546789", responseBody.Data.PhoneNumber)
+	assert.Equal(t, "seblak@mail.com", responseBody.Data.Email)
+	assert.Equal(t, "fauzan.hidayat-instagram", responseBody.Data.InstagramName)
+	assert.Equal(t, "https://www.instagram.com/", responseBody.Data.InstagramLink)
+	assert.Equal(t, "fauzan.hidayat-twitter", responseBody.Data.TwitterName)
+	assert.Equal(t, "https://www.twitter.com/", responseBody.Data.TwitterLink)
+	assert.Equal(t, "fauzan.hidayat-facebook", responseBody.Data.FacebookName)
+	assert.Equal(t, "https://www.facebook.com/", responseBody.Data.FacebookLink)
+	assert.NotNil(t, responseBody.Data.CreatedAt)
+	assert.NotNil(t, responseBody.Data.UpdatedAt)
+}
+
+func DoVerificationEmail(t *testing.T, email string) {
+	// Ambil user berdasarkan email
+	userEntity := new(entity.User)
+	if err := db.Where("email = ?", email).First(userEntity).Error; err != nil {
+		log.Println("User not found:", err)
+		return
+	}
+
+	// Update kolom email_verified
+	if err := db.Model(&entity.User{}).Where("id = ?", userEntity.ID).Update("email_verified", true).Error; err != nil {
+		log.Println("Failed to update:", err)
+		return
+	}
 }

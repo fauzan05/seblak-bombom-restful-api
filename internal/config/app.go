@@ -76,6 +76,7 @@ func Bootstrap(config *BootstrapConfig) {
 	xenditCallbackUseCase := xenditUseCase.NewXenditCallbackUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient, xenditPayoutRepository, userRepository, walletRepository, payoutRepository, applicationRepository, notificationRepository, config.Email)
 	xenditPayoutUseCase := xenditUseCase.NewXenditPayoutUseCase(config.DB, config.Log, config.Validate, xenditPayoutRepository, config.XenditClient, walletRepository, userRepository)
 	payoutUseCase := usecase.NewPayoutUseCase(config.DB, config.Log, config.Validate, payoutRepository, xenditPayoutUseCase, walletRepository, userRepository)
+	walletUseCase := usecase.NewWalletUseCase(config.DB, config.Log, config.Validate, userRepository, walletRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig, config.FrontEndConfig)
@@ -92,6 +93,7 @@ func Bootstrap(config *BootstrapConfig) {
 	cartController := http.NewCartController(cartUseCase, config.Log)
 	xenditPayoutController := xenditController.NewXenditPayoutController(xenditPayoutUseCase, config.Log, config.DB)
 	payoutController := http.NewPayoutController(payoutUseCase, config.Log)
+	walletController := http.NewWalletController(walletUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -115,6 +117,7 @@ func Bootstrap(config *BootstrapConfig) {
 		XenditPayoutController:            xenditPayoutController,
 		ApplicationController:             applicationController,
 		CartController:                    cartController,
+		WalletController:                  walletController,
 		AuthMiddleware:                    authMiddleware,
 		RoleMiddleware:                    roleMiddleware,
 		AuthXenditMiddleware:              authXenditMiddleware,

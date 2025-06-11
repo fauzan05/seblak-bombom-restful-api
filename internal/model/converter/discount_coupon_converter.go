@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -14,14 +14,14 @@ func DiscountCouponToResponse(discount *entity.DiscountCoupon) *model.DiscountCo
 		Code:            discount.Code,
 		Value:           discount.Value,
 		Type:            discount.Type,
-		Start:           helper.TimeRFC3339(discount.Start),
-		End:             helper.TimeRFC3339(discount.End),
+		Start:           helper_others.TimeRFC3339(discount.Start),
+		End:             helper_others.TimeRFC3339(discount.End),
 		Status:          discount.Status,
 		MaxUsagePerUser: discount.MaxUsagePerUser,
 		UsedCount:       discount.UsedCount,
 		MinOrderValue:   discount.MinOrderValue,
-		CreatedAt:       helper.TimeRFC3339(discount.CreatedAt),
-		UpdatedAt:       helper.TimeRFC3339(discount.UpdatedAt),
+		CreatedAt:       helper_others.TimeRFC3339(discount.CreatedAt),
+		UpdatedAt:       helper_others.TimeRFC3339(discount.UpdatedAt),
 	}
 }
 

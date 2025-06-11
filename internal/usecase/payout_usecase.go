@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
@@ -52,17 +53,17 @@ func (c *PayoutUseCase) Add(ctx *fiber.Ctx, request *model.CreatePayoutRequest) 
 
 	var xenditPayoutResponse *model.XenditPayoutResponse
 	var xenditPayoutId sql.NullString
-	var status helper.PayoutStatus
-	if request.Method == helper.PAYOUT_METHOD_ONLINE {
+	var status enum_state.PayoutStatus
+	if request.Method == enum_state.PAYOUT_METHOD_ONLINE {
 		result, err := c.XenditPayoutUseCase.AddPayout(ctx, request.XenditPayoutRequest, tx)
 		if err != nil {
 			return nil, err
 		}
 		xenditPayoutResponse = result
 		xenditPayoutId = sql.NullString{String: result.ID, Valid: true}
-		status = helper.PayoutStatus(result.Status)
+		status = enum_state.PayoutStatus(result.Status)
 	} else {
-		status = helper.PAYOUT_ACCEPTED
+		status = enum_state.PAYOUT_ACCEPTED
 		newWallet := new(entity.Wallet)
 		count, err := c.WalletRepository.FindAndCountFirstWalletByUserId(tx, newWallet, request.UserId, "active")
 		if err != nil {
@@ -109,7 +110,7 @@ func (c *PayoutUseCase) Add(ctx *fiber.Ctx, request *model.CreatePayoutRequest) 
 		if newPayout.XenditPayout == nil {
 			newPayout.XenditPayout = &entity.XenditPayout{}
 		}
-		helper.PrintStructFields(xenditPayoutResponse)
+		helper_others.PrintStructFields(xenditPayoutResponse)
 		newPayout.XenditPayout.ID = xenditPayoutResponse.ID
 		newPayout.XenditPayout.UserID = xenditPayoutResponse.UserId
 		newPayout.XenditPayout.BusinessID = xenditPayoutResponse.BusinessId
@@ -121,9 +122,9 @@ func (c *PayoutUseCase) Add(ctx *fiber.Ctx, request *model.CreatePayoutRequest) 
 		newPayout.XenditPayout.AccountNumber = xenditPayoutResponse.AccountNumber
 		newPayout.XenditPayout.AccountHolderName = xenditPayoutResponse.AccountHolderName
 		newPayout.XenditPayout.Status = xenditPayoutResponse.Status
-		newPayout.XenditPayout.CreatedAt = helper.TimeRFC3339.ToTime(xenditPayoutResponse.CreatedAt)
-		newPayout.XenditPayout.UpdatedAt = helper.TimeRFC3339.ToTime(xenditPayoutResponse.UpdatedAt)
-		newPayout.XenditPayout.EstimatedArrival = helper.TimeRFC3339.ToTime(xenditPayoutResponse.EstimatedArrival)
+		newPayout.XenditPayout.CreatedAt = helper_others.TimeRFC3339.ToTime(xenditPayoutResponse.CreatedAt)
+		newPayout.XenditPayout.UpdatedAt = helper_others.TimeRFC3339.ToTime(xenditPayoutResponse.UpdatedAt)
+		newPayout.XenditPayout.EstimatedArrival = helper_others.TimeRFC3339.ToTime(xenditPayoutResponse.EstimatedArrival)
 	}
 
 	if err := tx.Commit().Error; err != nil {

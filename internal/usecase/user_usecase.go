@@ -6,7 +6,8 @@ import (
 	"math/rand"
 	"net/url"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
@@ -83,7 +84,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		return nil, fiber.NewError(fiber.StatusConflict, "email user has already exists!")
 	}
 
-	if errs := helper.ValidatePassword(request.Password); len(errs) > 0 {
+	if errs := helper_others.ValidatePassword(request.Password); len(errs) > 0 {
 		c.Log.Warnf(errs)
 		return nil, fiber.NewError(fiber.StatusBadRequest, errs)
 	}
@@ -112,7 +113,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	newWallet := &entity.Wallet{}
 	newWallet.UserId = newUser.ID
 	newWallet.Balance = 0
-	newWallet.Status = helper.ACTIVE_WALLET
+	newWallet.Status = enum_state.ACTIVE_WALLET
 	if err := c.WalletRepository.Create(tx, newWallet); err != nil {
 		c.Log.Warnf("failed to create a new wallet into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create a new wallet into database : %+v", err))
@@ -133,18 +134,18 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 	}
 
 	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-	logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 	}
 
-	if request.Role == helper.CUSTOMER {
+	if request.Role == enum_state.CUSTOMER {
 		// setelah semuanya berhasil maka kirim notifikasi email
 		newMail := new(model.Mail)
 		newMail.To = []string{newUser.Email}
 		newMail.Subject = "Email Verification"
-		if request.Lang == helper.INDONESIA {
+		if request.Lang == enum_state.INDONESIA {
 			newMail.Subject = "Verifikasi Email"
 		}
 		baseTemplatePath := "../internal/templates/base_template_email1.html"
@@ -158,7 +159,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		baseURL := fmt.Sprintf("%s://%s/api/users/verify-email/%s", ctx.Protocol(), ctx.Hostname(), newUser.VerificationToken)
 		params := url.Values{}
 		params.Set("lang", string(request.Lang))
-	params.Set("timezone", request.TimeZone.String())
+		params.Set("timezone", request.TimeZone.String())
 
 		verifyURL := baseURL
 		if encoded := params.Encode(); encoded != "" {
@@ -191,7 +192,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		newMail := new(model.Mail)
 		newMail.To = []string{newUser.Email}
 		newMail.Subject = "Admin Email Verification"
-		if request.Lang == helper.INDONESIA {
+		if request.Lang == enum_state.INDONESIA {
 			newMail.Subject = "Verifikasi Email Admin"
 		}
 		baseTemplatePath := "../internal/templates/base_template_email1.html"
@@ -282,7 +283,7 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 		}
 
 		logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-		logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+		logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 		if err != nil {
 			c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
@@ -290,14 +291,14 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 		baseTemplatePath := "../internal/templates/base_template_email1.html"
 		childPath := fmt.Sprintf("../internal/templates/%s/email/registration_success.html", request.Lang)
 		newMail.Subject = "Registration Successful"
-		if request.Lang == helper.INDONESIA {
+		if request.Lang == enum_state.INDONESIA {
 			newMail.Subject = "Registrasi Berhasil"
 		}
 
-		if newUser.Role == helper.ADMIN {
+		if newUser.Role == enum_state.ADMIN {
 			childPath = fmt.Sprintf("../internal/templates/%s/email/admin_creation.html", request.Lang)
 			newMail.Subject = "New Admin User Created"
-			if request.Lang == helper.INDONESIA {
+			if request.Lang == enum_state.INDONESIA {
 				newMail.Subject = "Akun Admin Baru Berhasil Dibuat"
 			}
 		}
@@ -339,7 +340,7 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 		newNotification.Title = newMail.Subject
 		newNotification.UserID = newUser.ID
 		newNotification.IsRead = false
-		newNotification.Type = helper.AUTHENTICATION
+		newNotification.Type = enum_state.AUTHENTICATION
 		baseTemplatePath = "../internal/templates/base_template_notification1.html"
 		childPath = fmt.Sprintf("../internal/templates/%s/notification/registration_success.html", request.Lang)
 		tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
@@ -492,7 +493,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 	user.Name.FirstName = request.FirstName
 	user.Name.LastName = request.LastName
 	user.Phone = request.Phone
-	user.Role = helper.ADMIN
+	user.Role = enum_state.ADMIN
 
 	if err := c.UserRepository.Update(tx, user); err != nil {
 		c.Log.Warnf("failed to update data user : %+v", err)
@@ -606,7 +607,7 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 	}
 
 	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-	logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
@@ -617,7 +618,7 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 	baseTemplatePath := "../internal/templates/base_template_email1.html"
 	childPath := fmt.Sprintf("../internal/templates/%s/email/account_deletion.html", request.Lang)
 	newMail.Subject = "Account Deletion Successful"
-	if request.Lang == helper.INDONESIA {
+	if request.Lang == enum_state.INDONESIA {
 		newMail.Subject = "Penghapusan Akun Berhasil"
 	}
 	tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
@@ -707,7 +708,7 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	}
 
 	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-	logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
@@ -715,7 +716,7 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 	baseTemplatePath := "../internal/templates/base_template_email1.html"
 	childPath := fmt.Sprintf("../internal/templates/%s/email/forgot_password.html", request.Lang)
 	newMail.Subject = "Forgot Password"
-	if request.Lang == helper.INDONESIA {
+	if request.Lang == enum_state.INDONESIA {
 		newMail.Subject = "Lupa Kata Sandi"
 	}
 
@@ -834,7 +835,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 		return false, fiber.NewError(fiber.StatusBadRequest, "verification code is not match!")
 	}
 
-	if errs := helper.ValidatePassword(request.NewPassword); len(errs) > 0 {
+	if errs := helper_others.ValidatePassword(request.NewPassword); len(errs) > 0 {
 		c.Log.Warnf(errs)
 		return false, fiber.NewError(fiber.StatusBadRequest, errs)
 	}
@@ -890,11 +891,11 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	newNotification := new(entity.Notification)
 	newNotification.UserID = newUser.ID
 	newNotification.Title = "Password Reset Successful"
-	if request.Lang == helper.INDONESIA {
+	if request.Lang == enum_state.INDONESIA {
 		newNotification.Title = "Mengatur Ulang Kata Sandi Berhasil"
 	}
 	newNotification.IsRead = false
-	newNotification.Type = helper.AUTHENTICATION
+	newNotification.Type = enum_state.AUTHENTICATION
 	newNotification.BodyContent = bodyBuilder.String()
 	if err := c.NotificationRepository.Create(tx, newNotification); err != nil {
 		c.Log.Warnf("failed to create notification into database : %+v", err)
@@ -908,7 +909,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	baseTemplatePath = "../internal/templates/base_template_email1.html"
 	childPath = fmt.Sprintf("../internal/templates/%s/email/password_reset.html", request.Lang)
 	newMail.Subject = "Password Reset Successful"
-	if request.Lang == helper.INDONESIA {
+	if request.Lang == enum_state.INDONESIA {
 		newMail.Subject = "Atur Ulang Kata Sandi Berhasil"
 	}
 	tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
@@ -918,7 +919,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	}
 
 	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-	logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))

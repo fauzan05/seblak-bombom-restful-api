@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -25,8 +25,8 @@ func ApplicationToResponse(application *entity.Application) *model.ApplicationRe
 		TwitterLink:    application.SocialMedia.TwitterLink,
 		FacebookName:   application.SocialMedia.FacebookName,
 		FacebookLink:   application.SocialMedia.FacebookLink,
-		CreatedAt:      helper.TimeRFC3339(application.CreatedAt),
-		UpdatedAt:      helper.TimeRFC3339(application.UpdatedAt),
+		CreatedAt:      helper_others.TimeRFC3339(application.CreatedAt),
+		UpdatedAt:      helper_others.TimeRFC3339(application.UpdatedAt),
 	}
 
 }

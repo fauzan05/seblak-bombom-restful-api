@@ -3,7 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase/xendit"
 	"time"
@@ -40,7 +40,7 @@ func (c *XenditCallbackController) GetPaymentRequestCallbacks(ctx *fiber.Ctx) er
 	if lang == "" {
 		lang = "en"
 	}
-	requestData.Lang = helper.Languange(lang)
+	requestData.Lang = enum_state.Languange(lang)
 	timeZone, _ := requestData.Data.Metadata["time_zone"].(string)
 	loc, err := time.LoadLocation(timeZone)
 	if err != nil {

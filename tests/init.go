@@ -3,6 +3,7 @@ package tests
 import (
 	"seblak-bombom-restful-api/internal/config"
 	"seblak-bombom-restful-api/internal/helper/mailer"
+	"seblak-bombom-restful-api/internal/model"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -23,19 +24,27 @@ var validate *validator.Validate
 
 var email *mailer.EmailWorker
 
+var authConfig *model.AuthConfig
+
+var frontEndConfig *model.FrontEndConfig
+
 func init() {
 	viperConfig = config.NewViper()
 	log = config.NewLogger(viperConfig)
 	validate = config.NewValidator()
 	app = config.NewFiber(viperConfig)
-	db = config.NewDatabaseTest(viperConfig, log)
+	db = config.NewDatabaseDockerTest(viperConfig, log)
 	email = config.NewEmailWorker(viperConfig)
+	authConfig = config.NewAuthConfig(viperConfig)
+	frontEndConfig = config.NewFrontEndConfig(viperConfig)
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:       db,
-		App:      app,
-		Log:      log,
-		Validate: validate,
-		Config:   viperConfig,
-		Email:    email,
+		DB:             db,
+		App:            app,
+		Log:            log,
+		Validate:       validate,
+		Config:         viperConfig,
+		Email:          email,
+		AuthConfig:     authConfig,
+		FrontEndConfig: frontEndConfig,
 	})
 }

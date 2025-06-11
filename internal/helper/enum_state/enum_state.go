@@ -1,4 +1,4 @@
-package helper
+package enum_state
 
 type Role string
 type PaymentMethod string
@@ -122,8 +122,8 @@ const (
 	WITHDRAW      WalletTransactionType = "withdraw"
 )
 
-func IsValidChannelCode(pm ChannelCode) bool {
-	switch pm {
+func IsValidChannelCode(pc ChannelCode) bool {
+	switch pc {
 	case XENDIT_QR_DANA_CHANNEL_CODE, XENDIT_QR_LINKAJA_CHANNEL_CODE, XENDIT_EWALLET_LINKAJA_CHANNEL_CODE, XENDIT_EWALLET_DANA_CHANNEL_CODE, XENDIT_EWALLET_OVO_CHANNEL_CODE, XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE, WALLET_CHANNEL_CODE:
 		return true
 	default:
@@ -140,8 +140,8 @@ func IsValidPaymentMethod(pm PaymentMethod) bool {
 	}
 }
 
-func IsValidPaymentGateway(pm PaymentGateway) bool {
-	switch pm {
+func IsValidPaymentGateway(pg PaymentGateway) bool {
+	switch pg {
 	case PAYMENT_GATEWAY_MIDTRANS, PAYMENT_GATEWAY_XENDIT, PAYMENT_GATEWAY_SYSTEM:
 		return true
 	default:

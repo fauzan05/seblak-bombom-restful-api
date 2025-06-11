@@ -1,7 +1,7 @@
 package model
 
 import (
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 )
 
 type ImageResponse struct {
@@ -10,8 +10,8 @@ type ImageResponse struct {
 	FileName  string             `json:"file_name,omitempty"`
 	Type      string             `json:"type,omitempty"`
 	Position  int                `json:"position,omitempty"`
-	CreatedAt helper.TimeRFC3339 `json:"created_at,omitempty"`
-	UpdatedAt helper.TimeRFC3339 `json:"updated_at,omitempty"`
+	CreatedAt helper_others.TimeRFC3339 `json:"created_at,omitempty"`
+	UpdatedAt helper_others.TimeRFC3339 `json:"updated_at,omitempty"`
 }
 
 type AddImagesRequest struct {

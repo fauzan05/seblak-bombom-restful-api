@@ -2,7 +2,7 @@ package model
 
 import (
 	"mime/multipart"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 )
 
 type ApplicationResponse struct {
@@ -23,8 +23,8 @@ type ApplicationResponse struct {
 	TwitterLink    string             `json:"twitter_link"`
 	FacebookName   string             `json:"facebook_name"`
 	FacebookLink   string             `json:"facebook_link"`
-	CreatedAt      helper.TimeRFC3339 `json:"created_at"`
-	UpdatedAt      helper.TimeRFC3339 `json:"updated_at"`
+	CreatedAt      helper_others.TimeRFC3339 `json:"created_at"`
+	UpdatedAt      helper_others.TimeRFC3339 `json:"updated_at"`
 }
 
 type CreateApplicationRequest struct {

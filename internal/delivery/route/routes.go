@@ -26,6 +26,7 @@ type RouteConfig struct {
 	PayoutController                  *http.PayoutController
 	ApplicationController             *http.ApplicationController
 	CartController                    *http.CartController
+	WalletController                  *http.WalletController
 	AuthMiddleware                    fiber.Handler
 	RoleMiddleware                    fiber.Handler
 	AuthXenditMiddleware              fiber.Handler
@@ -189,4 +190,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 
 	// Balance
 	auth.Get("/balance", c.XenditPayoutController.GetAdminBalance)
+
+	// Wallet
+	auth.Put("/wallets/withdraw", c.WalletController.WithdrawRequest)
 }

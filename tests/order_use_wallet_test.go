@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 	"strings"
 	"testing"
@@ -30,9 +31,9 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	product := DoCreateProduct(t, tokenAdmin, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -67,7 +68,7 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(0), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(0), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -75,11 +76,11 @@ func TestCreateOrderAsAdminWithoutDeliveryAndDiscount(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_PENDING, responseBody.Data.OrderStatus)
 	assert.Equal(t, false, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(0), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -122,9 +123,9 @@ func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -158,7 +159,7 @@ func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(0), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(0), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -166,11 +167,11 @@ func TestCreateOrderAsAdminWithDiscountButDeliveryDeleted(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_PENDING, responseBody.Data.OrderStatus)
 	assert.Equal(t, false, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(0), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -208,9 +209,9 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -244,7 +245,7 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(0), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(0), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -252,11 +253,11 @@ func TestCreateOrderAsAdminWithDeliveryAndNoDiscount(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_PENDING, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(getDelivery.Delivery.Cost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -300,9 +301,9 @@ func TestCreateOrderAsAdminWithDeliveryAndDeliveryDeleted(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -349,7 +350,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(150000))
@@ -358,9 +359,9 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		IsDelivery:     true,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -394,7 +395,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -402,11 +403,11 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_PENDING, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(getDelivery.Delivery.Cost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -429,7 +430,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscount(t *testing.T) {
 
 	// cek saldo
 	currentUser = GetCurrentUserByToken(t, token)
-	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+	assert.Equal(t, helper_others.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
@@ -446,7 +447,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 2, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 2, 50000, true)
 
 	currentUser := GetCurrentUserByToken(t, token)
 	DoSetBalanceManually(token, float32(1500000))
@@ -457,9 +458,9 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.
 	for i := 1; i <= 3; i++ {
 		requestBody := model.CreateOrderRequest{
 			DiscountId:     getDiscountCoupon.ID,
-			PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-			PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-			ChannelCode:    helper.WALLET_CHANNEL_CODE,
+			PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+			PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+			ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 			IsDelivery:     true,
 			Note:           "Yang cepet ya!",
 			OrderProducts: []model.OrderProductResponse{
@@ -500,7 +501,7 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.
 			assert.Equal(t, http.StatusCreated, response.StatusCode)
 			assert.NotNil(t, responseBody.Data.ID)
 			assert.NotNil(t, responseBody.Data.Invoice)
-			assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+			assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 			assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 			assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 			assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -508,11 +509,11 @@ func TestCreateOrderAsAdminWithDeliveryAndDiscountUsageExceededLimit(t *testing.
 			assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 			assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 			assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-			assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-			assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-			assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-			assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-			assert.Equal(t, helper.ORDER_PENDING, responseBody.Data.OrderStatus)
+			assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+			assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+			assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+			assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+			assert.Equal(t, enum_state.ORDER_PENDING, responseBody.Data.OrderStatus)
 			assert.Equal(t, true, responseBody.Data.IsDelivery)
 			assert.Equal(t, float32(getDelivery.Delivery.Cost), responseBody.Data.DeliveryCost)
 			for _, address := range currentUser.Addresses {
@@ -546,9 +547,9 @@ func TestCreateOrderBalanceInsufficient(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     0,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -597,9 +598,9 @@ func TestCreateOrderDiscountNotFound(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     1,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -649,7 +650,7 @@ func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(5, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -657,9 +658,9 @@ func TestCreateOrderDiscountNotYetActiveDate(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -709,7 +710,7 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(-1, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -717,9 +718,9 @@ func TestCreateOrderDiscountExpired(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -768,7 +769,7 @@ func TestCreateOrderDiscountMinOrder(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(0, 1, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -776,9 +777,9 @@ func TestCreateOrderDiscountMinOrder(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -824,7 +825,7 @@ func TestCreateOrderPaymentMethodNotValid(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(0, 1, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -833,8 +834,8 @@ func TestCreateOrderPaymentMethodNotValid(t *testing.T) {
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
 		PaymentMethod:  "KAKA",
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -880,7 +881,7 @@ func TestCreateOrderChannelCodeNotValid(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -888,9 +889,9 @@ func TestCreateOrderChannelCodeNotValid(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
 		ChannelCode:    "KAKALA",
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -936,7 +937,7 @@ func TestCreateOrderPaymentGatewayNotValid(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -944,8 +945,8 @@ func TestCreateOrderPaymentGatewayNotValid(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.WALLET_CHANNEL_CODE,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
 		PaymentGateway: "LALA",
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
@@ -992,7 +993,7 @@ func TestCreateOrderWalletWrongPaymentMethod(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -1000,9 +1001,9 @@ func TestCreateOrderWalletWrongPaymentMethod(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_EWALLET,
-		ChannelCode:    helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_EWALLET,
+		ChannelCode:    enum_state.XENDIT_EWALLET_DANA_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -1048,7 +1049,7 @@ func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(0, 0, 0, 23, 59, 0)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), 100, 3, 50000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), 100, 3, 50000, true)
 
 	DoSetBalanceManually(token, float32(150000))
 	delivery := DoCreateDelivery(t, token)
@@ -1056,9 +1057,9 @@ func TestCreateOrderWalletWrongChannelCode(t *testing.T) {
 	product := DoCreateProduct(t, token, 2, 1)
 	requestBody := model.CreateOrderRequest{
 		DiscountId:     getDiscountCoupon.ID,
-		PaymentGateway: helper.PAYMENT_GATEWAY_SYSTEM,
-		PaymentMethod:  helper.PAYMENT_METHOD_WALLET,
-		ChannelCode:    helper.XENDIT_EWALLET_DANA_CHANNEL_CODE,
+		PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
+		PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
+		ChannelCode:    enum_state.XENDIT_EWALLET_DANA_CHANNEL_CODE,
 		IsDelivery:     false,
 		Note:           "Yang cepet ya!",
 		OrderProducts: []model.OrderProductResponse{
@@ -1104,7 +1105,7 @@ func TestGetAllOrderPagination(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
 	product := DoCreateProduct(t, token, 2, 1)
 	delivery := DoCreateDelivery(t, token)
 	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
@@ -1155,7 +1156,7 @@ func TestGetAllOrderPaginationSortingColumnDesc(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
 	product := DoCreateProduct(t, token, 2, 1)
 	delivery := DoCreateDelivery(t, token)
 	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
@@ -1211,7 +1212,7 @@ func TestGetAllOrderPaginationColumnNotFound(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
 	product := DoCreateProduct(t, token, 2, 1)
 	delivery := DoCreateDelivery(t, token)
 	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
@@ -1248,7 +1249,7 @@ func TestGetAllOrderPaginationSomeProductDeleted(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
 	product := DoCreateProduct(t, token, 2, 1)
 	delivery := DoCreateDelivery(t, token)
 	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
@@ -1303,7 +1304,7 @@ func TestGetAllOrderPaginationSearchProduct(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
 	product := DoCreateProduct(t, token, 2, 1)
 	delivery := DoCreateDelivery(t, token)
 	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
@@ -1354,7 +1355,7 @@ func TestGetAllOrderPaginationSearchProductNotFound(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(5), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(5), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), totalOrder*10, totalOrder, 20000, true)
 	product := DoCreateProduct(t, token, 2, 1)
 	delivery := DoCreateDelivery(t, token)
 	DoCreateManyOrderUsingWalletPayment(t, token, totalOrder, getDiscountCoupon, product, delivery)
@@ -1405,7 +1406,7 @@ func TestGetAllCurrentUserOrderPagination(t *testing.T) {
 	end := getRFC3339WithOffsetAndTime(15, 0, 0, 23, 59, 59)
 	parseEnd, err := time.Parse(time.RFC3339, end)
 	assert.Nil(t, err)
-	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", helper.PERCENT, float32(10), helper.TimeRFC3339(parseStart), helper.TimeRFC3339(parseEnd), totalOrder, totalOrder, 20000, true)
+	getDiscountCoupon := DoCreateDiscountCouponCustom(t, token, "Lima-Promo", "Ini discount 5%", "#ABC5", enum_state.PERCENT, float32(10), helper_others.TimeRFC3339(parseStart), helper_others.TimeRFC3339(parseEnd), totalOrder, totalOrder, 20000, true)
 	product := DoCreateProduct(t, token, 2, 1)
 
 	delivery := DoCreateDelivery(t, token)
@@ -1458,7 +1459,7 @@ func TestUpdateOrderReceivedAsCustomerError(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.ORDER_RECEIVED
+	requestBodyUpdate.OrderStatus = enum_state.ORDER_RECEIVED
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1490,7 +1491,7 @@ func TestUpdateReceivedOrderAsAdmin(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.ORDER_RECEIVED
+	requestBodyUpdate.OrderStatus = enum_state.ORDER_RECEIVED
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1513,7 +1514,7 @@ func TestUpdateReceivedOrderAsAdmin(t *testing.T) {
 	currentUser := GetCurrentUserByToken(t, tokenCust)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -1521,11 +1522,11 @@ func TestUpdateReceivedOrderAsAdmin(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_RECEIVED, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_RECEIVED, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(order.DeliveryCost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -1547,7 +1548,7 @@ func TestUpdateReceivedOrderAsAdmin(t *testing.T) {
 
 	// cek saldo
 	currentUser = GetCurrentUserByToken(t, tokenCust)
-	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+	assert.Equal(t, helper_others.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
@@ -1561,7 +1562,7 @@ func TestUpdateReadyForPickupOrderAsAdmin(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.READY_FOR_PICKUP
+	requestBodyUpdate.OrderStatus = enum_state.READY_FOR_PICKUP
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1584,7 +1585,7 @@ func TestUpdateReadyForPickupOrderAsAdmin(t *testing.T) {
 	currentUser := GetCurrentUserByToken(t, tokenCust)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -1592,11 +1593,11 @@ func TestUpdateReadyForPickupOrderAsAdmin(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.READY_FOR_PICKUP, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.READY_FOR_PICKUP, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(order.DeliveryCost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -1618,7 +1619,7 @@ func TestUpdateReadyForPickupOrderAsAdmin(t *testing.T) {
 
 	// cek saldo
 	currentUser = GetCurrentUserByToken(t, tokenCust)
-	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+	assert.Equal(t, helper_others.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
@@ -1632,7 +1633,7 @@ func TestUpdateReadyForPickupOrderAsCustomer(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.READY_FOR_PICKUP
+	requestBodyUpdate.OrderStatus = enum_state.READY_FOR_PICKUP
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1664,7 +1665,7 @@ func TestUpdateBeingDeliveredOrderAsAdmin(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.ORDER_BEING_DELIVERED
+	requestBodyUpdate.OrderStatus = enum_state.ORDER_BEING_DELIVERED
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1687,7 +1688,7 @@ func TestUpdateBeingDeliveredOrderAsAdmin(t *testing.T) {
 	currentUser := GetCurrentUserByToken(t, tokenCust)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -1695,11 +1696,11 @@ func TestUpdateBeingDeliveredOrderAsAdmin(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_BEING_DELIVERED, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_BEING_DELIVERED, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(order.DeliveryCost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -1721,7 +1722,7 @@ func TestUpdateBeingDeliveredOrderAsAdmin(t *testing.T) {
 
 	// cek saldo
 	currentUser = GetCurrentUserByToken(t, tokenCust)
-	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+	assert.Equal(t, helper_others.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
@@ -1735,7 +1736,7 @@ func TestUpdateBeingDeliveredOrderAsCustomer(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.ORDER_BEING_DELIVERED
+	requestBodyUpdate.OrderStatus = enum_state.ORDER_BEING_DELIVERED
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1767,7 +1768,7 @@ func TestUpdateDeliveredOrderAsAdmin(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.ORDER_DELIVERED
+	requestBodyUpdate.OrderStatus = enum_state.ORDER_DELIVERED
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1790,7 +1791,7 @@ func TestUpdateDeliveredOrderAsAdmin(t *testing.T) {
 	currentUser := GetCurrentUserByToken(t, tokenCust)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -1798,11 +1799,11 @@ func TestUpdateDeliveredOrderAsAdmin(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_DELIVERED, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_DELIVERED, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(order.DeliveryCost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -1824,7 +1825,7 @@ func TestUpdateDeliveredOrderAsAdmin(t *testing.T) {
 
 	// cek saldo
 	currentUser = GetCurrentUserByToken(t, tokenCust)
-	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+	assert.Equal(t, helper_others.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
@@ -1838,7 +1839,7 @@ func TestUpdateDeliveredOrderAsCustomer(t *testing.T) {
 	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, tokenAdmin, tokenCust)
 
 	requestBodyUpdate := new(model.UpdateOrderRequest)
-	requestBodyUpdate.OrderStatus = helper.ORDER_DELIVERED
+	requestBodyUpdate.OrderStatus = enum_state.ORDER_DELIVERED
 
 	bodyJson, err := json.Marshal(requestBodyUpdate)
 	assert.Nil(t, err)
@@ -1861,7 +1862,7 @@ func TestUpdateDeliveredOrderAsCustomer(t *testing.T) {
 	currentUser := GetCurrentUserByToken(t, tokenCust)
 	assert.NotNil(t, responseBody.Data.ID)
 	assert.NotNil(t, responseBody.Data.Invoice)
-	assert.Equal(t, helper.PERCENT, responseBody.Data.DiscountType)
+	assert.Equal(t, enum_state.PERCENT, responseBody.Data.DiscountType)
 	assert.Equal(t, float32(5), responseBody.Data.DiscountValue)
 	assert.Equal(t, float32(5250.2), responseBody.Data.TotalDiscount)
 	assert.Equal(t, currentUser.ID, responseBody.Data.UserId)
@@ -1869,11 +1870,11 @@ func TestUpdateDeliveredOrderAsCustomer(t *testing.T) {
 	assert.Equal(t, currentUser.LastName, responseBody.Data.LastName)
 	assert.Equal(t, currentUser.Email, responseBody.Data.Email)
 	assert.Equal(t, currentUser.Phone, responseBody.Data.Phone)
-	assert.Equal(t, helper.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
-	assert.Equal(t, helper.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
-	assert.Equal(t, helper.PAID_PAYMENT, responseBody.Data.PaymentStatus)
-	assert.Equal(t, helper.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
-	assert.Equal(t, helper.ORDER_DELIVERED, responseBody.Data.OrderStatus)
+	assert.Equal(t, enum_state.PAYMENT_GATEWAY_SYSTEM, responseBody.Data.PaymentGateway)
+	assert.Equal(t, enum_state.PAYMENT_METHOD_WALLET, responseBody.Data.PaymentMethod)
+	assert.Equal(t, enum_state.PAID_PAYMENT, responseBody.Data.PaymentStatus)
+	assert.Equal(t, enum_state.WALLET_CHANNEL_CODE, responseBody.Data.ChannelCode)
+	assert.Equal(t, enum_state.ORDER_DELIVERED, responseBody.Data.OrderStatus)
 	assert.Equal(t, true, responseBody.Data.IsDelivery)
 	assert.Equal(t, float32(order.DeliveryCost), responseBody.Data.DeliveryCost)
 	for _, address := range currentUser.Addresses {
@@ -1895,7 +1896,7 @@ func TestUpdateDeliveredOrderAsCustomer(t *testing.T) {
 
 	// cek saldo
 	currentUser = GetCurrentUserByToken(t, tokenCust)
-	assert.Equal(t, helper.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
+	assert.Equal(t, helper_others.RoundFloat32((float32(150000)-responseBody.Data.TotalFinalPrice), 1), currentUser.Wallet.Balance)
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }

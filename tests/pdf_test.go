@@ -3,8 +3,9 @@ package tests
 import (
 	"fmt"
 	"html/template"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/helper/generate_file"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 	"strings"
 	"testing"
@@ -22,14 +23,14 @@ func TestGeneratePDF(t *testing.T) {
 		time.Now().Format("2006"),
 		"Seblak Bombom",
 	)
-	newCreatePDF.Orientation = helper.PORTRAIT
-	newCreatePDF.PageSize = helper.A4
+	newCreatePDF.Orientation = enum_state.PORTRAIT
+	newCreatePDF.PageSize = enum_state.A4
 	templatePath := "../internal/templates/pdf/orders/invoice.html"
 	tmpl, err := template.ParseFiles(templatePath)
 	assert.Nil(t, err)
 
 	logoImage := "../tests/assets/seblak-logo.jpg"
-	logoImageToBase64, err := helper.ImageToBase64(logoImage)
+	logoImageToBase64, err := helper_others.ImageToBase64(logoImage)
 	assert.Nil(t, err)
 
 	items := []map[string]string{
@@ -47,8 +48,8 @@ func TestGeneratePDF(t *testing.T) {
 		},
 	}
 
-	paymentStatus := helper.PAID_PAYMENT
-	paymentStatusColor := helper.GetPaymentStatusColor(paymentStatus)
+	paymentStatus := enum_state.PAID_PAYMENT
+	paymentStatusColor := helper_others.GetPaymentStatusColor(paymentStatus)
 	bodyBuilder := new(strings.Builder)
 	err = tmpl.Execute(bodyBuilder, map[string]any{
 		"InvoiceNumber":      "INV/asdsa/MPL/423423",
