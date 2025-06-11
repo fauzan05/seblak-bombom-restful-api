@@ -190,7 +190,7 @@ func FormatNumberFloat32(n float32) string {
 	return result
 }
 
-func SaveWalletTransaction(db *gorm.DB, userId uint64, orderId uint64, amount float32, txType enum_state.WalletTransactionType, source enum_state.WalletTransactionSource, note string) error {
+func SaveWalletTransaction(db *gorm.DB, userId uint64, orderId *uint64, amount float32, txType enum_state.WalletTransactionType, source enum_state.WalletTransactionSource, note string) error {
 	newWalletTransaction := &entity.WalletTransactions{
 		UserId:  userId,
 		OrderId: orderId,

@@ -46,6 +46,7 @@ func ClearAll() {
 	ClearAddresses()
 	ClearDeliveries()
 	ClearCarts()
+	ClearWalletTransactions()
 	ClearUsers()
 }
 
@@ -165,6 +166,13 @@ func ClearUsers() {
 	err := db.Unscoped().Where("1 = 1").Delete(&entity.User{}).Error
 	if err != nil {
 		log.Fatalf("Failed clear user data : %+v", err)
+	}
+}
+
+func ClearWalletTransactions() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.WalletTransactions{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear wallet transaction data : %+v", err)
 	}
 }
 

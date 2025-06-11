@@ -61,7 +61,7 @@ func (c *WalletUseCase) Withdraw(ctx context.Context, request *model.WithDrawWal
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
 	}
 
-	err := helper_others.SaveWalletTransaction(tx, newWallet.UserId, 0, request.Amount, enum_state.WITHDRAW, enum_state.CASH, request.Notes)
+	err := helper_others.SaveWalletTransaction(tx, newWallet.UserId, nil, request.Amount, enum_state.WITHDRAW, enum_state.CASH, request.Notes)
 	if err != nil {
 		c.Log.Warnf("failed to save wallet transaction : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
