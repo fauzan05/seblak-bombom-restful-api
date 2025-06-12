@@ -190,26 +190,39 @@ func FormatNumberFloat32(n float32) string {
 	return result
 }
 
-func SaveWalletTransaction(db *gorm.DB, userId uint64, orderId *uint64, amount float32,
-	flowType enum_state.WalletFlowType, transactionType enum_state.WalletTransactionType,
-	paymentMethod enum_state.PaymentMethod, status enum_state.WalletTransactionStatus,
-	referenceNumber string, note string, adminNote string, processedBy *uint64, processedAt *time.Time) error {
+type SaveWalletTransactionRequest struct {
+	DB              *gorm.DB
+	UserId          uint64
+	OrderId         *uint64
+	Amount          float32
+	FlowType        enum_state.WalletFlowType
+	TransactionType enum_state.WalletTransactionType
+	PaymentMethod   enum_state.PaymentMethod
+	Status          enum_state.WalletTransactionStatus
+	ReferenceNumber string
+	Note            string
+	AdminNote       string
+	ProcessedBy     *uint64
+	ProcessedAt     *time.Time
+}
+
+func SaveWalletTransaction(walletTransaction *SaveWalletTransactionRequest) error {
 	newWalletTransaction := &entity.WalletTransactions{
-		UserId:          userId,
-		OrderId:         orderId,
-		Amount:          amount,
-		FlowType:        flowType,
-		TransactionType: transactionType,
-		PaymentMethod:   paymentMethod,
-		Status:          status,
-		ReferenceNumber: referenceNumber,
-		Note:            note,
-		AdminNote:       adminNote,
-		ProcessedBy:     processedBy,
-		ProcessedAt:     processedAt,
+		UserId:          walletTransaction.UserId,
+		OrderId:         walletTransaction.OrderId,
+		Amount:          walletTransaction.Amount,
+		FlowType:        walletTransaction.FlowType,
+		TransactionType: walletTransaction.TransactionType,
+		PaymentMethod:   walletTransaction.PaymentMethod,
+		Status:          walletTransaction.Status,
+		ReferenceNumber: walletTransaction.ReferenceNumber,
+		Note:            walletTransaction.Note,
+		AdminNote:       walletTransaction.AdminNote,
+		ProcessedBy:     walletTransaction.ProcessedBy,
+		ProcessedAt:     walletTransaction.ProcessedAt,
 	}
 
-	if err := db.Create(newWalletTransaction).Error; err != nil {
+	if err := walletTransaction.DB.Create(newWalletTransaction).Error; err != nil {
 		return err
 	}
 

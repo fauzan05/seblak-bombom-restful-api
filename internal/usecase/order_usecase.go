@@ -394,8 +394,22 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 
 	if request.PaymentMethod != enum_state.PAYMENT_METHOD_WALLET {
 		now := time.Now()
-		err = helper_others.SaveWalletTransaction(tx, request.UserId, &newOrder.ID, newOrder.TotalFinalPrice, enum_state.WALLET_FLOW_TYPE_DEBIT, enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT,
-			request.PaymentMethod, enum_state.WALLET_TRANSACTION_STATUS_COMPLETED, "", invoice, "", nil, &now)
+		newSaveWalletTransaction := new(helper_others.SaveWalletTransactionRequest)
+		newSaveWalletTransaction.DB = tx
+		newSaveWalletTransaction.UserId = request.UserId
+		newSaveWalletTransaction.OrderId = &newOrder.ID
+		newSaveWalletTransaction.Amount = newOrder.TotalFinalPrice
+		newSaveWalletTransaction.FlowType = enum_state.WALLET_FLOW_TYPE_DEBIT
+		newSaveWalletTransaction.TransactionType = enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT
+		newSaveWalletTransaction.PaymentMethod = request.PaymentMethod
+		newSaveWalletTransaction.Status = enum_state.WALLET_TRANSACTION_STATUS_COMPLETED
+		newSaveWalletTransaction.ReferenceNumber = newOrder.Invoice
+		newSaveWalletTransaction.Note = fmt.Sprintf("Create an order %s", invoice)
+		newSaveWalletTransaction.AdminNote = ""
+		newSaveWalletTransaction.ProcessedAt = &now
+		newSaveWalletTransaction.ProcessedBy = &request.UserId
+
+		err = helper_others.SaveWalletTransaction(newSaveWalletTransaction)
 		if err != nil {
 			c.Log.Warnf("failed to save wallet transaction : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
@@ -719,10 +733,23 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
 			}
 
-			err = helper_others.SaveWalletTransaction(tx, findWallet.UserId, &newOrder.ID, newOrder.TotalFinalPrice,
-				enum_state.WALLET_FLOW_TYPE_CREDIT, enum_state.WALLET_TRANSACTION_TYPE_ORDER_REFUND, newOrder.PaymentMethod,
-				enum_state.WALLET_TRANSACTION_STATUS_COMPLETED, "", request.CancellationNotes, request.CancellationNotes, nil, nil)
+			now := time.Now()
+			newSaveWalletTransaction := new(helper_others.SaveWalletTransactionRequest)
+			newSaveWalletTransaction.DB = tx
+			newSaveWalletTransaction.UserId = newOrder.UserId
+			newSaveWalletTransaction.OrderId = &newOrder.ID
+			newSaveWalletTransaction.Amount = newOrder.TotalFinalPrice
+			newSaveWalletTransaction.FlowType = enum_state.WALLET_FLOW_TYPE_DEBIT
+			newSaveWalletTransaction.TransactionType = enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT
+			newSaveWalletTransaction.PaymentMethod = newOrder.PaymentMethod
+			newSaveWalletTransaction.Status = enum_state.WALLET_TRANSACTION_STATUS_COMPLETED
+			newSaveWalletTransaction.ReferenceNumber = newOrder.Invoice
+			newSaveWalletTransaction.Note = fmt.Sprintf("Cancel an order %s : %s", newOrder.Invoice, request.CancellationNotes)
+			newSaveWalletTransaction.AdminNote = ""
+			newSaveWalletTransaction.ProcessedAt = &now
+			newSaveWalletTransaction.ProcessedBy = &newOrder.UserId
 
+			err = helper_others.SaveWalletTransaction(newSaveWalletTransaction)
 			if err != nil {
 				c.Log.Warnf("failed to save wallet transaction : %+v", err)
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
@@ -811,10 +838,22 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			}
 
 			now := time.Now()
-			err = helper_others.SaveWalletTransaction(tx, findWallet.UserId, &newOrder.ID, newOrder.TotalFinalPrice,
-				enum_state.WALLET_FLOW_TYPE_CREDIT, enum_state.WALLET_TRANSACTION_TYPE_ORDER_REFUND, newOrder.PaymentMethod,
-				enum_state.WALLET_TRANSACTION_STATUS_COMPLETED, "", "", request.RejectionNotes, &currentUser.ID, &now)
+			newSaveWalletTransaction := new(helper_others.SaveWalletTransactionRequest)
+			newSaveWalletTransaction.DB = tx
+			newSaveWalletTransaction.UserId = newOrder.UserId
+			newSaveWalletTransaction.OrderId = &newOrder.ID
+			newSaveWalletTransaction.Amount = newOrder.TotalFinalPrice
+			newSaveWalletTransaction.FlowType = enum_state.WALLET_FLOW_TYPE_DEBIT
+			newSaveWalletTransaction.TransactionType = enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT
+			newSaveWalletTransaction.PaymentMethod = newOrder.PaymentMethod
+			newSaveWalletTransaction.Status = enum_state.WALLET_TRANSACTION_STATUS_COMPLETED
+			newSaveWalletTransaction.ReferenceNumber = newOrder.Invoice
+			newSaveWalletTransaction.Note = fmt.Sprintf("Rejected an order %s", newOrder.Invoice)
+			newSaveWalletTransaction.AdminNote = request.RejectionNotes
+			newSaveWalletTransaction.ProcessedAt = &now
+			newSaveWalletTransaction.ProcessedBy = &currentUser.ID
 
+			err = helper_others.SaveWalletTransaction(newSaveWalletTransaction)
 			if err != nil {
 				c.Log.Warnf("failed to save wallet transaction : %+v", err)
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))

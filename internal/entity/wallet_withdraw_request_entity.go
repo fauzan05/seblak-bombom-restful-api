@@ -14,6 +14,7 @@ type WalletWithdrawRequests struct {
 	BankAcountNumber string                           `gorm:"column:bank_account_number"`
 	BankAcountName   string                           `gorm:"column:bank_account_name"`
 	Status           enum_state.WalletWithdrawRequest `gorm:"column:status"`
+	Note             string                           `gorm:"column:note"`
 	RejectionNotes   string                           `gorm:"column:rejection_notes"`
 	ProcessedBy      *uint64                          `gorm:"column:processed_by"`
 	ProcessedAt      *time.Time                       `gorm:"column:processed_at"`

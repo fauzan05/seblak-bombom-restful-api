@@ -160,7 +160,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth.Post("/payouts/:userId", c.PayoutController.Create)
 
 	// Wallet
-	auth.Put("/wallets/withdraw-cust", c.WalletController.WithdrawCustRequest)
+	auth.Post("/wallets/withdraw-cust", c.WalletController.WithdrawCustRequest)
 }
 
 // ADMIN
@@ -193,4 +193,7 @@ func (c *RouteConfig) SetupAuthAdminRoute() {
 
 	// Balance
 	auth.Get("/balance", c.XenditPayoutController.GetAdminBalance)
+
+	// Wallet
+	auth.Patch("/wallets/:withdrawRequestId/withdraw-approval", c.WalletController.WithdrawAdminApproval)
 }

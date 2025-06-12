@@ -2,8 +2,10 @@ package http
 
 import (
 	"fmt"
+	"seblak-bombom-restful-api/internal/delivery/middleware"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -30,33 +32,43 @@ func (c *WalletController) WithdrawCustRequest(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.WithdrawByCustRequest(ctx.Context(), request)
 	if err != nil {
-		c.Log.Warnf("failed to withdraw wallet balance : %+v", err)
+		c.Log.Warnf("failed to withdraw wallet request : %+v", err)
 		return err
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.WalletResponse]{
-		Code:   200,
-		Status: "success to withdraw wallet balance",
+	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.WithdrawWalletResponse]{
+		Code:   201,
+		Status: "success to withdraw wallet request",
 		Data:   response,
 	})
 }
 
-func (c *WalletController) WithdrawCustApproval(ctx *fiber.Ctx) error {
+func (c *WalletController) WithdrawAdminApproval(ctx *fiber.Ctx) error {
 	request := new(model.WithdrawWalletApprovalRequest)
+	getId := ctx.Params("withdrawRequestId")
+	withdrawRequestId, err := strconv.Atoi(getId)
+	if err != nil {
+		c.Log.Warnf("failed to convert withdraw_request_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert withdraw_request_id to integer : %+v", err))
+	}
+	request.ID = uint64(withdrawRequestId)
+
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	response, err := c.UseCase.WithdrawByCustApproval(ctx.Context(), request)
+	auth := middleware.GetCurrentUser(ctx)
+	request.CurrentAdminId = auth.ID
+	response, err := c.UseCase.WithdrawByAdminApproval(ctx.Context(), request)
 	if err != nil {
-		c.Log.Warnf("failed to withdraw wallet balance : %+v", err)
+		c.Log.Warnf("failed to approval withdraw wallet balance : %+v", err)
 		return err
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(model.ApiResponse[*model.WalletResponse]{
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.WithdrawWalletResponse]{
 		Code:   200,
-		Status: "success to withdraw wallet balance",
+		Status: "success to approval withdraw wallet balance",
 		Data:   response,
 	})
 }

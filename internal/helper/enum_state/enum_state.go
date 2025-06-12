@@ -128,10 +128,8 @@ const (
 	WALLET_TRANSACTION_TYPE_TRANSFER_OUT     WalletTransactionType = "transfer_out"
 
 	WALLET_TRANSACTION_STATUS_PENDING    WalletTransactionStatus = "pending"
-	WALLET_TRANSACTION_STATUS_PROCESSING WalletTransactionStatus = "processing"
 	WALLET_TRANSACTION_STATUS_COMPLETED  WalletTransactionStatus = "completed"
 	WALLET_TRANSACTION_STATUS_FAILED     WalletTransactionStatus = "failed"
-	WALLET_TRANSACTION_STATUS_CANCELLED  WalletTransactionStatus = "cancelled"
 
 	WALLET_WITHDRAW_REQUEST_METHOD_CASH          WalletWithdrawRequest = "cash"
 	WALLET_WITHDRAW_REQUEST_METHOD_BANK_TRANSFER WalletWithdrawRequest = "bank_transfer"

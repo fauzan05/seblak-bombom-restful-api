@@ -46,6 +46,7 @@ func ClearAll() {
 	ClearAddresses()
 	ClearDeliveries()
 	ClearCarts()
+	ClearWithdrawWalletRequests()
 	ClearWalletTransactions()
 	ClearUsers()
 }
@@ -54,6 +55,13 @@ func ClearPasswordResets() {
 	err := db.Unscoped().Where("1 = 1").Delete(&entity.PasswordReset{}).Error
 	if err != nil {
 		log.Fatalf("Failed clear password resets data : %+v", err)
+	}
+}
+
+func ClearWithdrawWalletRequests() {
+	err := db.Unscoped().Where("1 = 1").Delete(&entity.WalletWithdrawRequests{}).Error
+	if err != nil {
+		log.Fatalf("Failed clear withdraw wallet requests data : %+v", err)
 	}
 }
 

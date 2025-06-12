@@ -69,6 +69,14 @@ func (r *Repository[T]) FindAndCountFirstWalletByUserId(db *gorm.DB, entity *T, 
 	return count, nil
 }
 
+func (r *Repository[T]) FindFirstWalletByUserId(db *gorm.DB, entity *T, userId uint64, status string) error {
+	err := db.Model(entity).Where("user_id = ? AND status = ?", userId, status).First(entity)
+	if err != nil {
+		return err.Error
+	}
+	return nil
+}
+
 func (r *Repository[T]) FindFirstPayoutByXenditPayoutId(db *gorm.DB, entity *T, xenditPayoutId string) error {
 	return db.Where("xendit_payout_id = ?", xenditPayoutId).First(entity).Error
 }

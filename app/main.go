@@ -32,11 +32,11 @@ func main() {
 	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:       db,
-		App:      app,
-		Log:      log,
-		Validate: validate,
-		Config:   viperConfig,
+		DB:             db,
+		App:            app,
+		Log:            log,
+		Validate:       validate,
+		Config:         viperConfig,
 		XenditClient:   xenditClient,
 		Email:          email,
 		PDF:            pdf,
