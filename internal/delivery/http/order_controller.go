@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/pusher/pusher-http-go/v5"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,13 +22,16 @@ type OrderController struct {
 	Log            *logrus.Logger
 	UseCase        *usecase.OrderUseCase
 	FrontEndConfig *model.FrontEndConfig
+	PusherClient   pusher.Client
 }
 
-func NewOrderController(useCase *usecase.OrderUseCase, logger *logrus.Logger, frontEndConfig *model.FrontEndConfig) *OrderController {
+func NewOrderController(useCase *usecase.OrderUseCase, logger *logrus.Logger,
+	frontEndConfig *model.FrontEndConfig, pusherClient pusher.Client) *OrderController {
 	return &OrderController{
 		Log:            logger,
 		UseCase:        useCase,
 		FrontEndConfig: frontEndConfig,
+		PusherClient:   pusherClient,
 	}
 }
 
@@ -107,7 +111,7 @@ func (c *OrderController) GetOrderById(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert order_id to integer : %+v", err))
 	}
 	auth := middleware.GetCurrentUser(ctx)
-	
+
 	response, err := c.UseCase.GetOrderById(ctx.Context(), uint64(orderId), auth)
 	if err != nil {
 		c.Log.Warnf("failed to get order by id : %+v", err)
