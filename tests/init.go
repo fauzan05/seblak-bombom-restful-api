@@ -41,6 +41,7 @@ func init() {
 	email = config.NewEmailWorker(viperConfig)
 	authConfig = config.NewAuthConfig(viperConfig)
 	frontEndConfig = config.NewFrontEndConfig(viperConfig)
+	pusherClient := config.NewPusherClient(viperConfig)
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:             db,
 		App:            app,
@@ -50,5 +51,6 @@ func init() {
 		Email:          email,
 		AuthConfig:     authConfig,
 		FrontEndConfig: frontEndConfig,
+		PusherClient:   pusherClient,
 	})
 }

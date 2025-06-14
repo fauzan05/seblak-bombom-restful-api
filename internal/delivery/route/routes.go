@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/pusher/pusher-http-go/v5"
 )
 
 type RouteConfig struct {
@@ -31,6 +32,7 @@ type RouteConfig struct {
 	RoleMiddleware                    fiber.Handler
 	AuthXenditMiddleware              fiber.Handler
 	AuthAdminCreationMiddleware       fiber.Handler
+	PusherClient                      pusher.Client
 }
 
 func (c *RouteConfig) Setup() {
@@ -110,6 +112,16 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// Application
 	api.Get("/applications", c.ApplicationController.Get)
 	api.Use(c.AuthAdminCreationMiddleware).Post("/applications-use-admin-key", c.ApplicationController.Create) // add & update
+
+	api.Get("/test-pusher", func(f *fiber.Ctx) error {
+		message := f.Query("message", "")
+		data := map[string]string{"message": message}
+		err := c.PusherClient.Trigger("seblak_bombom_api_channel", "event_testing1", data)
+		if err != nil {
+			return err
+		}
+		return f.Status(fiber.StatusOK).JSON(data)
+	})
 }
 
 // USER

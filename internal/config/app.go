@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
+	"github.com/pusher/pusher-http-go/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/xendit/xendit-go/v6"
@@ -35,6 +36,7 @@ type BootstrapConfig struct {
 	PDF            *wkhtmltopdf.PDFGenerator
 	AuthConfig     *model.AuthConfig
 	FrontEndConfig *model.FrontEndConfig
+	PusherClient   pusher.Client
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -84,7 +86,7 @@ func Bootstrap(config *BootstrapConfig) {
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)
-	orderController := http.NewOrderController(orderUseCase, config.Log, config.FrontEndConfig)
+	orderController := http.NewOrderController(orderUseCase, config.Log, config.FrontEndConfig, config.PusherClient)
 	discountCouponController := http.NewDiscountCouponController(discountCouponUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
@@ -123,6 +125,7 @@ func Bootstrap(config *BootstrapConfig) {
 		RoleMiddleware:                    roleMiddleware,
 		AuthXenditMiddleware:              authXenditMiddleware,
 		AuthAdminCreationMiddleware:       authAdminCreationMiddleware,
+		PusherClient:                      config.PusherClient,
 	}
 	routeConfig.Setup()
 }

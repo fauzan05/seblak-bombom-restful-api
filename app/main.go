@@ -20,12 +20,13 @@ func main() {
 	authConfig := config.NewAuthConfig(viperConfig)
 	frontEndConfig := config.NewFrontEndConfig(viperConfig)
 	pdf := config.NewPDFGenerator(log)
+	pusherClient := config.NewPusherClient(viperConfig)
 
 	app := config.NewFiber(viperConfig)
 
 	// cors setting
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://seblak-bombom-api-consumer-app, http://localhost:8000",  // Frontend are allowed (port 8000), if you use docker so you have to list the container name of api consumer (seblak-bombom-api-consumer)
+		AllowOrigins:     "http://seblak-bombom-api-consumer-app, http://localhost:3000",  // Frontend are allowed (port 8000), if you use docker so you have to list the container name of api consumer (seblak-bombom-api-consumer)
 		AllowMethods:     "GET,POST,PATCH,PUT,DELETE",                                     // HTTP method are allowed
 		AllowHeaders:     "Origin, Content-Type, X-Requested-With, Accept, Authorization", // Header are allowed
 		AllowCredentials: true,
@@ -42,6 +43,7 @@ func main() {
 		PDF:            pdf,
 		AuthConfig:     authConfig,
 		FrontEndConfig: frontEndConfig,
+		PusherClient:   pusherClient,
 	})
 
 	webPort := viperConfig.GetInt("web.port")
