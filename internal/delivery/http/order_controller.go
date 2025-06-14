@@ -85,7 +85,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 func (c *OrderController) GetAllCurrent(ctx *fiber.Ctx) error {
 	auth := middleware.GetCurrentUser(ctx)
 	orderRequest := new(model.GetOrderByCurrentRequest)
-	orderRequest.ID = auth.ID
+	orderRequest.UserId = auth.ID
 	response, err := c.UseCase.GetAllCurrent(ctx.Context(), orderRequest)
 	if err != nil {
 		c.Log.Warnf("failed to get all orders by current user : %+v", err)
@@ -95,6 +95,28 @@ func (c *OrderController) GetAllCurrent(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*[]model.OrderResponse]{
 		Code:   200,
 		Status: "success to get all orders by current user",
+		Data:   response,
+	})
+}
+
+func (c *OrderController) GetOrderById(ctx *fiber.Ctx) error {
+	getId := ctx.Params("orderId")
+	orderId, err := strconv.Atoi(getId)
+	if err != nil {
+		c.Log.Warnf("failed to convert order_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert order_id to integer : %+v", err))
+	}
+	auth := middleware.GetCurrentUser(ctx)
+	
+	response, err := c.UseCase.GetOrderById(ctx.Context(), uint64(orderId), auth)
+	if err != nil {
+		c.Log.Warnf("failed to get order by id : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.OrderResponse]{
+		Code:   200,
+		Status: "success to get order by id",
 		Data:   response,
 	})
 }

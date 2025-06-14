@@ -708,7 +708,7 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 
 	for i := 1; i <= totalOrder; i++ {
 		requestBody := model.CreateOrderRequest{
-			DiscountId:     discountCoupon.ID,
+			DiscountId: 0,
 			PaymentGateway: enum_state.PAYMENT_GATEWAY_SYSTEM,
 			PaymentMethod:  enum_state.PAYMENT_METHOD_WALLET,
 			ChannelCode:    enum_state.WALLET_CHANNEL_CODE,
@@ -721,6 +721,11 @@ func DoCreateManyOrderUsingWalletPayment(t *testing.T, token string, totalOrder 
 				},
 			},
 		}
+
+		if discountCoupon != nil {
+			requestBody.DiscountId = discountCoupon.ID
+		}
+
 		bodyJson, err := json.Marshal(requestBody)
 		assert.Nil(t, err)
 		request := httptest.NewRequest(http.MethodPost, "/api/orders", strings.NewReader(string(bodyJson)))

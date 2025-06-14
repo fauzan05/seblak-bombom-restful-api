@@ -133,6 +133,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 
 	// Order
 	auth.Post("/orders", c.OrderController.Create)
+	auth.Get("/orders/:orderId", c.OrderController.GetOrderById)
 	auth.Get("/orders/users/:userId", c.OrderController.GetAllByUserId)
 	auth.Patch("/orders/:orderId/status", c.OrderController.UpdateOrderStatus)
 	auth.Get("/orders", c.OrderController.GetAll)

@@ -1900,3 +1900,37 @@ func TestUpdateDeliveredOrderAsCustomer(t *testing.T) {
 
 	assert.Nil(t, responseBody.Data.XenditTransaction)
 }
+
+func TestGetOrderById(t *testing.T) {
+	ClearAll()
+	DoRegisterAdmin(t)
+	adminToken := DoLoginAdmin(t)
+	DoRegisterCustomer(t)
+	custToken := DoLoginCustomer(t)
+	order := DoCreateOrderAsCustomerWithDeliveryAndDiscount(t, adminToken, custToken)
+
+	request := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/orders/%d", order.ID), nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Authorization", custToken)
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.OrderResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.Equal(t, order.ID, responseBody.Data.ID)
+	assert.Equal(t, order.Email, responseBody.Data.Email)
+	assert.Equal(t, order.FirstName, responseBody.Data.FirstName)
+	assert.Equal(t, order.LastName, responseBody.Data.LastName)
+	assert.Equal(t, order.CancellationNotes, responseBody.Data.CancellationNotes)
+	assert.Equal(t, order.CompleteAddress, responseBody.Data.CompleteAddress)
+	assert.Equal(t, order.DeliveryCost, responseBody.Data.DeliveryCost)
+}

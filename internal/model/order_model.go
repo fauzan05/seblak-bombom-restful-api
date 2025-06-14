@@ -58,7 +58,7 @@ type CreateOrderRequest struct {
 }
 
 type GetOrderByCurrentRequest struct {
-	ID uint64 `json:"-" validate:"required"` //user id
+	UserId uint64 `json:"-" validate:"required"` //user id
 }
 
 type UpdateOrderRequest struct {

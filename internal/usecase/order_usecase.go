@@ -580,12 +580,30 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	}
 
 	newOrders := new([]entity.Order)
-	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
+	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.UserId); err != nil {
 		c.Log.Warnf("failed to find all orders by current user : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find all orders by user id : %+v", err))
 	}
 
 	return converter.OrdersToResponse(newOrders), nil
+}
+
+func (c *OrderUseCase) GetOrderById(ctx context.Context, orderId uint64, currentUser *model.UserResponse) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx)
+
+	newOrders := new(entity.Order)
+	newOrders.ID = orderId
+	if err := c.OrderRepository.FindWith3Preloads(tx, newOrders, "OrderProducts", "OrderProducts.Product", "XenditTransaction"); err != nil {
+		c.Log.Warnf("failed to find order by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find order by id : %+v", err))
+	}
+
+	if currentUser.Role != enum_state.ADMIN && newOrders.UserId != currentUser.ID{
+		c.Log.Warnf("cannot access another order except admin!")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "cannot access another order except admin")
+	}
+
+	return converter.OrderToResponse(newOrders), nil
 }
 
 func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, currentUser *model.UserResponse) (*[]model.OrderResponse, int64, int, error) {
