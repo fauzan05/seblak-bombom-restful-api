@@ -109,5 +109,12 @@
     },
     "front_end": {
         "base_url": "example-url"
+    },
+    "pusher": {
+        "app_id": "",
+        "key": "",
+        "secret": "",
+        "cluster": "",
+        "secure": false
     }
 }

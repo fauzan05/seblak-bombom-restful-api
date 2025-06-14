@@ -427,10 +427,14 @@ func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUser
 
 	var token = &entity.Token{}
 	now := time.Now()
-	oneHours := now.Add(24 * time.Hour)
+	hours := 24
+	if request.Remember {
+		hours = hours * 3
+	}
+	totalHours := now.Add(time.Duration(hours) * time.Hour)
 	token.Token = uuid.New().String()
 	token.UserId = newUser.ID
-	token.ExpiryDate = oneHours
+	token.ExpiryDate = totalHours
 	if err := c.TokenRepository.Create(tx, token); err != nil {
 		c.Log.Warnf("failed to create token by user into database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create token by user into database : %+v", err))

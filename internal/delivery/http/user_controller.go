@@ -52,6 +52,8 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 			c.Log.Warnf("invalid admin creation key!")
 			return fiber.NewError(fiber.StatusForbidden, "invalid admin creation key!")
 		}
+	} else {
+		request.Role = enum_state.CUSTOMER
 	}
 
 	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
@@ -139,6 +141,16 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    response.Token,
+		Path:     "/",
+		HTTPOnly: true,  // Tidak bisa diakses lewat JS
+		Secure:   true,  // Harus HTTPS, matikan ini saat dev kalau perlu
+		SameSite: "Lax", // Untuk cegah CSRF
+		Expires:  response.ExpiryDate,
+	})
+
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserTokenResponse]{
 		Code:   200,
 		Status: "success to login",
@@ -214,6 +226,14 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 		c.Log.Warnf("failed to delete user token : %+v", err)
 		return err
 	}
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HTTPOnly: true,
+	})	
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,

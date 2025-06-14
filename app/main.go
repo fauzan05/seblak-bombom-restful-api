@@ -12,8 +12,8 @@ func main() {
 	log := config.NewLogger(viperConfig)
 	// db := config.NewDatabaseProd(viperConfig, log) //prod
 	// db := config.NewDatabaseTest(viperConfig, log) // test
-	// db := config.NewDatabaseDev(viperConfig, log) // dev
-	db := config.NewDatabaseDocker(viperConfig, log)
+	db := config.NewDatabaseDev(viperConfig, log) // dev
+	// db := config.NewDatabaseDocker(viperConfig, log)
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator()
 	email := config.NewEmailWorker(viperConfig)
@@ -26,11 +26,17 @@ func main() {
 
 	// cors setting
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://seblak-bombom-api-consumer-app, http://localhost:3000",  // Frontend are allowed (port 8000), if you use docker so you have to list the container name of api consumer (seblak-bombom-api-consumer)
-		AllowMethods:     "GET,POST,PATCH,PUT,DELETE",                                     // HTTP method are allowed
-		AllowHeaders:     "Origin, Content-Type, X-Requested-With, Accept, Authorization", // Header are allowed
+		AllowOriginsFunc: func(origin string) bool {
+			allowed := map[string]bool{
+				"http://localhost:3000":                 true,
+				"http://seblak-bombom-api-consumer-app": true,
+			}
+			return allowed[origin]
+		},
+		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept",
 		AllowCredentials: true,
-	}))
+	}))	
 
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:             db,

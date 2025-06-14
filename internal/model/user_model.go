@@ -58,6 +58,7 @@ type UpdateUserPasswordRequest struct {
 type LoginUserRequest struct {
 	Email    string `json:"email" validate:"required,max=100"`
 	Password string `json:"password" validate:"required,max=100"`
+	Remember bool   `json:"remember"`
 }
 
 type UserTokenResponse struct {

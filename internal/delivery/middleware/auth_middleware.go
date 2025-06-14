@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 
@@ -10,19 +9,23 @@ import (
 
 func NewAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		getToken := c.Get("Authorization", "NOT_FOUND")
+		getToken := c.Cookies("access_token", "NOT_FOUND")
+		if getToken == "NOT_FOUND" {
+			return fiber.NewError(fiber.StatusUnauthorized, "missing token")
+		}
+
 		request := &model.GetUserByTokenRequest{
 			Token: getToken,
 		}
-		userUseCase.Log.Debugf("Authorization : %s", request.Token)
+
+		userUseCase.Log.Debugf("token from cookie: %s", request.Token)
 
 		auth, err := userUseCase.GetUserByToken(c.Context(), request)
 		if err != nil {
-			userUseCase.Log.Warnf("token isn't valid : %+v", err)
-			return fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("token isn't valid : %+v", err))
+			userUseCase.Log.Warnf("invalid token: %+v", err)
+			return fiber.NewError(fiber.StatusUnauthorized, "token isn't valid")
 		}
 
-		userUseCase.Log.Debugf("User : %+v", auth.Email)
 		c.Locals("auth", auth)
 		return c.Next()
 	}
