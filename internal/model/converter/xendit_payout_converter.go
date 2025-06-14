@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -19,9 +19,9 @@ func XenditPayoutToResponse(xenditPayout *entity.XenditPayout) *model.XenditPayo
 		AccountNumber:     xenditPayout.AccountNumber,
 		AccountHolderName: xenditPayout.AccountHolderName,
 		Status:            xenditPayout.Status,
-		CreatedAt:         helper.TimeRFC3339(xenditPayout.CreatedAt),
-		UpdatedAt:         helper.TimeRFC3339(xenditPayout.UpdatedAt),
-		EstimatedArrival:  helper.TimeRFC3339(xenditPayout.EstimatedArrival),
+		CreatedAt:         helper_others.TimeRFC3339(xenditPayout.CreatedAt),
+		UpdatedAt:         helper_others.TimeRFC3339(xenditPayout.UpdatedAt),
+		EstimatedArrival:  helper_others.TimeRFC3339(xenditPayout.EstimatedArrival),
 	}
 
 	if xenditPayout.User != nil {

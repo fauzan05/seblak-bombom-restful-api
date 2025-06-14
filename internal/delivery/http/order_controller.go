@@ -5,7 +5,8 @@ import (
 	"html/template"
 	"net/url"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -36,8 +37,8 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Lang = helper.Languange(getLang)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+	request.Lang = enum_state.Languange(getLang)
 	getTimeZoneUser := ctx.Query("timezone", "UTC")
 	loc, err := time.LoadLocation(getTimeZoneUser)
 	if err != nil {
@@ -84,7 +85,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 func (c *OrderController) GetAllCurrent(ctx *fiber.Ctx) error {
 	auth := middleware.GetCurrentUser(ctx)
 	orderRequest := new(model.GetOrderByCurrentRequest)
-	orderRequest.ID = auth.ID
+	orderRequest.UserId = auth.ID
 	response, err := c.UseCase.GetAllCurrent(ctx.Context(), orderRequest)
 	if err != nil {
 		c.Log.Warnf("failed to get all orders by current user : %+v", err)
@@ -94,6 +95,28 @@ func (c *OrderController) GetAllCurrent(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*[]model.OrderResponse]{
 		Code:   200,
 		Status: "success to get all orders by current user",
+		Data:   response,
+	})
+}
+
+func (c *OrderController) GetOrderById(ctx *fiber.Ctx) error {
+	getId := ctx.Params("orderId")
+	orderId, err := strconv.Atoi(getId)
+	if err != nil {
+		c.Log.Warnf("failed to convert order_id to integer : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert order_id to integer : %+v", err))
+	}
+	auth := middleware.GetCurrentUser(ctx)
+	
+	response, err := c.UseCase.GetOrderById(ctx.Context(), uint64(orderId), auth)
+	if err != nil {
+		c.Log.Warnf("failed to get order by id : %+v", err)
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.OrderResponse]{
+		Code:   200,
+		Status: "success to get order by id",
 		Data:   response,
 	})
 }
@@ -153,8 +176,8 @@ func (c *OrderController) UpdateOrderStatus(ctx *fiber.Ctx) error {
 		c.Log.Warnf("cannot parse data : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Lang = helper.Languange(getLang)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+	request.Lang = enum_state.Languange(getLang)
 	getTimeZoneUser := ctx.Query("timezone", "UTC")
 	loc, err := time.LoadLocation(getTimeZoneUser)
 	if err != nil {
@@ -218,8 +241,8 @@ func (c *OrderController) ShowInvoiceByOrderId(ctx *fiber.Ctx) error {
 		item := map[string]any{
 			"Name":       orderProduct.ProductName,
 			"Quantity":   orderProduct.Quantity,
-			"UnitPrice":  helper.FormatNumberFloat32(orderProduct.Price),
-			"TotalPrice": helper.FormatNumberFloat32(orderProduct.Price * float32(orderProduct.Quantity)),
+			"UnitPrice":  helper_others.FormatNumberFloat32(orderProduct.Price),
+			"TotalPrice": helper_others.FormatNumberFloat32(orderProduct.Price * float32(orderProduct.Quantity)),
 		}
 		items = append(items, item)
 	}
@@ -236,14 +259,14 @@ func (c *OrderController) ShowInvoiceByOrderId(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	timeZone := helper.TimeZoneMap[getTimeZoneUser]
+	timeZone := helper_others.TimeZoneMap[getTimeZoneUser]
 	logoImage := fmt.Sprintf("../uploads/images/application/%s", app.LogoFilename)
-	logoImageToBase64, err := helper.ImageToBase64(logoImage)
+	logoImageToBase64, err := helper_others.ImageToBase64(logoImage)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	paymentStatusColor := helper.GetPaymentStatusColor(order.PaymentStatus)
+	paymentStatusColor := helper_others.GetPaymentStatusColor(order.PaymentStatus)
 	orderMethod := "Ambil Di Tempat (Pickup)"
 	if order.IsDelivery {
 		orderMethod = "Diantar Ke Alamat"
@@ -258,11 +281,11 @@ func (c *OrderController) ShowInvoiceByOrderId(ctx *fiber.Ctx) error {
 		"ShippingAddress":    order.CompleteAddress,
 		"Items":              items,
 		"IsDelivery":         order.IsDelivery,
-		"Subtotal":           helper.FormatNumberFloat32(order.TotalProductPrice),
-		"Discount":           helper.FormatNumberFloat32(order.TotalDiscount),
-		"ShippingCost":       helper.FormatNumberFloat32(order.DeliveryCost),
-		"TotalBilling":       helper.FormatNumberFloat32(order.TotalFinalPrice + app.ServiceFee),
-		"ServiceFee":         helper.FormatNumberFloat32(app.ServiceFee),
+		"Subtotal":           helper_others.FormatNumberFloat32(order.TotalProductPrice),
+		"Discount":           helper_others.FormatNumberFloat32(order.TotalDiscount),
+		"ShippingCost":       helper_others.FormatNumberFloat32(order.DeliveryCost),
+		"TotalBilling":       helper_others.FormatNumberFloat32(order.TotalFinalPrice + app.ServiceFee),
+		"ServiceFee":         helper_others.FormatNumberFloat32(app.ServiceFee),
 		"PaymentMethod":      order.PaymentMethod,
 		"PaymentStatus":      order.PaymentStatus,
 		"PaymentStatusColor": paymentStatusColor,

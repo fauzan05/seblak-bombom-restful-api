@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/repository"
@@ -96,47 +97,47 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update xendit transaction status into database : %+v", err))
 			}
 
-			var payment_status helper.PaymentStatus
+			var payment_status enum_state.PaymentStatus
 			var is_send_email bool
 			var email_subject string
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED) {
 				is_send_email = true
-				payment_status = helper.PAID_PAYMENT
+				payment_status = enum_state.PAID_PAYMENT
 				email_subject = "Payment Successfull"
-				if request.Lang == helper.INDONESIA {
+				if request.Lang == enum_state.INDONESIA {
 					email_subject = "Pembayaran Berhasil"
 				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_CANCELED) {
 				is_send_email = true
-				payment_status = helper.CANCELLED_PAYMENT
+				payment_status = enum_state.CANCELLED_PAYMENT
 				email_subject = "Payment Cancelled"
-				if request.Lang == helper.INDONESIA {
+				if request.Lang == enum_state.INDONESIA {
 					email_subject = "Pembayaran Dibatalkan"
 				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_FAILED) {
 				is_send_email = true
-				payment_status = helper.FAILED_PAYMENT
+				payment_status = enum_state.FAILED_PAYMENT
 				email_subject = "Payment Failed"
-				if request.Lang == helper.INDONESIA {
+				if request.Lang == enum_state.INDONESIA {
 					email_subject = "Pembayaran Gagal"
 				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_EXPIRED) {
 				is_send_email = true
-				payment_status = helper.EXPIRED_PAYMENT
+				payment_status = enum_state.EXPIRED_PAYMENT
 				email_subject = "Payment Expired"
-				if request.Lang == helper.INDONESIA {
+				if request.Lang == enum_state.INDONESIA {
 					email_subject = "Pembayaran Kadaluwarsa"
 				}
 			}
 
 			if status == string(payment_request.PAYMENTREQUESTSTATUS_PENDING) {
-				payment_status = helper.PENDING_PAYMENT
+				payment_status = enum_state.PENDING_PAYMENT
 			}
 
 			updateOrderStatus := map[string]any{
@@ -161,7 +162,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				for _, product := range newOrder.OrderProducts {
 					var productImageBase64 string
 					productImagePath := fmt.Sprintf("../uploads/images/products/%s", product.ProductFirstImagePosition)
-					productImageBase64, err := helper.ImageToBase64(productImagePath)
+					productImageBase64, err := helper_others.ImageToBase64(productImagePath)
 					if err != nil {
 						c.Log.Warnf("failed to convert product image to base64 : %+v", err)
 						return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert product image to base64 : %+v", err))
@@ -172,7 +173,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 						"ProductImage":         productImageBase64,
 						"ProductName":          product.ProductName,
 						"Quantity":             product.Quantity,
-						"Price":                helper.FormatNumberFloat32(product.Price),
+						"Price":                helper_others.FormatNumberFloat32(product.Price),
 					}
 
 					productsSelected = append(productsSelected, productImage)
@@ -189,7 +190,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				}
 
 				logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-				logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+				logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 				if err != nil {
 					c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 					return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
@@ -217,13 +218,13 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 					"Items":            productsSelected,
 					"LogoImage":        logoImageBase64,
 					"CompanyTitle":     newApp.AppName,
-					"TotalAmount":      helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
+					"TotalAmount":      helper_others.FormatNumberFloat32(newOrder.TotalFinalPrice),
 					"Year":             time.Now().Format("2006"),
 					"CustomerNotes":    newOrder.Note,
 					"ShippingMethod":   newOrder.IsDelivery,
-					"ShippingCost":     helper.FormatNumberFloat32(newOrder.DeliveryCost),
-					"ServiceFee":       helper.FormatNumberFloat32(newOrder.ServiceFee),
-					"Discount":         helper.FormatNumberFloat32(newOrder.TotalDiscount),
+					"ShippingCost":     helper_others.FormatNumberFloat32(newOrder.DeliveryCost),
+					"ServiceFee":       helper_others.FormatNumberFloat32(newOrder.ServiceFee),
+					"Discount":         helper_others.FormatNumberFloat32(newOrder.TotalDiscount),
 					"Subject":          newMail.Subject,
 					"PaymentStatus":    newOrder.PaymentStatus,
 					"PaymentLink":      paymentLink,
@@ -247,7 +248,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				newNotification.UserID = newOrder.UserId
 				newNotification.Title = newMail.Subject
 				newNotification.IsRead = false
-				newNotification.Type = helper.TRANSACTION
+				newNotification.Type = enum_state.TRANSACTION
 				baseTemplatePath = "../internal/templates/base_template_notification1.html"
 				childPath = fmt.Sprintf("../internal/templates/%s/notification/order_payment.html", request.Lang)
 				tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
@@ -346,7 +347,7 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 				} else {
 					// update payout
 					updateStatus := map[string]any{
-						"status": helper.PAYOUT_SUCCEEDED,
+						"status": enum_state.PAYOUT_SUCCEEDED,
 					}
 
 					if err := c.PayoutRepository.UpdateCustomColumns(tx, newPayout, updateStatus); err != nil {
@@ -389,13 +390,13 @@ func (c *XenditCallbackUseCase) UpdateStatusPayoutRequestCallback(ctx *fiber.Ctx
 					c.Log.Warnf("payout not found!")
 					return fiber.NewError(fiber.StatusNotFound, "payout not found!")
 				} else {
-					status := helper.PAYOUT_CANCELLED
+					status := enum_state.PAYOUT_CANCELLED
 					if request.Data.Status == "failed" {
-						status = helper.PAYOUT_FAILED
+						status = enum_state.PAYOUT_FAILED
 					} else if request.Data.Status == "EXPIRED" {
-						status = helper.PAYOUT_EXPIRED
+						status = enum_state.PAYOUT_EXPIRED
 					} else if request.Data.Status == "REFUNDED" {
-						status = helper.PAYOUT_REFUNDED
+						status = enum_state.PAYOUT_REFUNDED
 					}
 
 					// update payout

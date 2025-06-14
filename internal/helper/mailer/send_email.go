@@ -7,7 +7,7 @@ import (
 	"log"
 	"mime/quotedprintable"
 	"net/smtp"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 	"strings"
 	"sync"
@@ -32,7 +32,7 @@ type SMTPMailer struct {
 }
 
 func (s *SMTPMailer) Send(mail model.Mail) error {
-	boundary := helper.GenerateBoundary() // batas antara bagian HTML dan attachment
+	boundary := helper_others.GenerateBoundary() // batas antara bagian HTML dan attachment
 
 	headers := map[string]string{
 		"From":         fmt.Sprintf("%s <%s>", s.SenderName, s.AuthEmail),

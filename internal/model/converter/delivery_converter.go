@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -14,8 +14,8 @@ func DeliveryToResponse(delivery *entity.Delivery) *model.DeliveryResponse {
 		District:  delivery.District,
 		Village:   delivery.Village,
 		Hamlet:    delivery.Hamlet,
-		CreatedAt: helper.TimeRFC3339(delivery.CreatedAt),
-		UpdatedAt: helper.TimeRFC3339(delivery.UpdatedAt),
+		CreatedAt: helper_others.TimeRFC3339(delivery.CreatedAt),
+		UpdatedAt: helper_others.TimeRFC3339(delivery.UpdatedAt),
 	}
 }
 

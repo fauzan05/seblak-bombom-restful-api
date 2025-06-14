@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -13,8 +13,8 @@ func ProductReviewToResponse(productReview *entity.ProductReview) *model.Product
 		UserId:    productReview.UserId,
 		Rate:      productReview.Rate,
 		Comment:   productReview.Comment,
-		CreatedAt: helper.TimeRFC3339(productReview.CreatedAt),
-		UpdatedAt: helper.TimeRFC3339(productReview.UpdatedAt),
+		CreatedAt: helper_others.TimeRFC3339(productReview.CreatedAt),
+		UpdatedAt: helper_others.TimeRFC3339(productReview.UpdatedAt),
 	}
 }
 

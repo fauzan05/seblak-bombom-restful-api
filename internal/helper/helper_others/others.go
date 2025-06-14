@@ -1,4 +1,4 @@
-package helper
+package helper_others
 
 import (
 	"crypto/rand"
@@ -10,11 +10,14 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func NullStringToString(ns sql.NullString) string {
@@ -139,13 +142,13 @@ func ImageToBase64(path string) (string, error) {
 	return base64.StdEncoding.EncodeToString(data), nil
 }
 
-func GetPaymentStatusColor(status PaymentStatus) string {
+func GetPaymentStatusColor(status enum_state.PaymentStatus) string {
 	switch status {
-	case PAID_PAYMENT:
+	case enum_state.PAID_PAYMENT:
 		return "green"
-	case PENDING_PAYMENT:
+	case enum_state.PENDING_PAYMENT:
 		return "orange"
-	case CANCELLED_PAYMENT, FAILED_PAYMENT, EXPIRED_PAYMENT:
+	case enum_state.CANCELLED_PAYMENT, enum_state.FAILED_PAYMENT, enum_state.EXPIRED_PAYMENT:
 		return "red"
 	default:
 		return "gray" // atau warna lain untuk status yang tidak diketahui
@@ -185,4 +188,43 @@ func FormatNumberFloat32(n float32) string {
 	}
 
 	return result
+}
+
+type SaveWalletTransactionRequest struct {
+	DB              *gorm.DB
+	UserId          uint64
+	OrderId         *uint64
+	Amount          float32
+	FlowType        enum_state.WalletFlowType
+	TransactionType enum_state.WalletTransactionType
+	PaymentMethod   enum_state.PaymentMethod
+	Status          enum_state.WalletTransactionStatus
+	ReferenceNumber string
+	Note            string
+	AdminNote       string
+	ProcessedBy     *uint64
+	ProcessedAt     *time.Time
+}
+
+func SaveWalletTransaction(walletTransaction *SaveWalletTransactionRequest) error {
+	newWalletTransaction := &entity.WalletTransactions{
+		UserId:          walletTransaction.UserId,
+		OrderId:         walletTransaction.OrderId,
+		Amount:          walletTransaction.Amount,
+		FlowType:        walletTransaction.FlowType,
+		TransactionType: walletTransaction.TransactionType,
+		PaymentMethod:   walletTransaction.PaymentMethod,
+		Status:          walletTransaction.Status,
+		ReferenceNumber: walletTransaction.ReferenceNumber,
+		Note:            walletTransaction.Note,
+		AdminNote:       walletTransaction.AdminNote,
+		ProcessedBy:     walletTransaction.ProcessedBy,
+		ProcessedAt:     walletTransaction.ProcessedAt,
+	}
+
+	if err := walletTransaction.DB.Create(newWalletTransaction).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

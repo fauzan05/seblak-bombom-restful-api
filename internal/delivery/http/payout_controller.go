@@ -2,7 +2,7 @@ package http
 
 import (
 	"fmt"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -38,7 +38,7 @@ func (c *PayoutController) Create(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	if request.Method == helper.PAYOUT_METHOD_ONLINE {
+	if request.Method == enum_state.PAYOUT_METHOD_ONLINE {
 		request.XenditPayoutRequest.UserId = uint64(userId)
 	}
 

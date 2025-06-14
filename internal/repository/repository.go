@@ -69,6 +69,14 @@ func (r *Repository[T]) FindAndCountFirstWalletByUserId(db *gorm.DB, entity *T, 
 	return count, nil
 }
 
+func (r *Repository[T]) FindFirstWalletByUserId(db *gorm.DB, entity *T, userId uint64, status string) error {
+	err := db.Model(entity).Where("user_id = ? AND status = ?", userId, status).First(entity)
+	if err != nil {
+		return err.Error
+	}
+	return nil
+}
+
 func (r *Repository[T]) FindFirstPayoutByXenditPayoutId(db *gorm.DB, entity *T, xenditPayoutId string) error {
 	return db.Where("xendit_payout_id = ?", xenditPayoutId).First(entity).Error
 }
@@ -283,6 +291,10 @@ func (r *Repository[T]) FindCurrentUserCartWithPreloads(db *gorm.DB, entity *T, 
 
 func (r *Repository[T]) FindWith2Preloads(db *gorm.DB, entity *T, preload1 string, preload2 string) error {
 	return db.Preload(preload1).Preload(preload2).Find(&entity).Error
+}
+
+func (r *Repository[T]) FindWith3Preloads(db *gorm.DB, entity *T, preload1 string, preload2 string, preload3 string) error {
+	return db.Preload(preload1).Preload(preload2).Preload(preload3).Find(&entity).Error
 }
 
 func (r *Repository[T]) FindCartItemByUserId(db *gorm.DB, entity *T, userId uint64) error {

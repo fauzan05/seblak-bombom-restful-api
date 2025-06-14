@@ -1,20 +1,20 @@
 package model
 
 import (
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 )
 
 type ProductResponse struct {
-	ID          uint64                  `json:"id,omitempty"`
-	Category    CategoryResponse        `json:"category,omitempty"`
-	Name        string                  `json:"name,omitempty"`
-	Description string                  `json:"description,omitempty"`
-	Price       float32                 `json:"price,omitempty"`
-	Stock       int                     `json:"stock,omitempty"`
-	Images      []ImageResponse         `json:"images,omitempty"`
-	Reviews     []ProductReviewResponse `json:"product_reviews,omitempty"`
-	CreatedAt   helper.TimeRFC3339      `json:"created_at,omitempty"`
-	UpdatedAt   helper.TimeRFC3339      `json:"updated_at,omitempty"`
+	ID          uint64                    `json:"id,omitempty"`
+	Category    CategoryResponse          `json:"category,omitempty"`
+	Name        string                    `json:"name,omitempty"`
+	Description string                    `json:"description,omitempty"`
+	Price       float32                   `json:"price,omitempty"`
+	Stock       int                       `json:"stock,omitempty"`
+	Images      []ImageResponse           `json:"images,omitempty"`
+	Reviews     []ProductReviewResponse   `json:"product_reviews,omitempty"`
+	CreatedAt   helper_others.TimeRFC3339 `json:"created_at,omitempty"`
+	UpdatedAt   helper_others.TimeRFC3339 `json:"updated_at,omitempty"`
 }
 
 type CreateProductRequest struct {

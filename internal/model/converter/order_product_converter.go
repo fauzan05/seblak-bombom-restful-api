@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -15,8 +15,8 @@ func OrderProductToResponse(orderProduct *entity.OrderProduct) *model.OrderProdu
 		Category:    orderProduct.Category,
 		Price:       orderProduct.Price,
 		Quantity:    orderProduct.Quantity,
-		CreatedAt:   helper.TimeRFC3339(orderProduct.CreatedAt),
-		UpdatedAt:   helper.TimeRFC3339(orderProduct.UpdatedAt),
+		CreatedAt:   helper_others.TimeRFC3339(orderProduct.CreatedAt),
+		UpdatedAt:   helper_others.TimeRFC3339(orderProduct.UpdatedAt),
 	}
 }
 

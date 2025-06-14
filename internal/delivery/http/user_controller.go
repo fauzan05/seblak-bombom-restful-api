@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"os"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -46,7 +46,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 	}
 
 	request.TimeZone = *loc
-	if request.Role == helper.ADMIN {
+	if request.Role == enum_state.ADMIN {
 		adminKey := ctx.Get("X-Admin-Key", "")
 		if adminKey != c.AuthConfig.AdminCreationKey {
 			c.Log.Warnf("invalid admin creation key!")
@@ -54,8 +54,8 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		}
 	}
 
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Lang = helper.Languange(getLang)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+	request.Lang = enum_state.Languange(getLang)
 	response, err := c.UseCase.Create(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to register an user : %+v", err)
@@ -73,8 +73,8 @@ func (c *UserController) VerifyEmailRegistration(ctx *fiber.Ctx) error {
 	getVerifyToken := ctx.Params("token", "")
 	request := new(model.VerifyEmailRegisterRequest)
 	request.VerificationToken = getVerifyToken
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Lang = helper.Languange(getLang)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+	request.Lang = enum_state.Languange(getLang)
 	getTimeZoneUser := ctx.Query("timezone", "UTC")
 	loc, err := time.LoadLocation(getTimeZoneUser)
 	if err != nil {
@@ -95,7 +95,7 @@ func (c *UserController) VerifyEmailRegistration(ctx *fiber.Ctx) error {
 func (c *UserController) ShowVerifiedSuccess(ctx *fiber.Ctx) error {
 	ctx.Type("html", "utf-8")
 	bodyBuilder := new(strings.Builder)
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
 	getVerifyToken := ctx.Params("token", "")
 	getEmail := ctx.Query("email", "")
 	err := c.UseCase.ValidateVerifyTokenIsValid(ctx, getVerifyToken, getEmail)
@@ -230,8 +230,8 @@ func (c *UserController) RemoveAccount(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Lang = helper.Languange(getLang)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+	request.Lang = enum_state.Languange(getLang)
 	getTimeZoneUser := ctx.Query("timezone", "UTC")
 	loc, err := time.LoadLocation(getTimeZoneUser)
 	if err != nil {
@@ -260,8 +260,8 @@ func (c *UserController) CreateForgotPassword(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Lang = helper.Languange(getLang)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+	request.Lang = enum_state.Languange(getLang)
 	response, err := c.UseCase.AddForgotPassword(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to create an forgot password request : %+v", err)
@@ -313,8 +313,8 @@ func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
 
 	request := new(model.PasswordResetRequest)
 	request.ID = uint64(passwordResetId)
-	getLang := ctx.Query("lang", string(helper.ENGLISH))
-	request.Lang = helper.Languange(getLang)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+	request.Lang = enum_state.Languange(getLang)
 	getTimeZoneUser := ctx.Query("timezone", "UTC")
 	loc, err := time.LoadLocation(getTimeZoneUser)
 	if err != nil {

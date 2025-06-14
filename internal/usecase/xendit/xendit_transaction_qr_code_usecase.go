@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"time"
@@ -60,7 +61,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	paymentRequestBasketItems := new([]payment_request.PaymentRequestBasketItem)
 	for _, product := range selectedOrder.OrderProducts {
 		refId := strconv.FormatUint(product.ProductId, 10)
-		itemType := string(helper.ITEM_TYPE_PHYSICAL_PRODUCT)
+		itemType := string(enum_state.ITEM_TYPE_PHYSICAL_PRODUCT)
 		paymentRequestBasketItem := &payment_request.PaymentRequestBasketItem{
 			ReferenceId: &refId,
 			Name:        product.ProductName,
@@ -76,7 +77,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 	// cek apakah ada biaya pengiriman
 	if selectedOrder.DeliveryCost > 0 {
 		refId := fmt.Sprintf("DELIVERY/%s", strconv.FormatUint(selectedOrder.ID, 10))
-		itemType := string(helper.ITEM_TYPE_DELIVERY_FEE)
+		itemType := string(enum_state.ITEM_TYPE_DELIVERY_FEE)
 		paymentRequestBasketItem := &payment_request.PaymentRequestBasketItem{
 			ReferenceId: &refId,
 			Name:        "Delivery Cost",
@@ -91,7 +92,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 
 	if selectedOrder.TotalDiscount > 0 {
 		refId := fmt.Sprintf("DISCOUNT/%s", strconv.FormatUint(selectedOrder.ID, 10))
-		itemType := string(helper.ITEM_TYPE_DISCOUNT)
+		itemType := string(enum_state.ITEM_TYPE_DISCOUNT)
 		paymentRequestBasketItem := &payment_request.PaymentRequestBasketItem{
 			ReferenceId: &refId,
 			Name:        "Discount",
@@ -144,7 +145,7 @@ func (c *XenditTransactionQRCodeUseCase) Add(ctx *fiber.Ctx, request *model.Crea
 
 	if resErr != nil {
 		c.Log.Warnf("failed to create new xendit transaction : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to create new xendit transaction : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper_others.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to create new xendit transaction : %+v", resErr.FullError()))
 	}
 
 	// setelah itu tangkap semua response
@@ -225,7 +226,7 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 
 	if resErr != nil {
 		c.Log.Warnf("failed to find xendit transaction : %+v", resErr.FullError())
-		return nil, fiber.NewError(helper.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to find xendit transaction : %+v", resErr.FullError()))
+		return nil, fiber.NewError(helper_others.SetFiberStatusCode(resErr.Status()), fmt.Sprintf("failed to find xendit transaction : %+v", resErr.FullError()))
 	}
 
 	if newXenditTransaction.Status != string(resp.Status) && newXenditTransaction.Status != string(payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED) {
@@ -254,29 +255,29 @@ func (c *XenditTransactionQRCodeUseCase) GetTransaction(ctx *fiber.Ctx, request 
 		// update juga di orders
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_SUCCEEDED {
 			// paid
-			newXenditTransaction.Order.PaymentStatus = helper.PAID_PAYMENT
+			newXenditTransaction.Order.PaymentStatus = enum_state.PAID_PAYMENT
 			hasPaymentStatusUpdated = true
 		}
 
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_FAILED {
 			// not paid
-			newXenditTransaction.Order.PaymentStatus = helper.FAILED_PAYMENT
+			newXenditTransaction.Order.PaymentStatus = enum_state.FAILED_PAYMENT
 			hasPaymentStatusUpdated = true
-			order_status = string(helper.ORDER_CANCELLED)
+			order_status = string(enum_state.ORDER_CANCELLED)
 		}
 
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_CANCELED {
 			// cancelled
-			newXenditTransaction.Order.PaymentStatus = helper.CANCELLED_PAYMENT
+			newXenditTransaction.Order.PaymentStatus = enum_state.CANCELLED_PAYMENT
 			hasPaymentStatusUpdated = true
-			order_status = string(helper.ORDER_CANCELLED)
+			order_status = string(enum_state.ORDER_CANCELLED)
 		}
 
 		if resp.Status == payment_request.PAYMENTREQUESTSTATUS_EXPIRED {
 			// expired
-			newXenditTransaction.Order.PaymentStatus = helper.EXPIRED_PAYMENT
+			newXenditTransaction.Order.PaymentStatus = enum_state.EXPIRED_PAYMENT
 			hasPaymentStatusUpdated = true
-			order_status = string(helper.ORDER_CANCELLED)
+			order_status = string(enum_state.ORDER_CANCELLED)
 		}
 
 		if hasPaymentStatusUpdated {

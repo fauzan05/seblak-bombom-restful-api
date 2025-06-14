@@ -51,8 +51,6 @@ func Bootstrap(config *BootstrapConfig) {
 	deliveryRepository := repository.NewDeliveryRepository(config.Log)
 	productReviewRepository := repository.NewProductReviewRepository(config.Log)
 	orderProductRepository := repository.NewOrderProductRepository(config.Log)
-	midtransSnapOrderRepository := repository.NewMidtransSnapOrderRepository(config.Log)
-	midtransCoreAPIOrderRepository := repository.NewMidtransCoreAPIOrderRepository(config.Log)
 	xenditTransactionRepository := repository.NewXenditTransactionRepository(config.Log)
 	applicationRepository := repository.NewApplicationRepository(config.Log)
 	cartRepository := repository.NewCartRepository(config.Log)
@@ -62,6 +60,7 @@ func Bootstrap(config *BootstrapConfig) {
 	payoutRepository := repository.NewPayoutRepository(config.Log)
 	notificationRepository := repository.NewNotificationRepository(config.Log)
 	passwordResetRepository := repository.NewPasswordResetRepository(config.Log)
+	walletWithdrawRepository := repository.NewWalletWithdrawRequestRepository(config.Log)
 
 	// setup use case
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, tokenRepository, addressRepository, walletRepository, cartRepository, notificationRepository, config.Email, applicationRepository, passwordResetRepository)
@@ -71,8 +70,6 @@ func Bootstrap(config *BootstrapConfig) {
 	discountCouponUseCase := usecase.NewDiscountCouponUseCase(config.DB, config.Log, config.Validate, discountCouponRepository)
 	deliveryUseCase := usecase.NewDeliveryUseCase(config.DB, config.Log, config.Validate, deliveryRepository)
 	productReviewUseCase := usecase.NewProductReviewUseCase(config.DB, config.Log, config.Validate, productReviewRepository)
-	midtransSnapOrderUseCase := usecase.NewMidtransSnapOrderUseCase(config.Log, config.Validate, orderRepository, config.SnapClient, config.CoreAPIClient, config.DB, midtransSnapOrderRepository, productRepository)
-	midtransCoreApiOrderUseCase := usecase.NewMidtransCoreAPIOrderUseCase(config.Log, config.Validate, orderRepository, config.CoreAPIClient, config.DB, midtransCoreAPIOrderRepository, productRepository)
 	xenditTransactionQRCodeUseCase := xenditUseCase.NewXenditTransactionQRCodeUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient)
 	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validate, orderRepository, productRepository, categoryRepository, addressRepository, discountCouponRepository, discountUsageRepository, deliveryRepository, orderProductRepository, walletRepository, xenditTransactionRepository, xenditTransactionQRCodeUseCase, config.XenditClient, applicationRepository, config.Email, notificationRepository)
 	applicationUseCase := usecase.NewApplicationUseCase(config.DB, config.Log, config.Validate, applicationRepository)
@@ -80,6 +77,7 @@ func Bootstrap(config *BootstrapConfig) {
 	xenditCallbackUseCase := xenditUseCase.NewXenditCallbackUseCase(config.DB, config.Log, config.Validate, orderRepository, xenditTransactionRepository, config.XenditClient, xenditPayoutRepository, userRepository, walletRepository, payoutRepository, applicationRepository, notificationRepository, config.Email)
 	xenditPayoutUseCase := xenditUseCase.NewXenditPayoutUseCase(config.DB, config.Log, config.Validate, xenditPayoutRepository, config.XenditClient, walletRepository, userRepository)
 	payoutUseCase := usecase.NewPayoutUseCase(config.DB, config.Log, config.Validate, payoutRepository, xenditPayoutUseCase, walletRepository, userRepository)
+	walletUseCase := usecase.NewWalletUseCase(config.DB, config.Log, config.Validate, userRepository, walletRepository, walletWithdrawRepository)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig, config.FrontEndConfig)
@@ -90,14 +88,13 @@ func Bootstrap(config *BootstrapConfig) {
 	discountCouponController := http.NewDiscountCouponController(discountCouponUseCase, config.Log)
 	deliveryController := http.NewDeliveryController(deliveryUseCase, config.Log)
 	productReviewController := http.NewProductReviewController(productReviewUseCase, config.Log)
-	midtransSnapOrderController := http.NewMidtransSnapOrderController(midtransSnapOrderUseCase, config.Log)
-	midtransCoreAPIOrderController := http.NewMidtransCoreAPIOrderController(midtransCoreApiOrderUseCase, config.Log)
 	xenditQRCodeTransactionController := xenditController.NewXenditQRCodeTransctionController(xenditTransactionQRCodeUseCase, config.Log, config.DB)
 	xenditCallbackController := xenditController.NewXenditCallbackController(xenditCallbackUseCase, config.Log, config.FrontEndConfig)
 	applicationController := http.NewApplicationController(applicationUseCase, config.Log)
 	cartController := http.NewCartController(cartUseCase, config.Log)
 	xenditPayoutController := xenditController.NewXenditPayoutController(xenditPayoutUseCase, config.Log, config.DB)
 	payoutController := http.NewPayoutController(payoutUseCase, config.Log)
+	walletController := http.NewWalletController(walletUseCase, config.Log)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -115,14 +112,13 @@ func Bootstrap(config *BootstrapConfig) {
 		DiscountCouponController:          discountCouponController,
 		DeliveryController:                deliveryController,
 		ProductReviewController:           productReviewController,
-		MidtransSnapOrderController:       midtransSnapOrderController,
-		MidtransCoreAPIOrderController:    midtransCoreAPIOrderController,
 		XenditQRCodeTransactionController: xenditQRCodeTransactionController,
 		PayoutController:                  payoutController,
 		XenditCallbackController:          xenditCallbackController,
 		XenditPayoutController:            xenditPayoutController,
 		ApplicationController:             applicationController,
 		CartController:                    cartController,
+		WalletController:                  walletController,
 		AuthMiddleware:                    authMiddleware,
 		RoleMiddleware:                    roleMiddleware,
 		AuthXenditMiddleware:              authXenditMiddleware,

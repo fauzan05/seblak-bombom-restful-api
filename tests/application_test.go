@@ -15,6 +15,79 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAddApplicationByKey(t *testing.T) {
+	ClearAll()
+
+	// Simulasi multipart body
+	var b bytes.Buffer
+	writer := multipart.NewWriter(&b)
+
+	// Tambahkan field JSON sebagai string field biasa
+	_ = writer.WriteField("app_name", "Warung Seblak Jaman Now")
+	_ = writer.WriteField("opening_hours", "07:00:00")
+	_ = writer.WriteField("closing_hours", "20:00:00")
+	_ = writer.WriteField("address", "Ini adalah alamat")
+	_ = writer.WriteField("google_maps_link", "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6")
+	_ = writer.WriteField("description", "Ini adalah deskripsi")
+	_ = writer.WriteField("phone_number", "08133546789")
+	_ = writer.WriteField("email", "seblak@mail.com")
+	_ = writer.WriteField("instagram_name", "fauzan.hidayat-instagram")
+	_ = writer.WriteField("instagram_link", "https://www.instagram.com/")
+	_ = writer.WriteField("twitter_name", "fauzan.hidayat-twitter")
+	_ = writer.WriteField("twitter_link", "https://www.twitter.com/")
+	_ = writer.WriteField("facebook_name", "fauzan.hidayat-facebook")
+	_ = writer.WriteField("facebook_link", "https://www.facebook.com/")
+	_ = writer.WriteField("service_fee", "1000")
+
+	filename, content, err := GenerateDummyJPEG(1 * 1024 * 1024) // 1 MB
+	assert.Nil(t, err)
+
+	partHeader := textproto.MIMEHeader{}
+	partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="logo_filename"; filename="%s"`, filename))
+	partHeader.Set("Content-Type", "image/jpeg")
+	partHeader.Set("X-Admin-Key", "rahasia-123#")
+
+	fileWriter, err := writer.CreatePart(partHeader)
+	assert.Nil(t, err)
+
+	_, err = fileWriter.Write(content)
+	assert.Nil(t, err)
+
+	writer.Close()
+
+	request := httptest.NewRequest(http.MethodPost, "/api/applications-use-admin-key", &b)
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+
+	response, err := app.Test(request)
+	assert.Nil(t, err)
+
+	bytes, err := io.ReadAll(response.Body)
+	assert.Nil(t, err)
+
+	responseBody := new(model.ApiResponse[model.ApplicationResponse])
+	err = json.Unmarshal(bytes, responseBody)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.NotNil(t, responseBody.Data.ID)
+	assert.Equal(t, "Warung Seblak Jaman Now", responseBody.Data.AppName)
+	assert.Equal(t, "07:00:00", responseBody.Data.OpeningHours)
+	assert.Equal(t, "20:00:00", responseBody.Data.ClosingHours)
+	assert.Equal(t, "Ini adalah alamat", responseBody.Data.Address)
+	assert.Equal(t, "https://maps.app.goo.gl/ftF7eEsBHa69uw3H6", responseBody.Data.GoogleMapsLink)
+	assert.Equal(t, "Ini adalah deskripsi", responseBody.Data.Description)
+	assert.Equal(t, "08133546789", responseBody.Data.PhoneNumber)
+	assert.Equal(t, "seblak@mail.com", responseBody.Data.Email)
+	assert.Equal(t, "fauzan.hidayat-instagram", responseBody.Data.InstagramName)
+	assert.Equal(t, "https://www.instagram.com/", responseBody.Data.InstagramLink)
+	assert.Equal(t, "fauzan.hidayat-twitter", responseBody.Data.TwitterName)
+	assert.Equal(t, "https://www.twitter.com/", responseBody.Data.TwitterLink)
+	assert.Equal(t, "fauzan.hidayat-facebook", responseBody.Data.FacebookName)
+	assert.Equal(t, "https://www.facebook.com/", responseBody.Data.FacebookLink)
+	assert.NotNil(t, responseBody.Data.CreatedAt)
+	assert.NotNil(t, responseBody.Data.UpdatedAt)
+}
+
 func TestAddApplicationSetting(t *testing.T) {
 	ClearAll()
 	DoRegisterAdmin(t)

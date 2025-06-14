@@ -1,7 +1,7 @@
 package model
 
 import (
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 )
 
 type CreateXenditPayout struct {
@@ -20,21 +20,21 @@ type GetWithdrawableBalanceResponse struct {
 }
 
 type XenditPayoutResponse struct {
-	ID                string             `json:"id"`
-	UserId            uint64             `json:"user_id"`
-	BusinessId        string             `json:"business_id"`
-	ReferenceId       string             `json:"reference_id"`
-	Amount            float32            `json:"amount"`
-	Currency          string             `json:"currency"`
-	Description       string             `json:"description"`
-	ChannelCode       string             `json:"channel_code"`
-	AccountNumber     string             `json:"account_number"`
-	AccountHolderName string             `json:"account_holder_name"`
-	Status            string             `json:"status"`
-	CreatedAt         helper.TimeRFC3339 `json:"created_at"`
-	UpdatedAt         helper.TimeRFC3339 `json:"updated_at"`
-	EstimatedArrival  helper.TimeRFC3339 `json:"estimated_arrival"`
-	User              *UserResponse      `json:"user,omitempty"`
+	ID                string                    `json:"id"`
+	UserId            uint64                    `json:"user_id"`
+	BusinessId        string                    `json:"business_id"`
+	ReferenceId       string                    `json:"reference_id"`
+	Amount            float32                   `json:"amount"`
+	Currency          string                    `json:"currency"`
+	Description       string                    `json:"description"`
+	ChannelCode       string                    `json:"channel_code"`
+	AccountNumber     string                    `json:"account_number"`
+	AccountHolderName string                    `json:"account_holder_name"`
+	Status            string                    `json:"status"`
+	CreatedAt         helper_others.TimeRFC3339 `json:"created_at"`
+	UpdatedAt         helper_others.TimeRFC3339 `json:"updated_at"`
+	EstimatedArrival  helper_others.TimeRFC3339 `json:"estimated_arrival"`
+	User              *UserResponse             `json:"user,omitempty"`
 }
 
 type CancelXenditPayout struct {

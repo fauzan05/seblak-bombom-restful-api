@@ -14,8 +14,6 @@ func main() {
 	// db := config.NewDatabaseTest(viperConfig, log) // test
 	// db := config.NewDatabaseDev(viperConfig, log) // dev
 	db := config.NewDatabaseDocker(viperConfig, log)
-	// snapClient := config.NewMidtransSanboxSnapClient(viperConfig, log)
-	// coreAPIClient := config.NewMidtransSanboxCoreAPIClient(viperConfig, log)
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator()
 	email := config.NewEmailWorker(viperConfig)
@@ -34,13 +32,11 @@ func main() {
 	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:       db,
-		App:      app,
-		Log:      log,
-		Validate: validate,
-		Config:   viperConfig,
-		// SnapClient:    snapClient,
-		// CoreAPIClient: coreAPIClient,
+		DB:             db,
+		App:            app,
+		Log:            log,
+		Validate:       validate,
+		Config:         viperConfig,
 		XenditClient:   xenditClient,
 		Email:          email,
 		PDF:            pdf,

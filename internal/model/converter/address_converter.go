@@ -2,7 +2,7 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
@@ -12,8 +12,8 @@ func AddressToResponse(address *entity.Address) *model.AddressResponse {
 		CompleteAddress: address.CompleteAddress,
 		GoogleMapsLink:  address.GoogleMapsLink,
 		IsMain:          address.IsMain,
-		CreatedAt:       helper.TimeRFC3339(address.CreatedAt),
-		UpdatedAt:       helper.TimeRFC3339(address.UpdatedAt),
+		CreatedAt:       helper_others.TimeRFC3339(address.CreatedAt),
+		UpdatedAt:       helper_others.TimeRFC3339(address.UpdatedAt),
 	}
 
 	if address.Delivery != nil {

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"html/template"
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/enum_state"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/helper/mailer"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
@@ -91,14 +92,19 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	// temukan produk untuk memastikan ketersediaan dan masukkan data produk ke slice OrderProduct serta mengkalkulasikan tagihannya
 	for _, orderProductRequest := range request.OrderProducts {
 		if orderProductRequest.Quantity < 0 {
-			c.Log.Warnf("quantity must be positive number : %+v", err)
+			c.Log.Warnf("quantity must be positive number!")
 			return nil, fiber.NewError(fiber.StatusInternalServerError, "quantity must be positive number!")
 		}
 		newProduct := new(entity.Product)
 		newProduct.ID = orderProductRequest.ProductId
 		count, err := c.ProductRepository.FindAndCountProductById(tx, newProduct)
+		if err != nil {
+			c.Log.Warnf("failed to find product by id : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to find product by id : %+v", err))
+		}
+
 		if count < 1 {
-			c.Log.Warnf("product not found : %+v", err)
+			c.Log.Warnf("product not found!")
 			return nil, fiber.NewError(fiber.StatusInternalServerError, "product not found!")
 		}
 
@@ -108,7 +114,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			if image.Position == 1 {
 				imageSelectedFileName = image.FileName
 				productImagePath := fmt.Sprintf("../uploads/images/products/%s", image.FileName)
-				imageBase64, err := helper.ImageToBase64(productImagePath)
+				imageBase64, err := helper_others.ImageToBase64(productImagePath)
 				if err != nil {
 					c.Log.Warnf("failed to convert product image to base64 : %+v", err)
 					return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert product image to base64 : %+v", err))
@@ -123,20 +129,20 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			"ProductImage":         productImageBase64,
 			"ProductName":          newProduct.Name,
 			"Quantity":             orderProductRequest.Quantity,
-			"Price":                helper.FormatNumberFloat32(newProduct.Price),
+			"Price":                helper_others.FormatNumberFloat32(newProduct.Price),
 		}
 
 		productsSelected = append(productsSelected, productSelected)
 
 		if newProduct.Stock < 1 {
-			c.Log.Warnf("product out of stock : %+v", err)
+			c.Log.Warnf("product out of stock!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "product out of stock!")
 		}
 
 		// pastikan permintaan tidak melebihi stok produk yang terkini
 		newProduct.Stock -= orderProductRequest.Quantity
 		if newProduct.Stock < 0 {
-			c.Log.Warnf("quantity order of product is out of limit : %+v", err)
+			c.Log.Warnf("quantity order of product is out of limit!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "quantity order of product is out of limit")
 		}
 
@@ -184,9 +190,9 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	newOrder.Phone = request.Phone
 	newOrder.Note = request.Note
 	// set status order
-	newOrder.OrderStatus = helper.ORDER_PENDING
+	newOrder.OrderStatus = enum_state.ORDER_PENDING
 
-	newOrder.DiscountType = helper.PERCENT
+	newOrder.DiscountType = enum_state.PERCENT
 	if request.DiscountId > 0 {
 		newDiscount := new(entity.DiscountCoupon)
 		newDiscount.ID = request.DiscountId
@@ -237,15 +243,15 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 					}
 				}
 
-				if newDiscount.Type == helper.PERCENT {
-					newOrder.DiscountType = helper.PERCENT
+				if newDiscount.Type == enum_state.PERCENT {
+					newOrder.DiscountType = enum_state.PERCENT
 					discount := float32(newDiscount.Value) / float32(100)
 					afterDiscount := newOrder.TotalFinalPrice * discount
 					newOrder.TotalFinalPrice -= afterDiscount
 					// simpan total diskon/potongan harganya
 					newOrder.TotalDiscount = afterDiscount
-				} else if newDiscount.Type == helper.NOMINAL {
-					newOrder.DiscountType = helper.NOMINAL
+				} else if newDiscount.Type == enum_state.NOMINAL {
+					newOrder.DiscountType = enum_state.NOMINAL
 					newOrder.TotalFinalPrice -= newDiscount.Value
 					// simpan total diskon/potongan harganya
 					newOrder.TotalDiscount = newDiscount.Value
@@ -273,32 +279,32 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		}
 	}
 
-	if !helper.IsValidPaymentMethod(request.PaymentMethod) {
+	if !enum_state.IsValidPaymentMethod(request.PaymentMethod) {
 		c.Log.Warnf("invalid payment method!")
 		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid payment method!")
 	}
 	newOrder.PaymentMethod = request.PaymentMethod
 
-	if !helper.IsValidChannelCode(request.ChannelCode) {
+	if !enum_state.IsValidChannelCode(request.ChannelCode) {
 		c.Log.Warnf("invalid channel code!")
 		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid channel code!")
 	}
 	newOrder.ChannelCode = request.ChannelCode
 
-	if !helper.IsValidPaymentGateway(request.PaymentGateway) {
+	if !enum_state.IsValidPaymentGateway(request.PaymentGateway) {
 		c.Log.Warnf("invalid payment gateway!")
 		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid payment gateway!")
 	}
 	newOrder.PaymentGateway = request.PaymentGateway
-	newOrder.PaymentStatus = helper.PENDING_PAYMENT
+	newOrder.PaymentStatus = enum_state.PENDING_PAYMENT
 
-	if request.PaymentGateway == helper.PAYMENT_GATEWAY_SYSTEM {
-		if request.PaymentMethod != helper.PAYMENT_METHOD_WALLET {
+	if request.PaymentGateway == enum_state.PAYMENT_GATEWAY_SYSTEM {
+		if request.PaymentMethod != enum_state.PAYMENT_METHOD_WALLET {
 			c.Log.Warnf("payment method %s is not available on payment gateway system!", request.PaymentMethod)
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("payment method %s is not available on payment gateway system!", request.PaymentMethod))
 		}
 
-		if request.ChannelCode != helper.WALLET_CHANNEL_CODE {
+		if request.ChannelCode != enum_state.WALLET_CHANNEL_CODE {
 			c.Log.Warnf("channel code %s is not available on payment gateway system!", request.ChannelCode)
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("channel code %s is not available on payment gateway system!", request.ChannelCode))
 		}
@@ -317,19 +323,19 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			return nil, fiber.NewError(fiber.StatusBadRequest, "failed to update new balance!")
 		}
 
-		newOrder.PaymentStatus = helper.PAID_PAYMENT
+		newOrder.PaymentStatus = enum_state.PAID_PAYMENT
 	}
 
-	if request.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT {
-		if request.PaymentMethod != helper.PAYMENT_METHOD_QR_CODE {
+	if request.PaymentGateway == enum_state.PAYMENT_GATEWAY_XENDIT {
+		if request.PaymentMethod != enum_state.PAYMENT_METHOD_QR_CODE {
 			c.Log.Warnf("payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway)
 			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("payment method %s is not available on payment gateway %s!", request.PaymentMethod, request.PaymentGateway))
 		} else {
 
-			validChannelCodes := map[helper.PaymentMethod][]helper.ChannelCode{
-				helper.PAYMENT_METHOD_QR_CODE: {
-					helper.XENDIT_QR_DANA_CHANNEL_CODE,
-					helper.XENDIT_QR_LINKAJA_CHANNEL_CODE,
+			validChannelCodes := map[enum_state.PaymentMethod][]enum_state.ChannelCode{
+				enum_state.PAYMENT_METHOD_QR_CODE: {
+					enum_state.XENDIT_QR_DANA_CHANNEL_CODE,
+					enum_state.XENDIT_QR_LINKAJA_CHANNEL_CODE,
 				},
 			}
 
@@ -386,8 +392,32 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add invoice code : %+v", err))
 	}
 
+	if request.PaymentMethod != enum_state.PAYMENT_METHOD_WALLET {
+		now := time.Now()
+		newSaveWalletTransaction := new(helper_others.SaveWalletTransactionRequest)
+		newSaveWalletTransaction.DB = tx
+		newSaveWalletTransaction.UserId = request.UserId
+		newSaveWalletTransaction.OrderId = &newOrder.ID
+		newSaveWalletTransaction.Amount = newOrder.TotalFinalPrice
+		newSaveWalletTransaction.FlowType = enum_state.WALLET_FLOW_TYPE_DEBIT
+		newSaveWalletTransaction.TransactionType = enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT
+		newSaveWalletTransaction.PaymentMethod = request.PaymentMethod
+		newSaveWalletTransaction.Status = enum_state.WALLET_TRANSACTION_STATUS_COMPLETED
+		newSaveWalletTransaction.ReferenceNumber = newOrder.Invoice
+		newSaveWalletTransaction.Note = fmt.Sprintf("Create an order %s", invoice)
+		newSaveWalletTransaction.AdminNote = ""
+		newSaveWalletTransaction.ProcessedAt = &now
+		newSaveWalletTransaction.ProcessedBy = &request.UserId
+
+		err = helper_others.SaveWalletTransaction(newSaveWalletTransaction)
+		if err != nil {
+			c.Log.Warnf("failed to save wallet transaction : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
+		}
+	}
+
 	// jika pembayaran menggunakan xendit,maka panggil xendit usecase
-	if newOrder.PaymentGateway == helper.PAYMENT_GATEWAY_XENDIT && newOrder.PaymentMethod == helper.PAYMENT_METHOD_QR_CODE {
+	if newOrder.PaymentGateway == enum_state.PAYMENT_GATEWAY_XENDIT && newOrder.PaymentMethod == enum_state.PAYMENT_METHOD_QR_CODE {
 		newXenditQRCodeRequest := new(model.CreateXenditTransaction)
 		newXenditQRCodeRequest.OrderId = newOrder.ID
 		newXenditQRCodeRequest.Lang = request.Lang
@@ -412,9 +442,9 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newXenditTransaction.Description = result.Description
 		newXenditTransaction.FailureCode = result.FailureCode
 		newXenditTransaction.Metadata = result.Metadata
-		newXenditTransaction.ExpiresAt = helper.TimeRFC3339.ToTime(result.ExpiresAt)
-		newXenditTransaction.CreatedAt = helper.TimeRFC3339.ToTime(result.CreatedAt)
-		newXenditTransaction.UpdatedAt = helper.TimeRFC3339.ToTime(result.UpdatedAt)
+		newXenditTransaction.ExpiresAt = helper_others.TimeRFC3339.ToTime(result.ExpiresAt)
+		newXenditTransaction.CreatedAt = helper_others.TimeRFC3339.ToTime(result.CreatedAt)
+		newXenditTransaction.UpdatedAt = helper_others.TimeRFC3339.ToTime(result.UpdatedAt)
 
 		newOrder.XenditTransaction = newXenditTransaction
 	}
@@ -431,17 +461,17 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 	}
 
 	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-	logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 	}
 
-	if newOrder.PaymentStatus == helper.PAID_PAYMENT {
+	if newOrder.PaymentStatus == enum_state.PAID_PAYMENT {
 		newMail := new(model.Mail)
 		newMail.To = []string{newOrder.Email}
 		newMail.Subject = "Payment Successfull"
-		if request.Lang == helper.INDONESIA {
+		if request.Lang == enum_state.INDONESIA {
 			newMail.Subject = "Pembayaran Berhasil"
 		}
 
@@ -464,13 +494,13 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			"Items":            productsSelected,
 			"LogoImage":        logoImageBase64,
 			"CompanyTitle":     newApp.AppName,
-			"TotalAmount":      helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
+			"TotalAmount":      helper_others.FormatNumberFloat32(newOrder.TotalFinalPrice),
 			"Year":             time.Now().Format("2006"),
 			"CustomerNotes":    newOrder.Note,
 			"ShippingMethod":   newOrder.IsDelivery,
-			"ShippingCost":     helper.FormatNumberFloat32(newOrder.DeliveryCost),
-			"ServiceFee":       helper.FormatNumberFloat32(newOrder.ServiceFee),
-			"Discount":         helper.FormatNumberFloat32(newOrder.TotalDiscount),
+			"ShippingCost":     helper_others.FormatNumberFloat32(newOrder.DeliveryCost),
+			"ServiceFee":       helper_others.FormatNumberFloat32(newOrder.ServiceFee),
+			"Discount":         helper_others.FormatNumberFloat32(newOrder.TotalDiscount),
 			"Subject":          newMail.Subject,
 			"PaymentStatus":    newOrder.PaymentStatus,
 			"PaymentLink":      paymentLink,
@@ -495,7 +525,7 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newNotification.UserID = newOrder.UserId
 		newNotification.Title = newMail.Subject
 		newNotification.IsRead = false
-		newNotification.Type = helper.TRANSACTION
+		newNotification.Type = enum_state.TRANSACTION
 		baseTemplatePath = "../internal/templates/base_template_notification1.html"
 		childPath = fmt.Sprintf("../internal/templates/%s/notification/order_payment.html", request.Lang)
 		tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
@@ -550,12 +580,30 @@ func (c *OrderUseCase) GetAllCurrent(ctx context.Context, request *model.GetOrde
 	}
 
 	newOrders := new([]entity.Order)
-	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.ID); err != nil {
+	if err := c.OrderRepository.FindAllOrdersByUserId(tx, newOrders, request.UserId); err != nil {
 		c.Log.Warnf("failed to find all orders by current user : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find all orders by user id : %+v", err))
 	}
 
 	return converter.OrdersToResponse(newOrders), nil
+}
+
+func (c *OrderUseCase) GetOrderById(ctx context.Context, orderId uint64, currentUser *model.UserResponse) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx)
+
+	newOrders := new(entity.Order)
+	newOrders.ID = orderId
+	if err := c.OrderRepository.FindWith3Preloads(tx, newOrders, "OrderProducts", "OrderProducts.Product", "XenditTransaction"); err != nil {
+		c.Log.Warnf("failed to find order by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find order by id : %+v", err))
+	}
+
+	if currentUser.Role != enum_state.ADMIN && newOrders.UserId != currentUser.ID{
+		c.Log.Warnf("cannot access another order except admin!")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "cannot access another order except admin")
+	}
+
+	return converter.OrderToResponse(newOrders), nil
 }
 
 func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, currentUser *model.UserResponse) (*[]model.OrderResponse, int64, int, error) {
@@ -612,7 +660,7 @@ func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int
 			Preload("OrderProducts").
 			Preload("OrderProducts.Product.Images").
 			Preload("XenditTransaction").Where("order_products.product_name LIKE ?", "%"+search+"%")
-		if currentUser.Role == helper.CUSTOMER {
+		if currentUser.Role == enum_state.CUSTOMER {
 			result.Where("user_id = ?", currentUser.ID)
 		}
 		return result
@@ -656,19 +704,26 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		return nil, fiber.NewError(fiber.StatusNotFound, "order not found!")
 	}
 
-	newOrder.CancellationNotes = request.CancellationNotes
+	if request.OrderStatus == enum_state.ORDER_CANCELLED {
+		newOrder.CancellationNotes = request.CancellationNotes
+	}
+
+	if request.OrderStatus == enum_state.ORDER_RECEIVED {
+		newOrder.RejectionNotes = request.RejectionNotes
+	}
+
 	var is_send_email bool
 	var mail_subject_cust string
 	var mail_subject_admin string
 	// validate first before update order status state into database
 	// if cancelled
-	if request.OrderStatus == helper.ORDER_CANCELLED {
-		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED || newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+	if request.OrderStatus == enum_state.ORDER_CANCELLED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLED || newOrder.OrderStatus == enum_state.ORDER_REJECTED || newOrder.OrderStatus == enum_state.ORDER_CANCELLATION_REQUESTED {
 			c.Log.Warnf("can't cancel an order that has been rejected/cancelled/cancellation requested!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that has been rejected/cancelled/cancellation requested!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_PENDING && newOrder.PaymentStatus == helper.PAID_PAYMENT {
+		if newOrder.OrderStatus == enum_state.ORDER_PENDING && newOrder.PaymentStatus == enum_state.PAID_PAYMENT {
 			// jika pending dan paid maka kembalikan saldo
 			// find user wallet
 			findWallet := new(entity.Wallet)
@@ -696,61 +751,83 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
 			}
 
+			now := time.Now()
+			newSaveWalletTransaction := new(helper_others.SaveWalletTransactionRequest)
+			newSaveWalletTransaction.DB = tx
+			newSaveWalletTransaction.UserId = newOrder.UserId
+			newSaveWalletTransaction.OrderId = &newOrder.ID
+			newSaveWalletTransaction.Amount = newOrder.TotalFinalPrice
+			newSaveWalletTransaction.FlowType = enum_state.WALLET_FLOW_TYPE_DEBIT
+			newSaveWalletTransaction.TransactionType = enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT
+			newSaveWalletTransaction.PaymentMethod = newOrder.PaymentMethod
+			newSaveWalletTransaction.Status = enum_state.WALLET_TRANSACTION_STATUS_COMPLETED
+			newSaveWalletTransaction.ReferenceNumber = newOrder.Invoice
+			newSaveWalletTransaction.Note = fmt.Sprintf("Cancel an order %s : %s", newOrder.Invoice, request.CancellationNotes)
+			newSaveWalletTransaction.AdminNote = ""
+			newSaveWalletTransaction.ProcessedAt = &now
+			newSaveWalletTransaction.ProcessedBy = &newOrder.UserId
+
+			err = helper_others.SaveWalletTransaction(newSaveWalletTransaction)
+			if err != nil {
+				c.Log.Warnf("failed to save wallet transaction : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
+			}
+
 			newOrder.OrderStatus = request.OrderStatus
 			is_send_email = true
 			mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Cancelled", newOrder.ID)
 			mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Canceled by Customer", newOrder.ID)
-			if request.Lang == helper.INDONESIA {
+			if request.Lang == enum_state.INDONESIA {
 				mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Dibatalkan", newOrder.ID)
 				mail_subject_admin = fmt.Sprintf("Order ID %d Telah Dibatalkan oleh Customer", newOrder.ID)
 			}
-		} else if newOrder.OrderStatus == helper.ORDER_PENDING && newOrder.PaymentStatus != helper.PENDING_PAYMENT {
-			newOrder.PaymentStatus = helper.CANCELLED_PAYMENT
+		} else if newOrder.OrderStatus == enum_state.ORDER_PENDING && newOrder.PaymentStatus != enum_state.PENDING_PAYMENT {
+			newOrder.PaymentStatus = enum_state.CANCELLED_PAYMENT
 			newOrder.OrderStatus = request.OrderStatus
-		} else if newOrder.OrderStatus == helper.ORDER_RECEIVED {
+		} else if newOrder.OrderStatus == enum_state.ORDER_RECEIVED {
 			c.Log.Warnf("can't cancel an order that is received!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is received!")
-		} else if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
+		} else if newOrder.OrderStatus == enum_state.READY_FOR_PICKUP {
 			c.Log.Warnf("can't cancel an order that is ready for pickup!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is ready for pickup!")
-		} else if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
+		} else if newOrder.OrderStatus == enum_state.ORDER_BEING_DELIVERED {
 			c.Log.Warnf("can't cancel an order that is being delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that is being delivered!")
-		} else if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+		} else if newOrder.OrderStatus == enum_state.ORDER_DELIVERED {
 			c.Log.Warnf("can't cancel an order that has been delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't cancel an order that has been delivered!")
 		}
 	}
 
-	if request.OrderStatus == helper.ORDER_REJECTED {
+	if request.OrderStatus == enum_state.ORDER_REJECTED {
 		// Admin access only for reject
-		if currentUser.Role == helper.CUSTOMER {
+		if currentUser.Role == enum_state.CUSTOMER {
 			c.Log.Warn("admin access only!")
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_REJECTED {
+		if newOrder.OrderStatus == enum_state.ORDER_REJECTED {
 			c.Log.Warnf("can't reject an order that has been rejected!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that has been rejected!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLED {
 			c.Log.Warnf("can't reject an order that has been cancelled!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that has been cancelled!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_RECEIVED {
+		if newOrder.OrderStatus == enum_state.ORDER_RECEIVED {
 			c.Log.Warnf("can't reject an order that has been received!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that has been received!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
+		if newOrder.OrderStatus == enum_state.ORDER_BEING_DELIVERED {
 			c.Log.Warnf("can't reject an order that is been delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't reject an order that is been delivered!")
 		}
 
 		// maka balikkan saldo customer
-		if newOrder.PaymentStatus == helper.PAID_PAYMENT {
+		if newOrder.PaymentStatus == enum_state.PAID_PAYMENT {
 			// find user wallet
 			// kembalikan saldo ke user
 			findWallet := new(entity.Wallet)
@@ -778,10 +855,32 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update wallet balance : %+v", err))
 			}
 
+			now := time.Now()
+			newSaveWalletTransaction := new(helper_others.SaveWalletTransactionRequest)
+			newSaveWalletTransaction.DB = tx
+			newSaveWalletTransaction.UserId = newOrder.UserId
+			newSaveWalletTransaction.OrderId = &newOrder.ID
+			newSaveWalletTransaction.Amount = newOrder.TotalFinalPrice
+			newSaveWalletTransaction.FlowType = enum_state.WALLET_FLOW_TYPE_DEBIT
+			newSaveWalletTransaction.TransactionType = enum_state.WALLET_TRANSACTION_TYPE_ORDER_PAYMENT
+			newSaveWalletTransaction.PaymentMethod = newOrder.PaymentMethod
+			newSaveWalletTransaction.Status = enum_state.WALLET_TRANSACTION_STATUS_COMPLETED
+			newSaveWalletTransaction.ReferenceNumber = newOrder.Invoice
+			newSaveWalletTransaction.Note = fmt.Sprintf("Rejected an order %s", newOrder.Invoice)
+			newSaveWalletTransaction.AdminNote = request.RejectionNotes
+			newSaveWalletTransaction.ProcessedAt = &now
+			newSaveWalletTransaction.ProcessedBy = &currentUser.ID
+
+			err = helper_others.SaveWalletTransaction(newSaveWalletTransaction)
+			if err != nil {
+				c.Log.Warnf("failed to save wallet transaction : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save wallet transaction : %+v", err))
+			}
+
 			is_send_email = true
 			mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Rejected", newOrder.ID)
 			mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Rejected by Admin", newOrder.ID)
-			if request.Lang == helper.INDONESIA {
+			if request.Lang == enum_state.INDONESIA {
 				mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Ditolak", newOrder.ID)
 				mail_subject_admin = fmt.Sprintf("Order ID %d Telah Ditolak oleh Admin", newOrder.ID)
 			}
@@ -790,39 +889,39 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		newOrder.OrderStatus = request.OrderStatus
 	}
 
-	if request.OrderStatus == helper.ORDER_RECEIVED {
+	if request.OrderStatus == enum_state.ORDER_RECEIVED {
 		// Admin access only for received
-		if currentUser.Role == helper.CUSTOMER {
+		if currentUser.Role == enum_state.CUSTOMER {
 			c.Log.Warn("admin access only!")
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
 		}
 
-		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+		if newOrder.PaymentStatus != enum_state.PAID_PAYMENT {
 			c.Log.Warnf("can't accept an order that has not been paid yet!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has not been paid yet!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLED || newOrder.OrderStatus == enum_state.ORDER_REJECTED {
 			c.Log.Warnf("can't accept an order that has been cancelled/rejected!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has been cancelled/rejected!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_RECEIVED {
+		if newOrder.OrderStatus == enum_state.ORDER_RECEIVED {
 			c.Log.Warnf("can't accept an order that has been received!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has been received!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
+		if newOrder.OrderStatus == enum_state.ORDER_BEING_DELIVERED {
 			c.Log.Warnf("can't accept an order that is being delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that is being delivered!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+		if newOrder.OrderStatus == enum_state.ORDER_DELIVERED {
 			c.Log.Warnf("can't accept an order that has been delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that has been delivered!")
 		}
 
-		if newOrder.OrderStatus == helper.READY_FOR_PICKUP {
+		if newOrder.OrderStatus == enum_state.READY_FOR_PICKUP {
 			c.Log.Warnf("can't accept an order that is ready for pickup!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't accept an order that is ready for pickup!")
 		}
@@ -831,45 +930,45 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		is_send_email = true
 		mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Received", newOrder.ID)
 		mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Received by Admin", newOrder.ID)
-		if request.Lang == helper.INDONESIA {
+		if request.Lang == enum_state.INDONESIA {
 			mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Diterima", newOrder.ID)
 			mail_subject_admin = fmt.Sprintf("Order ID %d Telah Diterima oleh Admin", newOrder.ID)
 		}
 	}
 
-	if request.OrderStatus == helper.READY_FOR_PICKUP {
+	if request.OrderStatus == enum_state.READY_FOR_PICKUP {
 		// Admin access only for pick up
-		if currentUser.Role == helper.CUSTOMER {
+		if currentUser.Role == enum_state.CUSTOMER {
 			c.Log.Warn("admin access only!")
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
 		}
 
-		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+		if newOrder.PaymentStatus != enum_state.PAID_PAYMENT {
 			c.Log.Warnf("can't pick up an order that has not been paid yet!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has not been paid yet!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLATION_REQUESTED {
 			c.Log.Warnf("can't pick up an order that is ready for pickup!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that is ready for pickup!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLED || newOrder.OrderStatus == enum_state.ORDER_REJECTED {
 			c.Log.Warnf("can't pick up an order that has been cancelled/rejected!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has been cancelled/rejected!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLATION_REQUESTED {
 			c.Log.Warnf("can't pick up an order that has a cancellation request!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has a cancellation request!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_BEING_DELIVERED {
+		if newOrder.OrderStatus == enum_state.ORDER_BEING_DELIVERED {
 			c.Log.Warnf("can't pick up an order that has being delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has being delivered!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+		if newOrder.OrderStatus == enum_state.ORDER_DELIVERED {
 			c.Log.Warnf("can't pick up an order that has been delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't pick up an order that has been delivered!")
 		}
@@ -877,34 +976,34 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		newOrder.OrderStatus = request.OrderStatus
 	}
 
-	if request.OrderStatus == helper.ORDER_BEING_DELIVERED {
+	if request.OrderStatus == enum_state.ORDER_BEING_DELIVERED {
 		// Admin access only for being delivered
-		if currentUser.Role == helper.CUSTOMER {
+		if currentUser.Role == enum_state.CUSTOMER {
 			c.Log.Warn("admin access only!")
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "admin access only!")
 		}
 
-		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+		if newOrder.PaymentStatus != enum_state.PAID_PAYMENT {
 			c.Log.Warnf("can't being delivered an order that has not been paid yet!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has not been paid yet!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLATION_REQUESTED {
 			c.Log.Warnf("can't being delivered an order that is ready for pickup!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that is ready for pickup!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLED || newOrder.OrderStatus == enum_state.ORDER_REJECTED {
 			c.Log.Warnf("can't being delivered an order that has been cancelled/rejected!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has been cancelled/rejected!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLATION_REQUESTED {
 			c.Log.Warnf("can't being delivered an order that has a cancellation request!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has a cancellation request!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+		if newOrder.OrderStatus == enum_state.ORDER_DELIVERED {
 			c.Log.Warnf("can't being delivered an order that has been delivered!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't being delivered an order that has been delivered!")
 		}
@@ -912,23 +1011,23 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		newOrder.OrderStatus = request.OrderStatus
 	}
 
-	if request.OrderStatus == helper.ORDER_DELIVERED {
-		if newOrder.PaymentStatus != helper.PAID_PAYMENT {
+	if request.OrderStatus == enum_state.ORDER_DELIVERED {
+		if newOrder.PaymentStatus != enum_state.PAID_PAYMENT {
 			c.Log.Warnf("can't complete an order that has not been paid yet!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has not been paid yet!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_DELIVERED {
+		if newOrder.OrderStatus == enum_state.ORDER_DELIVERED {
 			c.Log.Warnf("can't complete an order that has been completed!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has been completed!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLED || newOrder.OrderStatus == helper.ORDER_REJECTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLED || newOrder.OrderStatus == enum_state.ORDER_REJECTED {
 			c.Log.Warnf("can't complete an order that has been cancelled/rejected!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has been cancelled/rejected!")
 		}
 
-		if newOrder.OrderStatus == helper.ORDER_CANCELLATION_REQUESTED {
+		if newOrder.OrderStatus == enum_state.ORDER_CANCELLATION_REQUESTED {
 			c.Log.Warnf("can't complete an order that has a cancellation request!")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "can't complete an order that has a cancellation request!")
 		}
@@ -937,7 +1036,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		is_send_email = true
 		mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Picked Up", newOrder.ID)
 		mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Picked Up by Customer", newOrder.ID)
-		if request.Lang == helper.INDONESIA {
+		if request.Lang == enum_state.INDONESIA {
 			mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Diambil", newOrder.ID)
 			mail_subject_admin = fmt.Sprintf("Pesanan dengan ID %d Telah Diambil oleh Pelanggan", newOrder.ID)
 
@@ -945,7 +1044,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		if newOrder.IsDelivery {
 			mail_subject_cust = fmt.Sprintf("Your Order with ID %d Has Been Delivered", newOrder.ID)
 			mail_subject_admin = fmt.Sprintf("Order ID %d Has Been Delivered", newOrder.ID)
-			if request.Lang == helper.INDONESIA {
+			if request.Lang == enum_state.INDONESIA {
 				mail_subject_cust = fmt.Sprintf("Pesanan Anda dengan ID %d Telah Sampai Di Tujuan", newOrder.ID)
 				mail_subject_admin = fmt.Sprintf("Order ID %d Telah Sampai Di Tujuan", newOrder.ID)
 			}
@@ -976,7 +1075,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		}
 
 		logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
-		logoImageBase64, err := helper.ImageToBase64(logoImagePath)
+		logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 		if err != nil {
 			c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
@@ -993,7 +1092,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			"PaymentMethod":     string(newOrder.PaymentMethod),
 			"LogoImage":         logoImageBase64,
 			"CompanyTitle":      newApp.AppName,
-			"TotalAmount":       helper.FormatNumberFloat32(newOrder.TotalFinalPrice),
+			"TotalAmount":       helper_others.FormatNumberFloat32(newOrder.TotalFinalPrice),
 			"Year":              time.Now().Format("2006"),
 			"PaymentStatus":     newOrder.PaymentStatus,
 			"OrderTrackingURL":  orderTrackingURL,

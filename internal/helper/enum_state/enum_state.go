@@ -1,4 +1,4 @@
-package helper
+package enum_state
 
 type Role string
 type PaymentMethod string
@@ -18,6 +18,12 @@ type PayoutMethod string
 type PDFPageSize string
 type PDFOrientation string
 type Languange string
+type WalletFlowType string
+type WalletTransactionSource string
+type WalletTransactionType string
+type WalletPaymentMethod string
+type WalletTransactionStatus string
+type WalletWithdrawRequest string
 
 const (
 	// role
@@ -56,20 +62,10 @@ const (
 	PAYMENT_METHOD_QR_CODE PaymentMethod = "QR_CODE"
 	PAYMENT_METHOD_EWALLET PaymentMethod = "EWALLET"
 	PAYMENT_METHOD_WALLET  PaymentMethod = "WALLET"
+	PAYMENT_METHOD_CASH    PaymentMethod = "CASH"
 
-	PAYMENT_GATEWAY_MIDTRANS PaymentGateway = "MIDTRANS"
-	PAYMENT_GATEWAY_XENDIT   PaymentGateway = "XENDIT"
-	PAYMENT_GATEWAY_SYSTEM   PaymentGateway = "SYSTEM"
-
-	CAPTURE        TransactionStatus = "capture"
-	SETTLEMENT     TransactionStatus = "settlement"
-	PENDING        TransactionStatus = "pending"
-	DENY           TransactionStatus = "deny"
-	CANCEL         TransactionStatus = "cancel"
-	EXPIRE         TransactionStatus = "expire"
-	REFUND         TransactionStatus = "refund"
-	PARTIAL_REFUND TransactionStatus = "partial_refund"
-	AUTHORIZE      TransactionStatus = "authorize"
+	PAYMENT_GATEWAY_XENDIT PaymentGateway = "XENDIT"
+	PAYMENT_GATEWAY_SYSTEM PaymentGateway = "SYSTEM"
 
 	GET    RequestMethod = "GET"
 	POST   RequestMethod = "POST"
@@ -118,10 +114,32 @@ const (
 
 	INDONESIA Languange = "id"
 	ENGLISH   Languange = "en"
+
+	WALLET_FLOW_TYPE_DEBIT  WalletFlowType = "debit"
+	WALLET_FLOW_TYPE_CREDIT WalletFlowType = "credit"
+
+	WALLET_TRANSACTION_TYPE_TOP_UP           WalletTransactionType = "top_up"
+	WALLET_TRANSACTION_TYPE_ORDER_PAYMENT    WalletTransactionType = "order_payment"
+	WALLET_TRANSACTION_TYPE_ORDER_REFUND     WalletTransactionType = "order_refund"
+	WALLET_TRANSACTION_TYPE_WITHDRAW         WalletTransactionType = "withdraw"
+	WALLET_TRANSACTION_TYPE_ADMIN_ADJUSTMENT WalletTransactionType = "admin_adjustment"
+	WALLET_TRANSACTION_TYPE_CASHBACK         WalletTransactionType = "cashback"
+	WALLET_TRANSACTION_TYPE_TRANSFER_IN      WalletTransactionType = "transfer_in"
+	WALLET_TRANSACTION_TYPE_TRANSFER_OUT     WalletTransactionType = "transfer_out"
+
+	WALLET_TRANSACTION_STATUS_PENDING    WalletTransactionStatus = "pending"
+	WALLET_TRANSACTION_STATUS_COMPLETED  WalletTransactionStatus = "completed"
+	WALLET_TRANSACTION_STATUS_FAILED     WalletTransactionStatus = "failed"
+
+	WALLET_WITHDRAW_REQUEST_METHOD_CASH          WalletWithdrawRequest = "cash"
+	WALLET_WITHDRAW_REQUEST_METHOD_BANK_TRANSFER WalletWithdrawRequest = "bank_transfer"
+	WALLET_WITHDRAW_REQUEST_STATUS_PENDING       WalletWithdrawRequest = "pending"
+	WALLET_WITHDRAW_REQUEST_STATUS_APPROVED      WalletWithdrawRequest = "approved"
+	WALLET_WITHDRAW_REQUEST_STATUS_REJECTED      WalletWithdrawRequest = "rejected"
 )
 
-func IsValidChannelCode(pm ChannelCode) bool {
-	switch pm {
+func IsValidChannelCode(pc ChannelCode) bool {
+	switch pc {
 	case XENDIT_QR_DANA_CHANNEL_CODE, XENDIT_QR_LINKAJA_CHANNEL_CODE, XENDIT_EWALLET_LINKAJA_CHANNEL_CODE, XENDIT_EWALLET_DANA_CHANNEL_CODE, XENDIT_EWALLET_OVO_CHANNEL_CODE, XENDIT_EWALLET_SHOPEEPAY_CHANNEL_CODE, WALLET_CHANNEL_CODE:
 		return true
 	default:
@@ -138,9 +156,9 @@ func IsValidPaymentMethod(pm PaymentMethod) bool {
 	}
 }
 
-func IsValidPaymentGateway(pm PaymentGateway) bool {
-	switch pm {
-	case PAYMENT_GATEWAY_MIDTRANS, PAYMENT_GATEWAY_XENDIT, PAYMENT_GATEWAY_SYSTEM:
+func IsValidPaymentGateway(pg PaymentGateway) bool {
+	switch pg {
+	case PAYMENT_GATEWAY_XENDIT, PAYMENT_GATEWAY_SYSTEM:
 		return true
 	default:
 		return false

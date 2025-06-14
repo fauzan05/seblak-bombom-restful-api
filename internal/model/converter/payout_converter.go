@@ -2,21 +2,21 @@ package converter
 
 import (
 	"seblak-bombom-restful-api/internal/entity"
-	"seblak-bombom-restful-api/internal/helper"
+	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/model"
 )
 
 func PayoutToResponse(payout *entity.Payout) *model.PayoutResponse {
 	response := &model.PayoutResponse{
 		ID:             payout.ID,
-		XenditPayoutId: helper.NullStringToString(payout.XenditPayoutId),
+		XenditPayoutId: helper_others.NullStringToString(payout.XenditPayoutId),
 		Amount:         payout.Amount,
 		Currency:       payout.Currency,
 		Method:         payout.Method,
 		Status:         payout.Status,
 		Notes:          payout.Notes,
-		CreatedAt:      helper.TimeRFC3339(payout.CreatedAt),
-		UpdatedAt:      helper.TimeRFC3339(payout.UpdatedAt),
+		CreatedAt:      helper_others.TimeRFC3339(payout.CreatedAt),
+		UpdatedAt:      helper_others.TimeRFC3339(payout.UpdatedAt),
 	}
 
 	if payout.XenditPayout != nil {
