@@ -19,16 +19,19 @@ import (
 type UserController struct {
 	Log            *logrus.Logger
 	UseCase        *usecase.UserUseCase
+	AppUseCase     *usecase.ApplicationUseCase
 	AuthConfig     *model.AuthConfig
 	FrontEndConfig *model.FrontEndConfig
 }
 
-func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger, authConfig *model.AuthConfig, frontEndConfig *model.FrontEndConfig) *UserController {
+func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger, authConfig *model.AuthConfig,
+	frontEndConfig *model.FrontEndConfig, appUseCase *usecase.ApplicationUseCase) *UserController {
 	return &UserController{
 		Log:            logger,
 		UseCase:        useCase,
 		AuthConfig:     authConfig,
 		FrontEndConfig: frontEndConfig,
+		AppUseCase:     appUseCase,
 	}
 }
 
@@ -86,8 +89,8 @@ func (c *UserController) VerifyEmailRegistration(ctx *fiber.Ctx) error {
 	request.BaseFrontEndURL = c.FrontEndConfig.BaseURL
 	response, err := c.UseCase.VerifyEmailRegistration(ctx, request)
 	if err != nil {
-		c.Log.Warnf("failed to verify email registration an user : %+v", err)
-		return err
+		url := fmt.Sprintf("/verified-failed/%s?lang=%s", getVerifyToken, getLang)
+		return ctx.Redirect(url, fiber.StatusFound)
 	}
 
 	url := fmt.Sprintf("/verified-success/%s?lang=%s&email=%s", getVerifyToken, getLang, response.Email)
@@ -113,7 +116,7 @@ func (c *UserController) ShowVerifiedSuccess(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "internal server error")
 	}
 
-	loginUrl := fmt.Sprintf("%s/login", c.FrontEndConfig.BaseURL)
+	loginUrl := fmt.Sprintf("%s/auth/login", c.FrontEndConfig.BaseURL)
 	err = tmpl.Execute(bodyBuilder, map[string]string{
 		"LoginURL": loginUrl,
 		"Email":    getEmail,
@@ -121,6 +124,36 @@ func (c *UserController) ShowVerifiedSuccess(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		c.Log.Warnf("failed to execute verified_success page : %+v", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "internal server error")
+	}
+
+	return ctx.SendString(bodyBuilder.String())
+}
+
+func (c *UserController) ShowVerifiedFailed(ctx *fiber.Ctx) error {
+	ctx.Type("html", "utf-8")
+	bodyBuilder := new(strings.Builder)
+	getLang := ctx.Query("lang", string(enum_state.ENGLISH))
+
+	templatePath := fmt.Sprintf("../internal/templates/%s/pages/verified_failed.html", getLang)
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "internal server error")
+	}
+
+	getAppSetting, err := c.AppUseCase.Get(ctx.Context())
+	if err != nil {
+		c.Log.Warnf("%+v", err)
+		htmlBytes, _ := os.ReadFile(fmt.Sprintf("internal/templates/%s/pages/internal_error.html", getLang))
+		return ctx.Status(500).Type("html").SendString(string(htmlBytes))
+	}
+
+	err = tmpl.Execute(bodyBuilder, map[string]string{
+		"AdminEmail": getAppSetting.Email,
+	})
+
+	if err != nil {
+		c.Log.Warnf("failed to execute verified_failed page : %+v", err)
 		return fiber.NewError(fiber.StatusInternalServerError, "internal server error")
 	}
 
@@ -233,7 +266,7 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 		Path:     "/",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
-	})	
+	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
 		Code:   200,

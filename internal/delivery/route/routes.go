@@ -58,13 +58,14 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api.Static("/assets", staticPath)
 
 	// User
-	api.Post("/users", c.UserController.Register)
+	api.Post("/users/register", c.UserController.Register)
 	api.Post("/users/login", c.UserController.Login)
 	api.Post("/users/forgot-password", c.UserController.CreateForgotPassword)
 	api.Post("/users/forgot-password/:passwordResetId/validate", c.UserController.ValidateForgotPassword)
 	api.Post("/users/forgot-password/:passwordResetId/reset-password", c.UserController.ResetPassword)
 	api.Get("/users/verify-email/:token", c.UserController.VerifyEmailRegistration)
 	c.App.Get("/verified-success/:token", c.UserController.ShowVerifiedSuccess)
+	c.App.Get("/verified-failed/:token", c.UserController.ShowVerifiedFailed)
 
 	// Discount Coupon
 	api.Get("/discount-coupons", c.DiscountCouponController.GetAll)

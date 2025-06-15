@@ -22,10 +22,10 @@ type UserResponse struct {
 
 type RegisterUserRequest struct {
 	FirstName string               `json:"first_name" validate:"required,max=100"`
-	LastName  string               `json:"last_name" validate:"required,max=100"`
+	LastName  string               `json:"last_name"`
 	Email     string               `json:"email" validate:"required,max=100"`
 	Phone     string               `json:"phone" validate:"required,max=50"`
-	Password  string               `json:"password" validate:"required,min=8,max=100"`
+	Password  string               `json:"password" validate:"required"`
 	Role      enum_state.Role      `json:"role" validate:"required"`
 	Lang      enum_state.Languange `json:"-"`
 	TimeZone  time.Location        `json:"-"`

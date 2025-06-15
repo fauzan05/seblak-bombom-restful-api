@@ -1,7 +1,7 @@
 CREATE TABLE users (
     id INTEGER AUTO_INCREMENT,
     first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     email_verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(64),

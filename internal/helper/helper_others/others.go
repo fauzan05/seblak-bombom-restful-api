@@ -112,23 +112,47 @@ func GenerateBoundary() string {
 	return "BOUNDARY_" + hex.EncodeToString(bytes)
 }
 
-func ValidatePassword(password string) string {
+func ValidatePassword(password string, lang enum_state.Languange) string {
 	var errs string
 
-	if len(password) < 8 {
-		errs += "Password must be at least 8 characters long;"
-	}
-	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
-		errs += "Password must contain at least one uppercase letter;"
-	}
-	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
-		errs += "Password must contain at least one lowercase letter;"
-	}
-	if !regexp.MustCompile(`[0-9]`).MatchString(password) {
-		errs += "Password must contain at least one number;"
-	}
-	if !regexp.MustCompile(`[!@#~$%^&*()+|_]`).MatchString(password) {
-		errs += "Password must contain at least one symbol (!@#~$%^&*()+|_);"
+	if lang == enum_state.INDONESIA {
+		if len(password) < 8 {
+			errs += "Password harus terdiri dari minimal 8 karakter;"
+		}
+		if len(password) > 100 {
+			errs += "Password tidak boleh lebih dari 100 karakter;"
+		}
+		if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+			errs += "Password harus mengandung setidaknya satu huruf kapital (A-Z);"
+		}
+		if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+			errs += "Password harus mengandung setidaknya satu huruf kecil (a-z);"
+		}
+		if !regexp.MustCompile(`[0-9]`).MatchString(password) {
+			errs += "Password harus mengandung setidaknya satu angka (0-9);"
+		}
+		if !regexp.MustCompile(`[!@#~$%^&*()+|_]`).MatchString(password) {
+			errs += "Password harus mengandung setidaknya satu simbol (!@#~$%^&*()+|_);"
+		}
+	} else {
+		if len(password) < 8 {
+			errs += "Password must be at least 8 characters long;"
+		}
+		if len(password) > 100 {
+			errs += "Password must not exceed 100 characters;"
+		}
+		if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+			errs += "Password must contain at least one uppercase letter;"
+		}
+		if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+			errs += "Password must contain at least one lowercase letter;"
+		}
+		if !regexp.MustCompile(`[0-9]`).MatchString(password) {
+			errs += "Password must contain at least one number;"
+		}
+		if !regexp.MustCompile(`[!@#~$%^&*()+|_]`).MatchString(password) {
+			errs += "Password must contain at least one symbol (!@#~$%^&*()+|_);"
+		}
 	}
 
 	return errs

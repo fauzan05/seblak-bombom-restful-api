@@ -84,7 +84,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		return nil, fiber.NewError(fiber.StatusConflict, "email user has already exists!")
 	}
 
-	if errs := helper_others.ValidatePassword(request.Password); len(errs) > 0 {
+	if errs := helper_others.ValidatePassword(request.Password, request.Lang); len(errs) > 0 {
 		c.Log.Warnf(errs)
 		return nil, fiber.NewError(fiber.StatusBadRequest, errs)
 	}
@@ -309,7 +309,7 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
 		}
 
-		loginURL := fmt.Sprintf("%s/login", request.BaseFrontEndURL)
+		loginURL := fmt.Sprintf("%s/auth/login", request.BaseFrontEndURL)
 		bodyBuilder := new(strings.Builder)
 		err = tmpl.ExecuteTemplate(bodyBuilder, "base", map[string]string{
 			"FirstName":   newUser.Name.FirstName,
@@ -839,7 +839,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 		return false, fiber.NewError(fiber.StatusBadRequest, "verification code is not match!")
 	}
 
-	if errs := helper_others.ValidatePassword(request.NewPassword); len(errs) > 0 {
+	if errs := helper_others.ValidatePassword(request.NewPassword, request.Lang); len(errs) > 0 {
 		c.Log.Warnf(errs)
 		return false, fiber.NewError(fiber.StatusBadRequest, errs)
 	}
