@@ -400,29 +400,29 @@ func (c *UserUseCase) ValidateVerifyTokenIsValid(ctx *fiber.Ctx, verifyToken str
 	return nil
 }
 
-func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUserRequest) (*model.UserTokenResponse, error) {
+func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUserRequest) (*model.UserTokenResponse, *model.UserResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	if err := c.Validate.Struct(request); err != nil {
 		c.Log.Warnf("invalid request body : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid request body : %+v", err))
 	}
 
 	newUser := new(entity.User)
 	if err := c.UserRepository.FindByEmail(c.DB, newUser, request.Email); err != nil {
 		c.Log.Warnf("user not found : %+v", err)
-		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("user not found : %+v", err))
+		return nil, nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("user not found : %+v", err))
 	}
 
 	if !newUser.EmailVerified {
 		c.Log.Warnf("your account has not verified email")
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "your account has not verified email!")
+		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "your account has not verified email!")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(newUser.Password), []byte(request.Password)); err != nil {
 		c.Log.Warnf("password is wrong : %+v", err)
-		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("password is wrong : %+v", err))
+		return nil, nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("password is wrong : %+v", err))
 	}
 
 	var token = &entity.Token{}
@@ -437,15 +437,15 @@ func (c *UserUseCase) Authenticate(ctx context.Context, request *model.LoginUser
 	token.ExpiryDate = totalHours
 	if err := c.TokenRepository.Create(tx, token); err != nil {
 		c.Log.Warnf("failed to create token by user into database : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create token by user into database : %+v", err))
+		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create token by user into database : %+v", err))
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("failed to commit transaction : %+v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
+		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
-	return converter.UserTokenToResponse(token), nil
+	return converter.UserTokenToResponse(token), converter.UserToResponse(newUser), nil
 }
 
 func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUserByTokenRequest) (*model.UserResponse, error) {

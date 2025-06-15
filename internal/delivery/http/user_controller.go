@@ -168,7 +168,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
 	}
 
-	response, err := c.UseCase.Authenticate(ctx.Context(), request)
+	response, userResponse, err := c.UseCase.Authenticate(ctx.Context(), request)
 	if err != nil {
 		c.Log.Warnf("failed to login : %+v", err)
 		return err
@@ -184,10 +184,10 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Expires:  response.ExpiryDate,
 	})
 
-	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserTokenResponse]{
+	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
 		Code:   200,
 		Status: "success to login",
-		Data:   response,
+		Data:   userResponse,
 	})
 }
 
