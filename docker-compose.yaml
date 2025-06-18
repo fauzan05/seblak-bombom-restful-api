@@ -30,7 +30,7 @@ services:
     container_name: seblak-bombom-api-app
     build:
       context: "."
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     image: "seblak-bombom-api-img"
     restart: always
     environment:

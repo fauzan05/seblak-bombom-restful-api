@@ -1,47 +1,50 @@
-# Stage 1: Install wkhtmltopdf di Alpine 3.14
-FROM alpine:3.14 AS wkhtml
+# Stage 1: Build binary
+FROM golang:1.22.2-alpine AS builder
+
+WORKDIR /app
+
+# Aktifkan CGO kalau wkhtmltopdf membutuhkan fontconfig & sejenisnya
+ENV CGO_ENABLED=1 \
+    GOOS=linux \
+    GOARCH=amd64
 
 RUN apk add --no-cache \
+    git \
+    libc6-compat \
+    build-base \
     wkhtmltopdf \
     ttf-dejavu \
     fontconfig
 
-# Stage 2: Gunakan image Go dengan Alpine terbaru
-FROM golang:1.22.2-alpine
+COPY go.mod go.sum ./
+RUN go mod download
 
-# ─── Env untuk CompileDaemon ───────────────────────────────────────
-ENV GO111MODULE=on \
-    CGO_ENABLED=0
+COPY . .
+
+# Build binary ke /build/app
+RUN mkdir /build && \
+    go build -o /build/app ./app/main.go
+
+# ─────────────────────────────────────────────────────────────────────
+
+# Stage 2: Minimal runtime container
+FROM alpine:3.14
 
 WORKDIR /app
 
-# ─── Salin wkhtmltopdf dari Stage 1 ────────────────────────────────
-COPY --from=wkhtml /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
-COPY --from=wkhtml /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
-COPY --from=wkhtml /usr/share/fonts /usr/share/fonts
+# Copy binary dan wkhtmltopdf dari builder
+COPY --from=builder /build/app /app/app
+COPY --from=builder /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
+COPY --from=builder /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
+COPY --from=builder /usr/share/fonts /usr/share/fonts
+COPY --from=builder /etc/fonts /etc/fonts
 
-# ─── Install Dependensi Tambahan ───────────────────────────────────
+# Runtime deps
 RUN apk add --no-cache \
     libgcc \
-    ttf-dejavu \
-    fontconfig
-
-# ─── Copy Project & Buat Symlink untuk Internal Directory ──────────
-COPY . .
-
-# Buat symlink agar "../internal" di kode mengarah ke "/app/internal"
-RUN ln -s /app/internal /internal
-
-# ─── Build tools & app ─────────────────────────────────────────────
-RUN mkdir /build
-
-COPY go.mod .
-RUN go mod download
-
-RUN go install github.com/githubnemo/CompileDaemon@latest
+    fontconfig \
+    ttf-dejavu
 
 EXPOSE 80
 
-ENTRYPOINT [ "CompileDaemon", \
-  "-build=go build -o /build/app ./app/main.go", \
-  "-command=/build/app" ]
+CMD ["./app"]
