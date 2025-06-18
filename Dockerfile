@@ -1,7 +1,22 @@
-# builder image
-FROM surnet/alpine-wkhtmltopdf:3.8-0.12.5-full as builder
+# builder image untuk wkhtmltopdf
+FROM surnet/alpine-wkhtmltopdf:3.8-0.12.5-full as wkhtmlbuilder
 
-# Image
+# Build golang app
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /go/src/app
+
+# Copy go.mod dan go.sum terlebih dahulu (jika ada)
+COPY go.mod go.sum* ./
+RUN go mod download || true
+
+# Copy source code
+COPY . .
+
+# Build aplikasi
+RUN go build -o app ./app/main.go
+
+# Final image
 FROM golang:1.11-alpine3.8
 
 # Install needed packages
@@ -33,11 +48,22 @@ RUN  echo "https://mirror.tuna.tsinghua.edu.cn/alpine/v3.8/main" > /etc/apk/repo
     && rm -rf /tmp/* \
     && apk del .build-deps
 
-COPY --from=builder /bin/wkhtmltopdf /bin/wkhtmltopdf
-COPY --from=builder /bin/wkhtmltoimage /bin/wkhtmltoimage
+# Copy wkhtmltopdf
+COPY --from=wkhtmlbuilder /bin/wkhtmltopdf /bin/wkhtmltopdf
+COPY --from=wkhtmlbuilder /bin/wkhtmltoimage /bin/wkhtmltoimage
 
 WORKDIR /go/src/app
 
+# Copy built app dari builder stage
+COPY --from=builder /go/src/app/app .
+
+# Debug: cek app dan beri permission
+RUN ls -la && chmod +x app
+
+# Create symlink jika diperlukan
+RUN ln -s /go/src/app/internal /internal || true
+
 EXPOSE 80
 
-CMD [ "app" ]
+# Gunakan absolute path
+CMD ["/go/src/app/app"]
