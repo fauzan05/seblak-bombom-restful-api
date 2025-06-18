@@ -10,9 +10,9 @@ import (
 func main() {
 	viperConfig := config.NewViper()
 	log := config.NewLogger(viperConfig)
-	// db := config.NewDatabaseProd(viperConfig, log) //prod
+	db := config.NewDatabaseProd(viperConfig, log) //prod
 	// db := config.NewDatabaseTest(viperConfig, log) // test
-	db := config.NewDatabaseDev(viperConfig, log) // dev
+	// db := config.NewDatabaseDev(viperConfig, log) // dev
 	// db := config.NewDatabaseDocker(viperConfig, log)
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator()
@@ -28,15 +28,16 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: func(origin string) bool {
 			allowed := map[string]bool{
-				"http://localhost:3000":                 true,
-				"http://seblak-bombom-api-consumer-app": true,
+				"http://localhost:3000":                                         true,
+				"http://seblak-bombom-api-consumer-app":                         true,
+				"https://seblak-bombom-api-consumer-production.up.railway.app": true,
 			}
 			return allowed[origin]
 		},
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept",
 		AllowCredentials: true,
-	}))	
+	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:             db,
