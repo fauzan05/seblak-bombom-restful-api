@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"os"
+	// "os"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
@@ -67,12 +67,12 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 		// delete data gambar sebelumnya
 		if count > 0 {
 			if newApplication.LogoFilename != "" {
-				filePath := "../uploads/images/application/"
-				err = os.Remove(filePath + newApplication.LogoFilename)
-				if err != nil {
-					c.Log.Warnf("failed to delete image file: %v\n", err)
-					return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed delete image file: %v\n", err))
-				}
+				// filePath := "../uploads/images/application/"
+				// err = os.Remove(filePath + newApplication.LogoFilename)
+				// if err != nil {
+				// 	c.Log.Warnf("failed to delete image file: %v\n", err)
+				// 	return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed delete image file: %v\n", err))
+				// }
 			}
 		}
 	}
