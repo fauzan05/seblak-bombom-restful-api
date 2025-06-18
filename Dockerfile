@@ -8,15 +8,15 @@ FROM golang:1.22.2-alpine AS builder
 ENV GO111MODULE=on \
     CGO_ENABLED=0
 
-WORKDIR /build
+WORKDIR /app
 
 # Copy dan build project
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
-# Build aplikasi ke dalam folder /build
-RUN go build -o app ./app/main.go && ls -la
+# Build aplikasi - pastikan output path benar
+RUN go build -o /app/app ./app/main.go
 
 # Stage 3: Final image
 FROM alpine:3.14
@@ -29,18 +29,16 @@ COPY --from=wkhtml /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
 COPY --from=wkhtml /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
 COPY --from=wkhtml /usr/share/fonts /usr/share/fonts
 
-# Create workdir
+# Create app directory
 WORKDIR /app
 
-# Copy aplikasi dari builder
-COPY --from=builder /build/app .
+# Copy aplikasi dari builder dengan path yang benar
+COPY --from=builder /app/app /app/app
 
-# Debug: check file exists
-RUN ls -la /app/
-
-# Set permission
-RUN chmod +x app
+# Set permission setelah copy
+RUN chmod +x /app/app
 
 EXPOSE 80
 
-CMD ["./app"]
+# Gunakan path absolut
+CMD ["/app/app"]
