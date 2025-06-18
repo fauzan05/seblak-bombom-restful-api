@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"seblak-bombom-restful-api/internal/helper"
 
 	"github.com/spf13/viper"
@@ -8,14 +10,21 @@ import (
 
 func NewViper() *viper.Viper {
 	config := viper.New()
+	wd, err := os.Getwd()
+    if err != nil {
+        helper.HandleErrorWithPanic(err)
+    }
 
-	config.SetConfigName("config")
-	config.SetConfigType("json")
-	config.AddConfigPath("./../")
-	config.AddConfigPath("./")
-	err := config.ReadInConfig()
+    rootPath := filepath.Join(wd)
 
-	helper.HandleErrorWithPanic(err)
+	config.SetConfigFile(".env")
+    config.AddConfigPath(rootPath)
+    config.AutomaticEnv()
 
-	return config
+    if err := config.ReadInConfig(); err != nil {
+        helper.HandleErrorWithPanic(err)
+    }
+
+    return config
+
 }

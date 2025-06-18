@@ -13,14 +13,14 @@ import (
 )
 
 func NewDatabaseProd(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
-	username := viper.GetString("database.prod.username")
-	password := viper.GetString("database.prod.password")
-	host := viper.GetString("database.prod.host")
-	port := viper.GetInt("database.prod.port")
-	database_name := viper.GetString("database.prod.name")
-	idleConnection := viper.GetInt("database.prod.pool.idle")
-	maxConnection := viper.GetInt("database.prod.pool.max")
-	maxLifeTimeConnection := viper.GetInt("database.prod.pool.lifetime")
+	username := viper.GetString("DB_PROD_USERNAME")
+	password := viper.GetString("DB_PROD_PASSWORD")
+	host := viper.GetString("DB_PROD_HOST")
+	port := viper.GetInt("DB_PROD_PORT")
+	database_name := viper.GetString("DB_PROD_NAME")
+	idleConnection := viper.GetInt("DB_PROD_POOL_IDLE")
+	maxConnection := viper.GetInt("DB_PROD_POOL_MAX")
+	maxLifeTimeConnection := viper.GetInt("DB_PROD_POOL_LIFETIME")
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database_name)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
