@@ -38,10 +38,6 @@ COPY --from=builder /bin/wkhtmltoimage /bin/wkhtmltoimage
 
 WORKDIR /go/src/app
 
-COPY src/ .
-
-COPY fonts/ /usr/share/fonts
-
 RUN go get -d -v ./... && go install -v ./...
 
 EXPOSE 80
