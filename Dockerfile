@@ -17,12 +17,21 @@ COPY --from=wkhtmlbuilder /bin/wkhtmltoimage /bin/wkhtmltoimage
 
 WORKDIR /app
 
+# Copy semua files
 COPY . .
 
-# Berikan permission pada file main yang sudah ada
-RUN chmod +x main || true
+# Debug
+RUN ls -la
+
+# Create wrapper script
+RUN echo '#!/bin/sh' > start.sh && \
+    echo 'cd /app && ./main' >> start.sh && \
+    chmod +x start.sh
+
+# Create symlink jika diperlukan
+RUN ln -s /app/internal /internal || true
 
 EXPOSE 80
 
-# Gunakan file main yang sudah ada
-CMD ["/app/main"]
+# Gunakan script wrapper
+CMD ["/app/start.sh"]
