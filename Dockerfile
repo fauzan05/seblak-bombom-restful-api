@@ -1,25 +1,49 @@
-#-----------------PROD-----------------
-# Use the official Debian slim image for a lean production container.
-# https://hub.docker.com/_/debian
-# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM debian:buster-slim as prod
-RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    ca-certificates \
-    # start deps needed for wkhtmltopdf
-    curl \
-    libxrender1 \
-    libjpeg62-turbo \
-    fontconfig \
-    libxtst6 \
-    xfonts-75dpi \
-    xfonts-base \
-    xz-utils && \
-    # stop deps needed for wkhtmltopdf
-    rm -rf /var/lib/apt/lists/*
+# builder image
+FROM surnet/alpine-wkhtmltopdf:3.8-0.12.5-full as builder
 
-RUN curl "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb" -L -o "wkhtmltopdf.deb"
-RUN dpkg -i wkhtmltopdf.deb
+# Image
+FROM golang:1.11-alpine3.8
 
-COPY --from=build /web /web
+# Install needed packages
+RUN  echo "https://mirror.tuna.tsinghua.edu.cn/alpine/v3.8/main" > /etc/apk/repositories \
+     && echo "https://mirror.tuna.tsinghua.edu.cn/alpine/v3.8/community" >> /etc/apk/repositories \
+     && apk update && apk add --no-cache \
+      libstdc++ \
+      libx11 \
+      libxrender \
+      libxext \
+      libssl1.0 \
+      ca-certificates \
+      fontconfig \
+      freetype \
+      ttf-dejavu \
+      ttf-droid \
+      ttf-freefont \
+      ttf-liberation \
+      ttf-ubuntu-font-family \
+    && apk add --no-cache --virtual .build-deps \
+      msttcorefonts-installer \
+    \
+    # Install microsoft fonts
+    && update-ms-fonts \
+    && fc-cache -f \
+    \
+    # Clean up when done
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/* \
+    && apk del .build-deps
 
-CMD ["/web"]
+COPY --from=builder /bin/wkhtmltopdf /bin/wkhtmltopdf
+COPY --from=builder /bin/wkhtmltoimage /bin/wkhtmltoimage
+
+WORKDIR /go/src/app
+
+COPY src/ .
+
+COPY fonts/ /usr/share/fonts
+
+RUN go get -d -v ./... && go install -v ./...
+
+EXPOSE 80
+
+CMD [ "app" ]
