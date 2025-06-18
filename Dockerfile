@@ -2,7 +2,7 @@
 FROM alpine:3.14 AS wkhtml
 RUN apk add --no-cache wkhtmltopdf ttf-dejavu fontconfig
 
-# Stage 2: Golang build
+# Stage 2: Build app
 FROM golang:1.22.2-alpine
 
 ENV GO111MODULE=on \
@@ -10,25 +10,24 @@ ENV GO111MODULE=on \
 
 WORKDIR /app
 
-# wkhtmltopdf
+# Install wkhtmltopdf dari stage 1
 COPY --from=wkhtml /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
 COPY --from=wkhtml /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
 COPY --from=wkhtml /usr/share/fonts /usr/share/fonts
 
+# Install dependencies
 RUN apk add --no-cache libgcc ttf-dejavu fontconfig
 
-# Project code
+# Copy dan build project
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
 
 RUN ln -s /app/internal /internal
 
-# ✅ BUILD APP + beri permission execute
-RUN go build -o /app/app ./app/main.go && chmod +x /app/app
+# ✅ Build ke ./app dan beri izin eksekusi
+RUN go build -o app ./app/main.go && chmod +x app
 
 EXPOSE 80
 
-# ✅ Jalankan binary yang sudah bisa dieksekusi
 CMD ["./app"]
