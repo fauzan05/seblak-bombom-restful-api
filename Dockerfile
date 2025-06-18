@@ -14,8 +14,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
-# PERBAIKAN 1: Build langsung ke binary executable
-RUN go build -o main ./app/main.go  # Ubah output nama
+# PERBAIKAN: Pastikan output path konsisten
+RUN go build -o /app/main ./app/main.go  # Ubah menjadi /app/main
 
 # Stage 3: Final image
 FROM alpine:3.14
@@ -28,21 +28,21 @@ COPY --from=wkhtml /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
 COPY --from=wkhtml /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
 COPY --from=wkhtml /usr/share/fonts /usr/share/fonts
 
-# PERBAIKAN 2: Buat direktori khusus untuk app
-WORKDIR /app
+# Buat direktori
 RUN mkdir -p /app/bin
 
-# Copy aplikasi dari builder
-COPY --from=builder /app/main /app/bin/main  # Path konsisten
+# PERBAIKAN: Copy dengan path yang benar
+COPY --from=builder /app/main /app/bin/main
 
-# PERBAIKAN 3: Set permission secara eksplisit
-RUN chmod -R 755 /app/bin
+# Set permission
+RUN chmod 755 /app/bin/main
 
-# PERBAIKAN 4: Gunakan user non-root
-RUN adduser -D myuser
+# Gunakan user non-root
+RUN adduser -D -g '' myuser
 USER myuser
+
+WORKDIR /app
 
 EXPOSE 80
 
-# PERBAIKAN 5: Gunakan full path ke binary
 CMD ["/app/bin/main"]
