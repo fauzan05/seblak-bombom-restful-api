@@ -38,8 +38,6 @@ COPY --from=builder /bin/wkhtmltoimage /bin/wkhtmltoimage
 
 WORKDIR /go/src/app
 
-RUN go get -d -v ./... && go install -v ./...
-
 EXPOSE 80
 
 CMD [ "app" ]
