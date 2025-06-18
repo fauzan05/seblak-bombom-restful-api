@@ -7,7 +7,7 @@ import (
 )
 
 func NewFrontEndConfig(viper *viper.Viper) *model.FrontEndConfig {
-	getBaseURL := viper.GetString("front_end.base_url")
+	getBaseURL := viper.GetString("FRONT_END_BASE_URL")
 	newFrontEnd := new(model.FrontEndConfig)
 	newFrontEnd.BaseURL = getBaseURL
 	return newFrontEnd

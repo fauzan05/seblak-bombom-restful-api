@@ -6,11 +6,11 @@ import (
 )
 
 func NewPusherClient(viper *viper.Viper) pusher.Client {
-	appId := viper.GetString("pusher.app_id")
-	key := viper.GetString("pusher.key")
-	secret := viper.GetString("pusher.secret")
-	cluster := viper.GetString("pusher.cluster")
-	secure := viper.GetBool("pusher.secure")
+	appId := viper.GetString("PUSHER_APP_ID")
+	key := viper.GetString("PUSHER_KEY")
+	secret := viper.GetString("PUSHER_SECRET")
+	cluster := viper.GetString("PUSHER_CLUSTER")
+	secure := viper.GetBool("PUSHER_SECURE")
 	pusherClient := pusher.Client{
 		AppID:   appId,
 		Key:     key,

@@ -7,7 +7,7 @@ import (
 )
 
 func NewAuthConfig(viper *viper.Viper) *model.AuthConfig {
-	adminCreationKey := viper.GetString("auth_admin.admin_creation_key")
+	adminCreationKey := viper.GetString("ADMIN_CREATION_KEY")
 	newAuthConfig := new(model.AuthConfig)
 	newAuthConfig.AdminCreationKey = adminCreationKey
 	return newAuthConfig

@@ -53,7 +53,8 @@ func main() {
 		PusherClient:   pusherClient,
 	})
 
-	webPort := viperConfig.GetInt("web.port")
+	webPort := viperConfig.GetInt("WEB_PORT")
+	fmt.Println("Web server is running on port:", webPort)
 	err := app.Listen(fmt.Sprintf(":%d", webPort))
 	if err != nil {
 		log.Fatalf("Failed to start server : %v", err)

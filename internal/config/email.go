@@ -9,11 +9,11 @@ import (
 
 func NewEmailWorker(viper *viper.Viper) *mailer.EmailWorker {
 	smtpMailer := &mailer.SMTPMailer{
-		AuthEmail:    viper.GetString("email.test.email"),
-		AuthPassword: viper.GetString("email.test.password"),
-		SenderName:   viper.GetString("email.test.sender_name"),
-		Host:         viper.GetString("email.test.host"),
-		Port:         viper.GetInt("email.test.port"),
+		AuthEmail:    viper.GetString("EMAIL_TEST_EMAIL"),
+		AuthPassword: viper.GetString("EMAIL_TEST_PASSWORD"),
+		SenderName:   viper.GetString("EMAIL_TEST_SENDER_NAME"),
+		Host:         viper.GetString("EMAIL_TEST_HOST"),
+		Port:         viper.GetInt("EMAIL_TEST_PORT"),
 	}
 
 	worker := &mailer.EmailWorker{

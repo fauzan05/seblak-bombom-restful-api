@@ -9,9 +9,9 @@ import (
 
 func NewFiber(config *viper.Viper) *fiber.App {
 	var app = fiber.New(fiber.Config{
-		AppName: config.GetString("app.name"),
+		AppName: config.GetString("APP_NAME"),
 		ErrorHandler: NewErrorHandler(),
-		Prefork: config.GetBool("web.prefork"),
+		Prefork: config.GetBool("WEB_PREFORK"),
 		BodyLimit: 100 * 1024 * 1024,
 	})
 

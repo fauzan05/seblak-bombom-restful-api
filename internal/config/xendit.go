@@ -7,7 +7,7 @@ import (
 )
 
 func NewXenditTestTransactions(viper *viper.Viper, log *logrus.Logger) *xendit.APIClient {
-	apiKey := viper.GetString("xendit.test.api_key.secret_key")
+	apiKey := viper.GetString("XENDIT_TEST_SECRET_KEY")
 	xenditClient := xendit.NewClient(apiKey)
 	return xenditClient
 }
