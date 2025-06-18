@@ -10,13 +10,12 @@ ENV GO111MODULE=on \
 
 WORKDIR /app
 
-# Copy dan build project
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
-# Build aplikasi - pastikan output path benar
-RUN go build -o /app/app ./app/main.go
+# PERBAIKAN 1: Build langsung ke binary executable
+RUN go build -o main ./app/main.go  # Ubah output nama
 
 # Stage 3: Final image
 FROM alpine:3.14
@@ -29,16 +28,21 @@ COPY --from=wkhtml /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
 COPY --from=wkhtml /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
 COPY --from=wkhtml /usr/share/fonts /usr/share/fonts
 
-# Create app directory
+# PERBAIKAN 2: Buat direktori khusus untuk app
 WORKDIR /app
+RUN mkdir -p /app/bin
 
-# Copy aplikasi dari builder dengan path yang benar
-COPY --from=builder /app/app /app/app
+# Copy aplikasi dari builder
+COPY --from=builder /app/main /app/bin/main  # Path konsisten
 
-# Set permission setelah copy
-RUN chmod +x /app/app
+# PERBAIKAN 3: Set permission secara eksplisit
+RUN chmod -R 755 /app/bin
+
+# PERBAIKAN 4: Gunakan user non-root
+RUN adduser -D myuser
+USER myuser
 
 EXPOSE 80
 
-# Gunakan path absolut
-CMD ["/app/app"]
+# PERBAIKAN 5: Gunakan full path ke binary
+CMD ["/app/bin/main"]
