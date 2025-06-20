@@ -8,7 +8,7 @@ import (
 
 func NewAuthXenditCallback(config *viper.Viper, log *logrus.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		xenditCallbackToken := config.GetString("xendit.test.callback_token")
+		xenditCallbackToken := config.GetString("XENDIT_TEST_CALLBACK_TOKEN")
 		requestToken := c.Get("X-Callback-Token", "NOT_FOUND")
 		if requestToken != "NOT_FOUND" && requestToken != xenditCallbackToken {
 			log.Warnf("xendit callback token isn't valid!")
