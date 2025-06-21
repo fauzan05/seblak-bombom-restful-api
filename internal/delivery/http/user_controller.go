@@ -252,8 +252,8 @@ func (c *UserController) UpdatePassword(ctx *fiber.Ctx) error {
 func (c *UserController) Logout(ctx *fiber.Ctx) error {
 	tokenRequest := new(model.GetUserByTokenRequest)
 	// tangkap token dari header
-	result := ctx.GetReqHeaders()
-	tokenRequest.Token = result["Authorization"][0]
+	result := ctx.Cookies("access_token", "NOT_FOUND")
+	tokenRequest.Token = result
 	response, err := c.UseCase.Logout(ctx.Context(), tokenRequest)
 	if err != nil {
 		c.Log.Warnf("failed to delete user token : %+v", err)
