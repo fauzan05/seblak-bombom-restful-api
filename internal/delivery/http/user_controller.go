@@ -178,7 +178,6 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	}
 
 	isProduction := c.ViperConfig.GetString("ENV") == "prod"
-	fmt.Printf("isProduction: %v\n", isProduction)
 	if c.ViperConfig.GetString("ENV") == "prod" {
 		ctx.Cookie(&fiber.Cookie{
 			Name:     "access_token",
@@ -186,7 +185,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 			Path:     "/",
 			HTTPOnly: true,         // Tidak bisa diakses lewat JS
 			Secure:   isProduction, // Harus HTTPS, matikan ini saat dev kalau perlu
-			SameSite: "Lax",        // Untuk cegah CSRF
+			SameSite: "None",       // Untuk cegah CSRF
 			Expires:  response.ExpiryDate,
 		})
 	}
@@ -268,7 +267,6 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 	}
 
 	isProduction := c.ViperConfig.GetString("ENV") == "prod"
-
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    "",
@@ -276,6 +274,7 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
 		Secure:   isProduction,
+		SameSite: "None",
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
