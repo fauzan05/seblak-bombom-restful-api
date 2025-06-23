@@ -21,17 +21,20 @@ func main() {
 
 	db := config.NewDatabaseDev(viperConfig, log) // dev
 	if env == "prod" {
+		fmt.Println("Running in production mode")
 		db = config.NewDatabaseProd(viperConfig, log) //prod
 	}
 
 	if env == "test" {
+		fmt.Println("Running in test mode")
 		db = config.NewDatabaseTest(viperConfig, log) // test
 	}
 
 	if env == "docker" {
+		fmt.Println("Running in docker mode")
 		db = config.NewDatabaseDocker(viperConfig, log) // docker
 	}
-	
+
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator()
 	email := config.NewEmailWorker(viperConfig)
