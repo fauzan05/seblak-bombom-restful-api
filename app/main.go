@@ -5,6 +5,7 @@ import (
 	"seblak-bombom-restful-api/internal/config"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -18,8 +19,13 @@ func main() {
 	if env != "prod" && env != "test" && env != "dev" && env != "docker" {
 		log.Fatalf("Invalid ENV value: %s. Must be one of: prod, test, dev, docker", env)
 	}
-	fmt.Println("Running in environment:", env)
-	db := config.NewDatabaseDev(viperConfig, log) // dev
+
+	var db *gorm.DB // Use an empty interface to hold different database types
+	if env == "dev" {
+		fmt.Println("Running in development mode")
+		db = config.NewDatabaseDev(viperConfig, log) // dev
+	}
+
 	if env == "prod" {
 		fmt.Println("Running in production mode")
 		db = config.NewDatabaseProd(viperConfig, log) //prod
