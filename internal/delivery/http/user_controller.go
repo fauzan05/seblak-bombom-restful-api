@@ -185,7 +185,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 			Path:     "/",
 			HTTPOnly: true,         // Tidak bisa diakses lewat JS
 			Secure:   isProduction, // Harus HTTPS, matikan ini saat dev kalau perlu
-			SameSite: "None",       // Untuk cegah CSRF
+			// SameSite: "None",       // Untuk cegah CSRF
 			Domain:   c.ViperConfig.GetString("DOMAIN"),
 			Expires:  response.ExpiryDate,
 		})
