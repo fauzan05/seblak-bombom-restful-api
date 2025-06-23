@@ -178,7 +178,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	}
 
 	isProduction := c.ViperConfig.GetString("ENV") == "prod"
-
+	fmt.Printf("isProduction: %v\n", isProduction)
 	if c.ViperConfig.GetString("ENV") == "prod" {
 		ctx.Cookie(&fiber.Cookie{
 			Name:     "access_token",
