@@ -186,6 +186,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 			HTTPOnly: true,         // Tidak bisa diakses lewat JS
 			Secure:   isProduction, // Harus HTTPS, matikan ini saat dev kalau perlu
 			SameSite: "None",       // Untuk cegah CSRF
+			Domain:   c.ViperConfig.GetString("DOMAIN"),
 			Expires:  response.ExpiryDate,
 		})
 	}
@@ -271,6 +272,7 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 		Name:     "access_token",
 		Value:    "",
 		Path:     "/",
+		Domain:   c.ViperConfig.GetString("DOMAIN"),
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
 		Secure:   isProduction,
