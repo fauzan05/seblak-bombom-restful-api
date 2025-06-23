@@ -82,7 +82,7 @@ func Bootstrap(config *BootstrapConfig) {
 	walletUseCase := usecase.NewWalletUseCase(config.DB, config.Log, config.Validate, userRepository, walletRepository, walletWithdrawRepository)
 
 	// setup controller
-	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig, config.FrontEndConfig, applicationUseCase)
+	userController := http.NewUserController(userUseCase, config.Log, config.AuthConfig, config.FrontEndConfig, applicationUseCase, config.Config)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 	productController := http.NewProductController(productUseCase, config.Log)

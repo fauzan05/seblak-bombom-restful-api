@@ -1,6 +1,7 @@
 package route
 
 import (
+	"mime"
 	"os"
 	"path/filepath"
 	"seblak-bombom-restful-api/internal/delivery/http"
@@ -85,31 +86,34 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// Images
 	uploadsDir := "../uploads/images"
 	api.Get("/image/*", func(c *fiber.Ctx) error {
-		relativePath := c.Params("*") // Menangkap seluruh path setelah /image/
+		relativePath := c.Params("*")
 		if relativePath == "" {
 			return c.Status(fiber.StatusBadRequest).SendString("Missing file path")
 		}
 
-		// Gabungkan path dengan root upload
 		unsafePath := filepath.Join(uploadsDir, relativePath)
 		cleanPath := filepath.Clean(unsafePath)
 
-		// Pastikan cleanPath masih dalam uploadsDir
 		absUploadsDir, _ := filepath.Abs(uploadsDir)
 		absCleanPath, _ := filepath.Abs(cleanPath)
 		if !strings.HasPrefix(absCleanPath, absUploadsDir) {
 			return c.Status(fiber.StatusForbidden).SendString("Access denied")
 		}
 
-		// Cek apakah file ada
 		if _, err := os.Stat(absCleanPath); os.IsNotExist(err) {
 			return c.Status(fiber.StatusNotFound).SendString("File not found")
 		}
 
-		// Kirim file
+		// 🎯 Dapatkan content-type berdasarkan ekstensi file
+		ext := filepath.Ext(absCleanPath)
+		mimeType := mime.TypeByExtension(ext)
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+		c.Type(mimeType) // atau c.Set("Content-Type", mimeType)
+
 		return c.SendFile(absCleanPath)
 	})
-
 	// Application
 	api.Get("/applications", c.ApplicationController.Get)
 	api.Use(c.AuthAdminCreationMiddleware).Post("/applications-use-admin-key", c.ApplicationController.Create) // add & update

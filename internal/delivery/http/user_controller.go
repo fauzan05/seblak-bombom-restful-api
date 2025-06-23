@@ -14,6 +14,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type UserController struct {
@@ -22,16 +23,18 @@ type UserController struct {
 	AppUseCase     *usecase.ApplicationUseCase
 	AuthConfig     *model.AuthConfig
 	FrontEndConfig *model.FrontEndConfig
+	ViperConfig    *viper.Viper
 }
 
 func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger, authConfig *model.AuthConfig,
-	frontEndConfig *model.FrontEndConfig, appUseCase *usecase.ApplicationUseCase) *UserController {
+	frontEndConfig *model.FrontEndConfig, appUseCase *usecase.ApplicationUseCase, viperConfig *viper.Viper) *UserController {
 	return &UserController{
 		Log:            logger,
 		UseCase:        useCase,
 		AuthConfig:     authConfig,
 		FrontEndConfig: frontEndConfig,
 		AppUseCase:     appUseCase,
+		ViperConfig:    viperConfig,
 	}
 }
 
@@ -174,15 +177,19 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	ctx.Cookie(&fiber.Cookie{
-		Name:     "access_token",
-		Value:    response.Token,
-		Path:     "/",
-		HTTPOnly: true,  // Tidak bisa diakses lewat JS
-		Secure:   true,  // Harus HTTPS, matikan ini saat dev kalau perlu
-		SameSite: "Lax", // Untuk cegah CSRF
-		Expires:  response.ExpiryDate,
-	})
+	isProduction := c.ViperConfig.GetString("ENV") == "prod"
+
+	if c.ViperConfig.GetString("ENV") == "prod" {
+		ctx.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    response.Token,
+			Path:     "/",
+			HTTPOnly: true,         // Tidak bisa diakses lewat JS
+			Secure:   isProduction, // Harus HTTPS, matikan ini saat dev kalau perlu
+			SameSite: "Lax",        // Untuk cegah CSRF
+			Expires:  response.ExpiryDate,
+		})
+	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
 		Code:   200,
@@ -260,12 +267,15 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	isProduction := c.ViperConfig.GetString("ENV") == "prod"
+
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    "",
 		Path:     "/",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
+		Secure:   isProduction,
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{

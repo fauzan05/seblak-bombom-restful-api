@@ -10,10 +10,28 @@ import (
 func main() {
 	viperConfig := config.NewViper()
 	log := config.NewLogger(viperConfig)
-	db := config.NewDatabaseProd(viperConfig, log) //prod
-	// db := config.NewDatabaseTest(viperConfig, log) // test
-	// db := config.NewDatabaseDev(viperConfig, log) // dev
-	// db := config.NewDatabaseDocker(viperConfig, log)
+	env := viperConfig.GetString("ENV")
+	if env == "" {
+		log.Fatal("ENV is not set")
+	}
+
+	if env != "prod" && env != "test" && env != "dev" && env != "docker" {
+		log.Fatalf("Invalid ENV value: %s. Must be one of: prod, test, dev, docker", env)
+	}
+
+	db := config.NewDatabaseDev(viperConfig, log) // dev
+	if env == "prod" {
+		db = config.NewDatabaseProd(viperConfig, log) //prod
+	}
+
+	if env == "test" {
+		db = config.NewDatabaseTest(viperConfig, log) // test
+	}
+
+	if env == "docker" {
+		db = config.NewDatabaseDocker(viperConfig, log) // docker
+	}
+	
 	xenditClient := config.NewXenditTestTransactions(viperConfig, log)
 	validate := config.NewValidator()
 	email := config.NewEmailWorker(viperConfig)
@@ -28,8 +46,8 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: func(origin string) bool {
 			allowed := map[string]bool{
-				"http://localhost:3000":                                         true,
-				"http://seblak-bombom-api-consumer-app":                         true,
+				"http://localhost:3000":                                        true,
+				"http://seblak-bombom-api-consumer-app":                        true,
 				"https://seblak-bombom-api-consumer-production.up.railway.app": true,
 			}
 			return allowed[origin]
@@ -54,7 +72,6 @@ func main() {
 	})
 
 	webPort := viperConfig.GetInt("WEB_PORT")
-	fmt.Println("Web server is running on port:", webPort)
 	err := app.Listen(fmt.Sprintf(":%d", webPort))
 	if err != nil {
 		log.Fatalf("Failed to start server : %v", err)
