@@ -18,7 +18,7 @@ func main() {
 	if env != "prod" && env != "test" && env != "dev" && env != "docker" {
 		log.Fatalf("Invalid ENV value: %s. Must be one of: prod, test, dev, docker", env)
 	}
-
+	fmt.Println("Running in environment:", env)
 	db := config.NewDatabaseDev(viperConfig, log) // dev
 	if env == "prod" {
 		fmt.Println("Running in production mode")
