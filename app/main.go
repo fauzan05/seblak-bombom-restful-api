@@ -55,15 +55,14 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: func(origin string) bool {
 			allowed := map[string]bool{
-				"http://localhost:3000":                                        true,
-				"http://seblak-bombom-api-consumer-app":                        true,
 				"https://seblak-bombom-api-consumer-production.up.railway.app": true,
+				"http://localhost:3000": true,
 			}
 			return allowed[origin]
 		},
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Cookie, Authorization",
-		AllowCredentials: true,
+		AllowCredentials: true, //
 	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
