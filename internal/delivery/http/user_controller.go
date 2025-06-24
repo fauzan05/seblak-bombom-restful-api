@@ -184,7 +184,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Value:    response.Token,
 		Path:     "/",
 		HTTPOnly: true,                         // Tidak bisa diakses lewat JS
-		Secure:   isProduction,                 // Harus HTTPS, matikan ini saat dev kalau perlu
+		Secure:   false,                        // Harus HTTPS, matikan ini saat dev kalau perlu
 		SameSite: fiber.CookieSameSiteNoneMode, // Untuk cegah CSRF
 		Expires:  response.ExpiryDate,
 	})
