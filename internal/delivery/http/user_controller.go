@@ -183,11 +183,10 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Name:     "access_token",
 		Value:    response.Token,
 		Path:     "/",
-		HTTPOnly: true,                         // Tidak bisa diakses lewat JS
-		Secure:   false,                        // Harus HTTPS, matikan ini saat dev kalau perlu
-		SameSite: fiber.CookieSameSiteNoneMode, // Untuk cegah CSRF
+		HTTPOnly: true,                        
+		Secure:   false,                       
+		SameSite: fiber.CookieSameSiteLaxMode,
 		Expires:  response.ExpiryDate,
-		Domain:   "seblak-bombom-api-consumer-production.up.railway.app",
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
