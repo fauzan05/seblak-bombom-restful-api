@@ -61,7 +61,7 @@ func main() {
 			return allowed[origin]
 		},
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
-		AllowHeaders:     "Origin, Content-Type, Accept, Cookie, Authorization",
+		AllowHeaders:     "Origin, Content-Type, Accept",
 		AllowCredentials: true, //
 	}))
 
