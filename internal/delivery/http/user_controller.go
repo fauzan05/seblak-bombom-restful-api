@@ -187,7 +187,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Secure:   false,                        // Harus HTTPS, matikan ini saat dev kalau perlu
 		SameSite: fiber.CookieSameSiteNoneMode, // Untuk cegah CSRF
 		Expires:  response.ExpiryDate,
-		Domain:   "https://seblak-bombom-restful-api-production.up.railway.app",
+		Domain:   "seblak-bombom-restful-api-production.up.railway.app",
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
