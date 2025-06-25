@@ -186,6 +186,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Secure:   isProduction,
 		SameSite: fiber.CookieSameSiteNoneMode,
 		Expires:  response.ExpiryDate,
+		Domain:   ".fznh-dev.my.id",
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
