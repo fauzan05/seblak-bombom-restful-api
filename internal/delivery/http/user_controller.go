@@ -281,7 +281,7 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 		// Ambil root domain dinamis (misal: fznh-dev.my.id)
 		domain = "." + strings.Join(domainParts[len(domainParts)-3:], ".")
 	}
-
+	fmt.Println("domain:", domain)
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    "",
