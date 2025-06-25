@@ -184,8 +184,8 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Value:    response.Token,
 		Path:     "/",
 		HTTPOnly: true,                        
-		Secure:   false,                       
-		SameSite: fiber.CookieSameSiteLaxMode,
+		// Secure:   false,                       
+		// SameSite: fiber.CookieSameSiteLaxMode,
 		Expires:  response.ExpiryDate,
 	})
 
