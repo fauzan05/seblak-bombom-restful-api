@@ -178,6 +178,14 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 	}
 
 	isProduction := c.ViperConfig.GetString("ENV") == "prod"
+	hostname := ctx.Hostname() // Misal: "seblak.fznh-dev.my.id"
+	domainParts := strings.Split(hostname, ".")
+	domain := ""
+	if len(domainParts) >= 3 {
+		// Ambil root domain dinamis (misal: fznh-dev.my.id)
+		domain = "." + strings.Join(domainParts[len(domainParts)-3:], ".")
+	}
+
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    response.Token,
@@ -186,7 +194,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Secure:   isProduction,
 		SameSite: fiber.CookieSameSiteLaxMode,
 		Expires:  response.ExpiryDate,
-		Domain:   ".fznh-dev.my.id",
+		Domain:   domain,
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
@@ -266,10 +274,19 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 	}
 
 	isProduction := c.ViperConfig.GetString("ENV") == "prod"
+	hostname := ctx.Hostname() // Misal: "seblak.fznh-dev.my.id"
+	domainParts := strings.Split(hostname, ".")
+	domain := ""
+	if len(domainParts) >= 3 {
+		// Ambil root domain dinamis (misal: fznh-dev.my.id)
+		domain = "." + strings.Join(domainParts[len(domainParts)-3:], ".")
+	}
+
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    "",
 		Path:     "/",
+		Domain:   domain,
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HTTPOnly: true,
