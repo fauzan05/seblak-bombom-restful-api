@@ -64,7 +64,7 @@ func main() {
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: true,
-		ExposeHeaders:    "Content-Length,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Authorization,Set-Cookie",
+		// ExposeHeaders:    "Content-Length,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Authorization,Set-Cookie",
 	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
