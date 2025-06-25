@@ -62,7 +62,7 @@ func main() {
 		},
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept",
-		AllowCredentials: true, //
+		AllowCredentials: true,
 	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
