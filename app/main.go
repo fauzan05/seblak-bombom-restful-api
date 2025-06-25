@@ -57,6 +57,7 @@ func main() {
 			allowed := map[string]bool{
 				"https://seblak-bombom-api-consumer-production.up.railway.app": true,
 				"http://localhost:3000": true,
+				"https://seblak.fznh-dev.my.id": true,
 			}
 			return allowed[origin]
 		},
