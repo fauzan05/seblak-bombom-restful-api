@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 
@@ -19,7 +20,7 @@ func NewAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 		}
 
 		userUseCase.Log.Debugf("token from cookie: %s", request.Token)
-
+		fmt.Println("token from cookie:", request.Token)
 		auth, err := userUseCase.GetUserByToken(c.Context(), request)
 		if err != nil {
 			userUseCase.Log.Warnf("invalid token: %+v", err)
