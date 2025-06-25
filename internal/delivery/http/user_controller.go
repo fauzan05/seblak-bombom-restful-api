@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"os"
 	"seblak-bombom-restful-api/internal/delivery/middleware"
+	"seblak-bombom-restful-api/internal/helper/cookies_helper"
 	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
@@ -177,18 +178,28 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	isProduction := c.ViperConfig.GetString("ENV") == "prod"
-	fmt.Println("ENV IS PROD :", isProduction)
-	ctx.Cookie(&fiber.Cookie{
-		Name:     "access_token",
-		Value:    response.Token,
-		Path:     "/",
-		HTTPOnly: false,
-		Secure:   isProduction,
-		SameSite: fiber.CookieSameSiteNoneMode,
-		Expires:  response.ExpiryDate,
-		Domain:   "",
-	})
+	// isProduction := c.ViperConfig.GetString("ENV") == "prod"
+	// fmt.Println("ENV IS PROD :", isProduction)
+	// ctx.Cookie(&fiber.Cookie{
+	// 	Name:     "access_token",
+	// 	Value:    response.Token,
+	// 	Path:     "/",
+	// 	HTTPOnly: false,
+	// 	Secure:   isProduction,
+	// 	SameSite: fiber.CookieSameSiteNoneMode,
+	// 	Expires:  response.ExpiryDate,
+	// 	Domain:   "",
+	// })
+	err = cookies_helper.SetCrossOriginCookie(ctx, "access_token", response.Token, response.ExpiryDate)
+	if err != nil {
+        return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "error": "Failed to set cookie",
+        })
+    }
+
+	fmt.Printf("Cookie set with Partitioned attribute\n")
+    fmt.Printf("Origin: %s\n", ctx.Get("Origin"))
+    fmt.Printf("Host: %s\n", ctx.Request().Host())
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
 		Code:   200,
