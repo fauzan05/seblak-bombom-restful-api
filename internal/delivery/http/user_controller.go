@@ -183,7 +183,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Name:     "access_token",
 		Value:    response.Token,
 		Path:     "/",
-		HTTPOnly: true,
+		HTTPOnly: false,
 		Secure:   isProduction,
 		SameSite: fiber.CookieSameSiteNoneMode,
 		Expires:  response.ExpiryDate,
