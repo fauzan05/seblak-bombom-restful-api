@@ -461,6 +461,7 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 		c.Log.Warnf("token isn't valid!")
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "token isn't valid!")
 	}
+	fmt.Println("Current Time:", time.Now())
 
 	expiredDate := user.Token.ExpiryDate
 	if expiredDate.Before(time.Now()) {
