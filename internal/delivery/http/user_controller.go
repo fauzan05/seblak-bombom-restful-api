@@ -192,7 +192,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Path:     "/",
 		HTTPOnly: true,
 		Secure:   isProduction,
-		SameSite: fiber.CookieSameSiteLaxMode,
+		SameSite: fiber.CookieSameSiteNoneMode,
 		Expires:  response.ExpiryDate,
 		Domain:   domain,
 	})
