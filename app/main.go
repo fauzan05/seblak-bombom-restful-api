@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"seblak-bombom-restful-api/internal/config"
-	"strings"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"gorm.io/gorm"
@@ -52,21 +51,23 @@ func main() {
 
 	app := config.NewFiber(viperConfig)
 
-	allowedOrigins := []string{
-		"https://seblak.fznh-dev.my.id",
-		"https://seblak-bombom-api-consumer-production.up.railway.app",
-	}
-
-	if env == "dev" {
-		allowedOrigins = append(allowedOrigins, "http://localhost:3000")
-	}
-
 	// cors setting
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     strings.Join(allowedOrigins, ","),
+		AllowOriginsFunc: func(origin string) bool {
+			allowed := map[string]bool{
+				"https://seblak-bombom-api-consumer-production.up.railway.app": true,
+				"https://seblak.fznh-dev.my.id": true,
+			}
+
+			env := viperConfig.GetString("ENV")
+			if env == "dev" {
+				allowed["http://localhost:3000"] = true
+			}
+			return allowed[origin]
+		},
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Requested-With,X-CSRF-Token",
-		ExposeHeaders:    "Set-Cookie",
+		ExposeHeaders:    "Content-Length,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Authorization,Set-Cookie",
 		AllowCredentials: true,
 	}))
 
