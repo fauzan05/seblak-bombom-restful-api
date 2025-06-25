@@ -55,16 +55,16 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: func(origin string) bool {
 			allowed := map[string]bool{
-				// "https://seblak-bombom-api-consumer-production.up.railway.app": true,
-				"http://localhost:3000": true,
+				"https://seblak-bombom-api-consumer-production.up.railway.app": true,
+				"http://localhost:3000":         true,
 				"https://seblak.fznh-dev.my.id": true,
 			}
 			return allowed[origin]
 		},
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
-		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Requested-With,X-CSRF-Token",
+		ExposeHeaders:    "Content-Length,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Authorization,Set-Cookie",
 		AllowCredentials: true,
-		// ExposeHeaders:    "Content-Length,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Authorization,Set-Cookie",
 	}))
 
 	config.Bootstrap(&config.BootstrapConfig{
