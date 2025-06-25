@@ -158,3 +158,24 @@ migrate -database "mysql://root@tcp(localhost:3306)/database_name" -path databas
 # Important
 
 if you want to login with admin, you must create an admin account with the path "/users/register", but you must include "Custom Header API Key Authentication" with the name "X-Admin-Key" then followed by the request body in the role = admin section. For X-Admin-Key, you must set it in your env file in the "ADMIN_CREATION_KEY" section and fill in whatever you think is secret. For example, it is in the .env.example file and you copy it and then name it .env .
+
+## 🧪 Live Demo / Testing
+
+You can try this application directly on the following demo server:
+
+🔗 **Frontend**: [https://seblak.fznh-dev.my.id](https://seblak.fznh-dev.my.id)
+🔗 **Backend (API base URL)**: [https://api.fznh-dev.my.id](https://api.fznh-dev.my.id/api)
+
+### 🔐 Demo Login (User/Customer)
+- Email: `cust1@email.com`
+- Password: `Cust1Testing#`
+
+### 🔐 Demo Login (Admin)
+- Email: `admin1@email.com`
+- Password: `Admin1Testing#`
+
+### 🚧 Note
+- Data on the demo server will be reset periodically
+- You **don't need to register manual**, just use the available demo account
+- Some features (such as payments) are simulated/mock
+
