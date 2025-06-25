@@ -192,7 +192,7 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Path:     "/",
 		HTTPOnly: true,
 		Secure:   isProduction,
-		SameSite: fiber.CookieSameSiteNoneMode,
+		SameSite: fiber.CookieSameSiteLaxMode,
 		Expires:  response.ExpiryDate,
 		Domain:   domain,
 	})
@@ -291,7 +291,7 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 		MaxAge:   -1,
 		HTTPOnly: true,
 		Secure:   isProduction,
-		SameSite: fiber.CookieSameSiteNoneMode,
+		SameSite: fiber.CookieSameSiteLaxMode,
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[bool]{
