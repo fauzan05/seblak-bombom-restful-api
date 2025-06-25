@@ -154,3 +154,7 @@ To migrate 1 step :
 // 1 is a how many step do you wanna
 migrate -database "mysql://root@tcp(localhost:3306)/database_name" -path database/migrations up 1
 ```
+
+# Important
+
+if you want to login with admin, you must create an admin account with the path "/users/register", but you must include "Custom Header API Key Authentication" with the name "X-Admin-Key" then followed by the request body in the role = admin section. For X-Admin-Key, you must set it in your env file in the "ADMIN_CREATION_KEY" section and fill in whatever you think is secret. For example, it is in the .env.example file and you copy it and then name it .env .
