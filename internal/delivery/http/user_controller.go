@@ -183,10 +183,11 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		Name:     "access_token",
 		Value:    response.Token,
 		Path:     "/",
-		HTTPOnly: true,                        
-		// Secure:   false,                       
-		// SameSite: fiber.CookieSameSiteLaxMode,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: fiber.CookieSameSiteNoneMode,
 		Expires:  response.ExpiryDate,
+		Domain:   "",
 	})
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponse[*model.UserResponse]{
