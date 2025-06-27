@@ -44,15 +44,15 @@ func (c *CategoryUseCase) Add(ctx *fiber.Ctx, request *model.CreateCategoryReque
 	}
 
 	hashedFilename := ""
-	if request.ImageFilename != nil {
-		err := helper.ValidateFile(1, request.ImageFilename)
+	if request.Image != nil {
+		err := helper.ValidateFile(1, request.Image)
 		if err != nil {
 			c.Log.Warnf(err.Error())
 			return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 
-		hashedFilename = helper.HashFileName(request.ImageFilename.Filename)
-		err = ctx.SaveFile(request.ImageFilename, fmt.Sprintf("uploads/images/categories/%s", hashedFilename))
+		hashedFilename = helper.HashFileName(request.Image.Filename)
+		err = ctx.SaveFile(request.Image, fmt.Sprintf("uploads/images/categories/%s", hashedFilename))
 		if err != nil {
 			c.Log.Warnf("failed to save category image file : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save category image file : %+v", err))
@@ -62,7 +62,7 @@ func (c *CategoryUseCase) Add(ctx *fiber.Ctx, request *model.CreateCategoryReque
 	newCategory := new(entity.Category)
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
-	if request.ImageFilename != nil {
+	if request.Image != nil {
 		newCategory.ImageFilename = hashedFilename
 	}
 
@@ -98,7 +98,7 @@ func (c *CategoryUseCase) GetById(ctx context.Context, request *model.GetCategor
 	return converter.CategoryToResponse(newCategory), nil
 }
 
-func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.CategoryResponse, int64, int, error) {
+func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, isActive string) (*[]model.CategoryResponse, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -128,7 +128,13 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 	}
 	
 	categories, totalCategory, err := repository.Paginate(tx, &entity.Category{}, newPagination, func(d *gorm.DB) *gorm.DB {
-		return d.Where("categories.name LIKE ?", "%"+search+"%")
+		query := d.Where("categories.name LIKE ?", "%"+search+"%")
+		if isActive == "active" {
+			query = query.Where("categories.deleted_at IS NULL")
+		} else if isActive == "inactive" {
+			query = query.Where("categories.deleted_at IS NOT NULL")
+		}
+		return query
 	})
 
 	if err != nil {
@@ -171,15 +177,15 @@ func (c *CategoryUseCase) Update(ctx *fiber.Ctx, request *model.UpdateCategoryRe
 	}
 
 	hashedFilename := ""
-	if request.ImageFilename != nil {
-		err := helper.ValidateFile(1, request.ImageFilename)
+	if request.Image != nil {
+		err := helper.ValidateFile(1, request.Image)
 		if err != nil {
 			c.Log.Warnf(err.Error())
 			return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 
-		hashedFilename = helper.HashFileName(request.ImageFilename.Filename)
-		err = ctx.SaveFile(request.ImageFilename, fmt.Sprintf("uploads/images/categories/%s", hashedFilename))
+		hashedFilename = helper.HashFileName(request.Image.Filename)
+		err = ctx.SaveFile(request.Image, fmt.Sprintf("uploads/images/categories/%s", hashedFilename))
 		if err != nil {
 			c.Log.Warnf("failed to save category image file : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save category image file : %+v", err))
@@ -188,7 +194,7 @@ func (c *CategoryUseCase) Update(ctx *fiber.Ctx, request *model.UpdateCategoryRe
 
 	newCategory.Name = request.Name
 	newCategory.Description = request.Description
-	if request.ImageFilename != nil {
+	if request.Image != nil {
 		newCategory.ImageFilename = hashedFilename
 	}
 	newCategory.UpdatedAt = time.Now().UTC()

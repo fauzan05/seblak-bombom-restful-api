@@ -15,9 +15,9 @@ type CategoryResponse struct {
 }
 
 type CreateCategoryRequest struct {
-	Name          string                `json:"name" validate:"required,max=100"`
-	Description   string                `json:"description"`
-	ImageFilename *multipart.FileHeader `json:"image_filename"`
+	Name        string                `json:"name" validate:"required,max=100"`
+	Description string                `json:"description"`
+	Image       *multipart.FileHeader `json:"image"`
 }
 
 type GetCategoryRequest struct {
@@ -25,10 +25,10 @@ type GetCategoryRequest struct {
 }
 
 type UpdateCategoryRequest struct {
-	ID            uint64                `json:"-" validate:"required"`
-	Name          string                `json:"name" validate:"required,max=100"`
-	Description   string                `json:"description"`
-	ImageFilename *multipart.FileHeader `json:"image_filename"`
+	ID          uint64                `json:"-" validate:"required"`
+	Name        string                `json:"name" validate:"required,max=100"`
+	Description string                `json:"description"`
+	Image       *multipart.FileHeader `json:"image"`
 }
 
 type DeleteCategoryRequest struct {

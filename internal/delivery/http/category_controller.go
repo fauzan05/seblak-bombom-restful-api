@@ -38,10 +38,10 @@ func (c *CategoryController) Create(ctx *fiber.Ctx) error {
 	request := new(model.CreateCategoryRequest)
 	request.Name = strings.TrimSpace(form.Value["name"][0])
 	request.Description = strings.TrimSpace(form.Value["description"][0])
-	if len(form.File["image_filename"]) > 0 {
-		request.ImageFilename = form.File["image_filename"][0]
+	if len(form.File["image"]) > 0 {
+		request.Image = form.File["image"][0]
 	} else {
-		request.ImageFilename = nil
+		request.Image = nil
 	}
 
 	response, err := c.UseCase.Add(ctx, request)
@@ -87,6 +87,7 @@ func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
 	// ambil data sorting
 	getColumn := ctx.Query("column", "")
 	getSortBy := ctx.Query("sort_by", "desc")
+	isActive := ctx.Query("is_active", "")
 
 	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
 	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
@@ -102,7 +103,7 @@ func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
+	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, isActive)
 	if err != nil {
 		c.Log.Warnf("failed to find all categories : %+v", err)
 		return err
@@ -141,10 +142,10 @@ func (c *CategoryController) Edit(ctx *fiber.Ctx) error {
 	request.ID = uint64(categoryId)
 	request.Name = strings.TrimSpace(form.Value["name"][0])
 	request.Description = strings.TrimSpace(form.Value["description"][0])
-	if len(form.File["image_filename"]) > 0 {
-		request.ImageFilename = form.File["image_filename"][0]
+	if len(form.File["image"]) > 0 {
+		request.Image = form.File["image"][0]
 	} else {
-		request.ImageFilename = nil
+		request.Image = nil
 	}
 
 	response, err := c.UseCase.Update(ctx, request)

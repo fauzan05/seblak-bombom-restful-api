@@ -84,7 +84,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api.Get("/products/:productId", c.ProductController.Get)
 
 	// Images
-	uploadsDir := "../uploads/images"
+	uploadsDir := "uploads/images"
 	api.Get("/image/*", func(c *fiber.Ctx) error {
 		relativePath := c.Params("*")
 		if relativePath == "" {
