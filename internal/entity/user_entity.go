@@ -18,6 +18,7 @@ type User struct {
 	Phone             string          `gorm:"column:phone"`
 	Password          string          `gorm:"column:password"`
 	Role              enum_state.Role `gorm:"column:role"`
+	UserProfile       string          `gorm:"column:user_profile"`
 	CreatedAt         time.Time       `gorm:"column:created_at;autoCreateTime;<-:create"`
 	UpdatedAt         time.Time       `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	DeletedAt         gorm.DeletedAt  `gorm:"column:deleted_at"`

@@ -1,23 +1,25 @@
 package model
 
 import (
+	"mime/multipart"
 	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"time"
 )
 
 type UserResponse struct {
-	ID        uint64                    `json:"id"`
-	FirstName string                    `json:"first_name"`
-	LastName  string                    `json:"last_name"`
-	Email     string                    `json:"email"`
-	Phone     string                    `json:"phone"`
-	Addresses []AddressResponse         `json:"addresses,omitempty"`
-	Role      enum_state.Role           `json:"role"`
-	Wallet    WalletResponse            `json:"wallet"`
-	Cart      CartResponse              `json:"cart"`
-	CreatedAt helper_others.TimeRFC3339 `json:"created_at"`
-	UpdatedAt helper_others.TimeRFC3339 `json:"updated_at"`
+	ID          uint64                    `json:"id"`
+	FirstName   string                    `json:"first_name"`
+	LastName    string                    `json:"last_name"`
+	Email       string                    `json:"email"`
+	Phone       string                    `json:"phone"`
+	Addresses   []AddressResponse         `json:"addresses,omitempty"`
+	Role        enum_state.Role           `json:"role"`
+	Wallet      WalletResponse            `json:"wallet"`
+	Cart        CartResponse              `json:"cart"`
+	UserProfile string                    `json:"user_profile"`
+	CreatedAt   helper_others.TimeRFC3339 `json:"created_at"`
+	UpdatedAt   helper_others.TimeRFC3339 `json:"updated_at"`
 }
 
 type RegisterUserRequest struct {
@@ -43,10 +45,11 @@ type VerifyUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	FirstName string `json:"first_name" validate:"required,max=100"`
-	LastName  string `json:"last_name" validate:"required,max=100"`
-	Email     string `json:"email" validate:"required,max=100"`
-	Phone     string `json:"phone" validate:"required,max=50"`
+	FirstName   string                `json:"first_name" validate:"required,max=100"`
+	LastName    string                `json:"last_name" validate:"required,max=100"`
+	Email       string                `json:"email" validate:"required,max=100"`
+	Phone       string                `json:"phone" validate:"required,max=50"`
+	UserProfile *multipart.FileHeader `json:"user_profile"`
 }
 
 type UpdateUserPasswordRequest struct {

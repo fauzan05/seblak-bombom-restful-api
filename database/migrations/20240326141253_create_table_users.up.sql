@@ -9,6 +9,7 @@ CREATE TABLE users (
     phone VARCHAR(100) NOT NULL,
     password VARCHAR(100) NOT NULL,
     role ENUM ("admin", "customer") NOT NULL,
+    user_profile TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL,

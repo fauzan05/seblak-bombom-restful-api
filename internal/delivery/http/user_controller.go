@@ -215,17 +215,31 @@ func (c *UserController) GetCurrent(ctx *fiber.Ctx) error {
 }
 
 func (c *UserController) Update(ctx *fiber.Ctx) error {
-	// ambil data form update
-	dataRequest := new(model.UpdateUserRequest)
-	err := ctx.BodyParser(dataRequest)
+	if _, err := os.Stat("uploads/images/users/"); os.IsNotExist(err) {
+		os.MkdirAll("uploads/images/users/", os.ModePerm)
+	}
+
+	form, err := ctx.MultipartForm()
 	if err != nil {
-		c.Log.Warnf("cannot parse data : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
+		c.Log.Warnf("cannot parse multipart form data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data : %+v", err))
+	}
+
+	// ambil data form update
+	request := new(model.UpdateUserRequest)
+	request.FirstName = strings.TrimSpace(form.Value["first_name"][0])
+	request.LastName = strings.TrimSpace(form.Value["last_name"][0])
+	request.Email = strings.TrimSpace(form.Value["email"][0])
+	request.Phone = strings.TrimSpace(form.Value["phone"][0])
+	if len(form.File["user_profile"]) > 0 {
+		request.UserProfile = form.File["user_profile"][0]
+	} else {
+		request.UserProfile = nil
 	}
 	// ambil data current user dari auth
 	auth := middleware.GetCurrentUser(ctx)
 
-	response, err := c.UseCase.Update(ctx.Context(), dataRequest, auth)
+	response, err := c.UseCase.Update(ctx, request, auth)
 	if err != nil {
 		c.Log.Warnf("failed to update user data : %+v", err)
 		return err

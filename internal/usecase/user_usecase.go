@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/url"
 	"seblak-bombom-restful-api/internal/entity"
+	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/helper/enum_state"
 	"seblak-bombom-restful-api/internal/helper/helper_others"
 	"seblak-bombom-restful-api/internal/helper/mailer"
@@ -133,7 +134,7 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
 	}
 
-	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+	logoImagePath := fmt.Sprintf("uploads/images/application/%s", newApp.LogoFilename)
 	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
@@ -282,7 +283,7 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
 		}
 
-		logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+		logoImagePath := fmt.Sprintf("uploads/images/application/%s", newApp.LogoFilename)
 		logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 		if err != nil {
 			c.Log.Warnf("failed to convert logo to base64 : %+v", err)
@@ -458,8 +459,8 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 
 	user := new(entity.User)
 	if err := c.UserRepository.FindUserByToken(tx, user, request.Token); err != nil {
-		c.Log.Warnf("token isn't valid!")
-		return nil, fiber.NewError(fiber.StatusUnauthorized, "token isn't valid!")
+		c.Log.Warnf("failed to find token : %+v", err)
+		return nil, fiber.NewError(fiber.StatusUnauthorized, fmt.Sprintf("failed to find token : %+v", err))
 	}
 
 	expiredDate := user.Token.ExpiryDate
@@ -473,8 +474,8 @@ func (c *UserUseCase) GetUserByToken(ctx context.Context, request *model.GetUser
 	return converter.UserToResponse(user), nil
 }
 
-func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest, currentUser *model.UserResponse) (*model.UserResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (c *UserUseCase) Update(ctx *fiber.Ctx, request *model.UpdateUserRequest, currentUser *model.UserResponse) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
 
 	if err := c.Validate.Struct(request); err != nil {
@@ -493,15 +494,34 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 		return nil, fiber.NewError(fiber.StatusConflict, "email has already exists!")
 	}
 
-	user := new(entity.User)
-	user.ID = currentUser.ID
-	user.Email = request.Email
-	user.Name.FirstName = request.FirstName
-	user.Name.LastName = request.LastName
-	user.Phone = request.Phone
-	user.Role = enum_state.ADMIN
+	hashedFilename := ""
+	if request.UserProfile != nil {
+		err := helper.ValidateFile(1, request.UserProfile)
+		if err != nil {
+			c.Log.Warnf(err.Error())
+			return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
 
-	if err := c.UserRepository.Update(tx, user); err != nil {
+		hashedFilename = helper.HashFileName(request.UserProfile.Filename)
+		err = ctx.SaveFile(request.UserProfile, fmt.Sprintf("uploads/images/users/%s", hashedFilename))
+		if err != nil {
+			c.Log.Warnf("failed to save user profile image file : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save user profile image file : %+v", err))
+		}
+	}
+
+	newUser := new(entity.User)
+	newUser.ID = currentUser.ID
+	newUser.Email = request.Email
+	newUser.Name.FirstName = request.FirstName
+	newUser.Name.LastName = request.LastName
+	newUser.Phone = request.Phone
+	newUser.Role = enum_state.ADMIN
+	if request.UserProfile != nil {
+		newUser.UserProfile = hashedFilename
+	}
+
+	if err := c.UserRepository.Update(tx, newUser); err != nil {
 		c.Log.Warnf("failed to update data user : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update data user : %+v", err))
 	}
@@ -511,7 +531,7 @@ func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserReque
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to commit transaction : %+v", err))
 	}
 
-	return converter.UserToResponse(user), nil
+	return converter.UserToResponse(newUser), nil
 }
 
 func (c *UserUseCase) UpdatePassword(ctx context.Context, request *model.UpdateUserPasswordRequest, user *model.UserResponse) (bool, error) {
@@ -612,7 +632,7 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
 	}
 
-	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+	logoImagePath := fmt.Sprintf("uploads/images/application/%s", newApp.LogoFilename)
 	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
@@ -713,7 +733,7 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find application from database : %+v", err))
 	}
 
-	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+	logoImagePath := fmt.Sprintf("uploads/images/application/%s", newApp.LogoFilename)
 	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
@@ -924,7 +944,7 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 		return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to parse template file html : %+v", err))
 	}
 
-	logoImagePath := fmt.Sprintf("../uploads/images/application/%s", newApp.LogoFilename)
+	logoImagePath := fmt.Sprintf("uploads/images/application/%s", newApp.LogoFilename)
 	logoImageBase64, err := helper_others.ImageToBase64(logoImagePath)
 	if err != nil {
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)

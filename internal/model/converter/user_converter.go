@@ -13,15 +13,16 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		addresses[i] = *AddressToResponse(&address)
 	}
 	response := &model.UserResponse{
-		ID:        user.ID,
-		FirstName: user.Name.FirstName,
-		LastName:  user.Name.LastName,
-		Email:     user.Email,
-		Phone:     user.Phone,
-		Addresses: addresses,
-		Role:      user.Role,
-		CreatedAt: helper_others.TimeRFC3339(user.CreatedAt),
-		UpdatedAt: helper_others.TimeRFC3339(user.UpdatedAt),
+		ID:          user.ID,
+		FirstName:   user.Name.FirstName,
+		LastName:    user.Name.LastName,
+		Email:       user.Email,
+		Phone:       user.Phone,
+		Addresses:   addresses,
+		Role:        user.Role,
+		UserProfile: user.UserProfile,
+		CreatedAt:   helper_others.TimeRFC3339(user.CreatedAt),
+		UpdatedAt:   helper_others.TimeRFC3339(user.UpdatedAt),
 	}
 
 	if user.Wallet != nil {
