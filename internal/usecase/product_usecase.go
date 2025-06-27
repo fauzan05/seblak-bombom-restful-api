@@ -2,11 +2,9 @@ package usecase
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"mime/multipart"
 	"os"
-	"path/filepath"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
@@ -123,7 +121,7 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		}
 
 		// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
-		hashedFilename := hashFileName(file.Filename)
+		hashedFilename := helper.HashFileName(file.Filename)
 		var position, _ = strconv.Atoi(positions[i])
 		// Tambahkan data ke struct ImageAddRequest
 		newImages[i].ProductId = newProduct.ID
@@ -322,7 +320,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 			}
 
 			// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
-			hashedFilename := hashFileName(file.Filename)
+			hashedFilename := helper.HashFileName(file.Filename)
 			var position, _ = strconv.Atoi(newImagePositions[i])
 			// Tambahkan data ke struct ImageAddRequest
 			newImages[i].ProductId = newProduct.ID
@@ -466,11 +464,4 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 	}
 
 	return true, nil
-}
-
-// Fungsi untuk membuat hash dari nama file
-func hashFileName(originalName string) string {
-	timestamp := time.Now().UnixNano()
-	hash := sha256.Sum256(fmt.Appendf(nil, "%d-%s", timestamp, originalName))
-	return fmt.Sprintf("%x", hash[:8]) + filepath.Ext(originalName) // Menggunakan 8 karakter pertama hash
 }

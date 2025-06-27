@@ -1,9 +1,12 @@
 package helper
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"mime/multipart"
+	"path/filepath"
 	"strings"
+	"time"
 )
 
 func ValidateFile(maxFileSizeRequest int, file *multipart.FileHeader) error {
@@ -30,4 +33,11 @@ func ValidateFile(maxFileSizeRequest int, file *multipart.FileHeader) error {
 	}
 
 	return nil
+}
+
+// Fungsi untuk membuat hash dari nama file
+func HashFileName(originalName string) string {
+	timestamp := time.Now().UnixNano()
+	hash := sha256.Sum256(fmt.Appendf(nil, "%d-%s", timestamp, originalName))
+	return fmt.Sprintf("%x", hash[:8]) + filepath.Ext(originalName) // Menggunakan 8 karakter pertama hash
 }

@@ -8,11 +8,12 @@ import (
 
 func CategoryToResponse(category *entity.Category) *model.CategoryResponse {
 	return &model.CategoryResponse{
-		ID:          category.ID,
-		Name:        category.Name,
-		Description: category.Description,
-		CreatedAt:   helper_others.TimeRFC3339(category.CreatedAt),
-		UpdatedAt:   helper_others.TimeRFC3339(category.UpdatedAt),
+		ID:            category.ID,
+		Name:          category.Name,
+		Description:   category.Description,
+		ImageFilename: category.ImageFilename,
+		CreatedAt:     helper_others.TimeRFC3339(category.CreatedAt),
+		UpdatedAt:     helper_others.TimeRFC3339(category.UpdatedAt),
 	}
 }
 

@@ -148,8 +148,8 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		if request.Lang == enum_state.INDONESIA {
 			newMail.Subject = "Verifikasi Email"
 		}
-		baseTemplatePath := "../internal/templates/base_template_email1.html"
-		childPath := fmt.Sprintf("../internal/templates/%s/email/email_verification.html", request.Lang)
+		baseTemplatePath := "internal/templates/base_template_email1.html"
+		childPath := fmt.Sprintf("internal/templates/%s/email/email_verification.html", request.Lang)
 		tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -195,8 +195,8 @@ func (c *UserUseCase) Create(ctx *fiber.Ctx, request *model.RegisterUserRequest)
 		if request.Lang == enum_state.INDONESIA {
 			newMail.Subject = "Verifikasi Email Admin"
 		}
-		baseTemplatePath := "../internal/templates/base_template_email1.html"
-		childPath := fmt.Sprintf("../internal/templates/%s/email/email_verification_admin.html", request.Lang)
+		baseTemplatePath := "internal/templates/base_template_email1.html"
+		childPath := fmt.Sprintf("internal/templates/%s/email/email_verification_admin.html", request.Lang)
 		tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -288,15 +288,15 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 			c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 		}
-		baseTemplatePath := "../internal/templates/base_template_email1.html"
-		childPath := fmt.Sprintf("../internal/templates/%s/email/registration_success.html", request.Lang)
+		baseTemplatePath := "internal/templates/base_template_email1.html"
+		childPath := fmt.Sprintf("internal/templates/%s/email/registration_success.html", request.Lang)
 		newMail.Subject = "Registration Successful"
 		if request.Lang == enum_state.INDONESIA {
 			newMail.Subject = "Registrasi Berhasil"
 		}
 
 		if newUser.Role == enum_state.ADMIN {
-			childPath = fmt.Sprintf("../internal/templates/%s/email/admin_creation.html", request.Lang)
+			childPath = fmt.Sprintf("internal/templates/%s/email/admin_creation.html", request.Lang)
 			newMail.Subject = "New Admin User Created"
 			if request.Lang == enum_state.INDONESIA {
 				newMail.Subject = "Akun Admin Baru Berhasil Dibuat"
@@ -341,8 +341,8 @@ func (c *UserUseCase) VerifyEmailRegistration(ctx *fiber.Ctx, request *model.Ver
 		newNotification.UserID = newUser.ID
 		newNotification.IsRead = false
 		newNotification.Type = enum_state.AUTHENTICATION
-		baseTemplatePath = "../internal/templates/base_template_notification1.html"
-		childPath = fmt.Sprintf("../internal/templates/%s/notification/registration_success.html", request.Lang)
+		baseTemplatePath = "internal/templates/base_template_notification1.html"
+		childPath = fmt.Sprintf("internal/templates/%s/notification/registration_success.html", request.Lang)
 		tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -621,8 +621,8 @@ func (c *UserUseCase) RemoveCurrentAccount(ctx context.Context, request *model.D
 
 	newMail := new(model.Mail)
 	newMail.To = []string{newUser.Email}
-	baseTemplatePath := "../internal/templates/base_template_email1.html"
-	childPath := fmt.Sprintf("../internal/templates/%s/email/account_deletion.html", request.Lang)
+	baseTemplatePath := "internal/templates/base_template_email1.html"
+	childPath := fmt.Sprintf("internal/templates/%s/email/account_deletion.html", request.Lang)
 	newMail.Subject = "Account Deletion Successful"
 	if request.Lang == enum_state.INDONESIA {
 		newMail.Subject = "Penghapusan Akun Berhasil"
@@ -719,8 +719,8 @@ func (c *UserUseCase) AddForgotPassword(ctx *fiber.Ctx, request *model.CreateFor
 		c.Log.Warnf("failed to convert logo to base64 : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 	}
-	baseTemplatePath := "../internal/templates/base_template_email1.html"
-	childPath := fmt.Sprintf("../internal/templates/%s/email/forgot_password.html", request.Lang)
+	baseTemplatePath := "internal/templates/base_template_email1.html"
+	childPath := fmt.Sprintf("internal/templates/%s/email/forgot_password.html", request.Lang)
 	newMail.Subject = "Forgot Password"
 	if request.Lang == enum_state.INDONESIA {
 		newMail.Subject = "Lupa Kata Sandi"
@@ -872,8 +872,8 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	}
 
 	logoImagePathURL := fmt.Sprintf("%s://%s/api/image/application/%s", ctx.Protocol(), ctx.Hostname(), newApp.LogoFilename)
-	baseTemplatePath := "../internal/templates/base_template_notification1.html"
-	childPath := fmt.Sprintf("../internal/templates/%s/notification/password_reset.html", request.Lang)
+	baseTemplatePath := "internal/templates/base_template_notification1.html"
+	childPath := fmt.Sprintf("internal/templates/%s/notification/password_reset.html", request.Lang)
 	tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 	if err != nil {
 		c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -912,8 +912,8 @@ func (c *UserUseCase) Reset(ctx *fiber.Ctx, request *model.PasswordResetRequest)
 	newMail := new(model.Mail)
 	newMail.To = []string{newUser.Email}
 	newMail.Cc = []string{}
-	baseTemplatePath = "../internal/templates/base_template_email1.html"
-	childPath = fmt.Sprintf("../internal/templates/%s/email/password_reset.html", request.Lang)
+	baseTemplatePath = "internal/templates/base_template_email1.html"
+	childPath = fmt.Sprintf("internal/templates/%s/email/password_reset.html", request.Lang)
 	newMail.Subject = "Password Reset Successful"
 	if request.Lang == enum_state.INDONESIA {
 		newMail.Subject = "Atur Ulang Kata Sandi Berhasil"

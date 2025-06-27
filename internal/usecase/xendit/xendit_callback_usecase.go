@@ -199,8 +199,8 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				newMail := new(model.Mail)
 				newMail.To = []string{newOrder.Email}
 				newMail.Subject = email_subject
-				baseTemplatePath := "../internal/templates/base_template_email1.html"
-				childPath := fmt.Sprintf("../internal/templates/%s/email/order_payment.html", request.Lang)
+				baseTemplatePath := "internal/templates/base_template_email1.html"
+				childPath := fmt.Sprintf("internal/templates/%s/email/order_payment.html", request.Lang)
 				tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 				if err != nil {
 					c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -249,8 +249,8 @@ func (c *XenditCallbackUseCase) UpdateStatusPaymentRequestCallback(ctx *fiber.Ct
 				newNotification.Title = newMail.Subject
 				newNotification.IsRead = false
 				newNotification.Type = enum_state.TRANSACTION
-				baseTemplatePath = "../internal/templates/base_template_notification1.html"
-				childPath = fmt.Sprintf("../internal/templates/%s/notification/order_payment.html", request.Lang)
+				baseTemplatePath = "internal/templates/base_template_notification1.html"
+				childPath = fmt.Sprintf("internal/templates/%s/notification/order_payment.html", request.Lang)
 				tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
 				if err != nil {
 					c.Log.Warnf("failed to parse template file html : %+v", err)

@@ -475,8 +475,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 			newMail.Subject = "Pembayaran Berhasil"
 		}
 
-		baseTemplatePath := "../internal/templates/base_template_email1.html"
-		childPath := fmt.Sprintf("../internal/templates/%s/email/order_payment.html", request.Lang)
+		baseTemplatePath := "internal/templates/base_template_email1.html"
+		childPath := fmt.Sprintf("internal/templates/%s/email/order_payment.html", request.Lang)
 		tmpl, err := template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -526,8 +526,8 @@ func (c *OrderUseCase) Add(ctx *fiber.Ctx, request *model.CreateOrderRequest) (*
 		newNotification.Title = newMail.Subject
 		newNotification.IsRead = false
 		newNotification.Type = enum_state.TRANSACTION
-		baseTemplatePath = "../internal/templates/base_template_notification1.html"
-		childPath = fmt.Sprintf("../internal/templates/%s/notification/order_payment.html", request.Lang)
+		baseTemplatePath = "internal/templates/base_template_notification1.html"
+		childPath = fmt.Sprintf("internal/templates/%s/notification/order_payment.html", request.Lang)
 		tmpl, err = template.ParseFiles(baseTemplatePath, childPath)
 		if err != nil {
 			c.Log.Warnf("failed to parse template file html : %+v", err)
@@ -1081,8 +1081,8 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to convert logo to base64 : %+v", err))
 		}
 
-		baseTemplatePath := "../internal/templates/base_template_email1.html"
-		childPath := fmt.Sprintf("../internal/templates/%s/email/order_status_customer.html", request.Lang)
+		baseTemplatePath := "internal/templates/base_template_email1.html"
+		childPath := fmt.Sprintf("internal/templates/%s/email/order_status_customer.html", request.Lang)
 		orderTrackingURL := fmt.Sprintf("%s/orders/%d/details", request.BaseFrontEndURL, newOrder.ID)
 		data := map[string]any{
 			"CustomerName":      newOrder.FirstName + " " + newOrder.LastName,
@@ -1116,7 +1116,7 @@ func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.Updat
 		}
 
 		// send admin
-		childPath = fmt.Sprintf("../internal/templates/%s/email/order_status_admin.html", request.Lang)
+		childPath = fmt.Sprintf("internal/templates/%s/email/order_status_admin.html", request.Lang)
 		err = c.Email.SendEmail(
 			c.Log,
 			[]string{newApp.Email},

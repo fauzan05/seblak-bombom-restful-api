@@ -57,8 +57,8 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 			return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 
-		hashedFilename = hashFileName(request.Logo.Filename)
-		err = ctx.SaveFile(request.Logo, fmt.Sprintf("../uploads/images/application/%s", hashedFilename))
+		hashedFilename = helper.HashFileName(request.Logo.Filename)
+		err = ctx.SaveFile(request.Logo, fmt.Sprintf("uploads/images/application/%s", hashedFilename))
 		if err != nil {
 			c.Log.Warnf("failed to save uploaded file: %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save uploaded file: %+v", err))
@@ -67,7 +67,7 @@ func (c *ApplicationUseCase) Add(ctx *fiber.Ctx, request *model.CreateApplicatio
 		// delete data gambar sebelumnya
 		// if count > 0 {
 		// 	if newApplication.LogoFilename != "" {
-		// 		filePath := "../uploads/images/application/"
+		// 		filePath := "uploads/images/application/"
 		// 		err = os.Remove(filePath + newApplication.LogoFilename)
 		// 		if err != nil {
 		// 			c.Log.Warnf("failed to delete image file: %v\n", err)

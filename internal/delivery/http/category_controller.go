@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"os"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/usecase"
 	"strconv"
@@ -24,13 +25,26 @@ func NewCategoryController(useCase *usecase.CategoryUseCase, logger *logrus.Logg
 }
 
 func (c *CategoryController) Create(ctx *fiber.Ctx) error {
-	request := new(model.CreateCategoryRequest)
-	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("cannot parse data : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
+	if _, err := os.Stat("uploads/images/categories/"); os.IsNotExist(err) {
+		os.MkdirAll("uploads/images/categories/", os.ModePerm)
 	}
 
-	response, err := c.UseCase.Add(ctx.Context(), request)
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		c.Log.Warnf("cannot parse multipart form data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data : %+v", err))
+	}
+
+	request := new(model.CreateCategoryRequest)
+	request.Name = strings.TrimSpace(form.Value["name"][0])
+	request.Description = strings.TrimSpace(form.Value["description"][0])
+	if len(form.File["image_filename"]) > 0 {
+		request.ImageFilename = form.File["image_filename"][0]
+	} else {
+		request.ImageFilename = nil
+	}
+
+	response, err := c.UseCase.Add(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to create new category : %+v", err)
 		return err
@@ -106,6 +120,16 @@ func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
 }
 
 func (c *CategoryController) Edit(ctx *fiber.Ctx) error {
+	if _, err := os.Stat("uploads/images/categories/"); os.IsNotExist(err) {
+		os.MkdirAll("uploads/images/categories/", os.ModePerm)
+	}
+
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		c.Log.Warnf("cannot parse multipart form data : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse multipart form data : %+v", err))
+	}
+
 	getId := ctx.Params("categoryId")
 	categoryId, err := strconv.Atoi(getId)
 	if err != nil {
@@ -113,14 +137,17 @@ func (c *CategoryController) Edit(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to convert category_id to integer : %+v", err))
 	}
 
-	updateCategory := new(model.UpdateCategoryRequest)
-	if err := ctx.BodyParser(updateCategory); err != nil {
-		c.Log.Warnf("cannot parse data : %+v", err)
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("cannot parse data : %+v", err))
+	request := new(model.UpdateCategoryRequest)
+	request.ID = uint64(categoryId)
+	request.Name = strings.TrimSpace(form.Value["name"][0])
+	request.Description = strings.TrimSpace(form.Value["description"][0])
+	if len(form.File["image_filename"]) > 0 {
+		request.ImageFilename = form.File["image_filename"][0]
+	} else {
+		request.ImageFilename = nil
 	}
 
-	updateCategory.ID = uint64(categoryId)
-	response, err := c.UseCase.Update(ctx.Context(), updateCategory)
+	response, err := c.UseCase.Update(ctx, request)
 	if err != nil {
 		c.Log.Warnf("failed to update category : %+v", err)
 		return err

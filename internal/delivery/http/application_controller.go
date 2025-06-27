@@ -26,8 +26,8 @@ func NewApplicationController(useCase *usecase.ApplicationUseCase, logger *logru
 
 func (c *ApplicationController) Create(ctx *fiber.Ctx) error {
 	// Buat direktori uploads jika belum ada
-	if _, err := os.Stat("../uploads/images/application/"); os.IsNotExist(err) {
-		os.MkdirAll("../uploads/images/application/", os.ModePerm)
+	if _, err := os.Stat("uploads/images/application/"); os.IsNotExist(err) {
+		os.MkdirAll("uploads/images/application/", os.ModePerm)
 	}
 
 	form, err := ctx.MultipartForm()
