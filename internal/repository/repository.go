@@ -414,7 +414,7 @@ func (r *Repository[T]) CountXenditPayouts(db *gorm.DB, entity *T, search string
 	return count, nil
 }
 
-func Paginate[T any](db *gorm.DB, model *T, pagination *Pagination, queryFn func(*gorm.DB) *gorm.DB) ([]T, int64, error) {
+func Paginate[T any](db *gorm.DB, model *T, pagination *Pagination, queryFn func(*gorm.DB) *gorm.DB) ([]T, int64, int64, int64, int64, error) {
 	var results []T
 	var total int64
 
@@ -430,17 +430,35 @@ func Paginate[T any](db *gorm.DB, model *T, pagination *Pagination, queryFn func
 	baseQuery := db.Unscoped().Model(model)
 	q := queryFn(baseQuery).Order(fmt.Sprintf("%s %s", pagination.Column, pagination.SortBy))
 
-	// Hitung total
+	// Hitung total current
 	if err := q.Count(&total).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, 0, 0, 0, err
 	}
 
 	// Ambil data
 	if err := q.Limit(pagination.PageSize).
 		Offset(offset).
 		Find(&results).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, 0, 0, 0, err
 	}
 
-	return results, total, nil
+	// Hitung total real
+	var totalReal int64
+	if err := db.Unscoped().Model(model).Count(&totalReal).Error; err != nil {
+		return nil, 0, 0, 0, 0, err
+	}
+
+	// Hitung total active
+	var totalRealActive int64
+	if err := db.Unscoped().Model(model).Where("deleted_at IS NULL").Count(&totalRealActive).Error; err != nil {
+		return nil, 0, 0, 0, 0, err
+	}
+
+	// Hitung total inactive
+	var totalRealInactive int64
+	if err := db.Unscoped().Model(model).Where("deleted_at IS NOT NULL").Count(&totalRealInactive).Error; err != nil {
+		return nil, 0, 0, 0, 0, err
+	}
+
+	return results, total, totalReal, totalRealActive, totalRealInactive, nil
 }

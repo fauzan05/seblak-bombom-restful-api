@@ -60,7 +60,7 @@ func (c *DeliveryUseCase) Add(ctx context.Context, request *model.CreateDelivery
 	return converter.DeliveryToResponse(newDelivery), nil
 }
 
-func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.DeliveryResponse, int64, int, error) {
+func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string) (*[]model.DeliveryResponse, int64, int64, int64, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -89,10 +89,10 @@ func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 
 	if !allowedColumns[newPagination.Column] {
 		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
-		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
 	}
 	
-	deliveries, totalDelivery, err := repository.Paginate(tx, &entity.Delivery{}, newPagination, func(d *gorm.DB) *gorm.DB {
+	deliveries, totalCurrentDelivery, totalRealDelivery, totalActiveDelivery, totalInactiveDelivery, err := repository.Paginate(tx, &entity.Delivery{}, newPagination, func(d *gorm.DB) *gorm.DB {
 		return d.Where("deliveries.cost LIKE ?", "%"+search+"%").
 			Or("deliveries.city LIKE ?", "%"+search+"%").
 			Or("deliveries.district LIKE ?", "%"+search+"%").
@@ -102,17 +102,17 @@ func (c *DeliveryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 
 	if err != nil {
 		c.Log.Warnf("failed to paginate deliveries : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate deliveries : %+v", err))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate deliveries : %+v", err))
 	}
 
 	// Hitung total halaman
 	var totalPages int = 0
-	totalPages = int(totalDelivery / int64(perPage))
-	if totalDelivery%int64(perPage) > 0 {
+	totalPages = int(totalCurrentDelivery / int64(perPage))
+	if totalCurrentDelivery%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.DeliveriesToResponse(&deliveries), totalDelivery, totalPages, nil
+	return converter.DeliveriesToResponse(&deliveries), totalCurrentDelivery, totalRealDelivery, totalActiveDelivery, totalInactiveDelivery, totalPages, nil
 }
 
 func (c *DeliveryUseCase) Edit(ctx context.Context, request *model.UpdateDeliveryRequest) (*model.DeliveryResponse, error) {

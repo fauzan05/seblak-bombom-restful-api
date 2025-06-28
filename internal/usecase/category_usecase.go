@@ -98,7 +98,7 @@ func (c *CategoryUseCase) GetById(ctx context.Context, request *model.GetCategor
 	return converter.CategoryToResponse(newCategory), nil
 }
 
-func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, isActive string) (*[]model.CategoryResponse, int64, int, error) {
+func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, isActive string) (*[]model.CategoryResponse, int64, int64, int64, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -124,10 +124,10 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 
 	if !allowedColumns[newPagination.Column] {
 		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
-		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
 	}
-	
-	categories, totalCategory, err := repository.Paginate(tx, &entity.Category{}, newPagination, func(d *gorm.DB) *gorm.DB {
+
+	categories, totalCurrentCategory, totalRealCategory, totalActiveCategory, totalInactiveCategory, err := repository.Paginate(tx, &entity.Category{}, newPagination, func(d *gorm.DB) *gorm.DB {
 		query := d.Where("categories.name LIKE ?", "%"+search+"%")
 		if isActive == "active" {
 			query = query.Where("categories.deleted_at IS NULL")
@@ -139,17 +139,17 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 
 	if err != nil {
 		c.Log.Warnf("failed to paginate categories : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate categories : %+v", err))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate categories : %+v", err))
 	}
 
 	// Hitung total halaman
 	var totalPages int = 0
-	totalPages = int(totalCategory / int64(perPage))
-	if totalCategory%int64(perPage) > 0 {
+	totalPages = int(totalCurrentCategory / int64(perPage))
+	if totalCurrentCategory%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.CategoriesToResponse(&categories), totalCategory, totalPages, nil
+	return converter.CategoriesToResponse(&categories), totalCurrentCategory, totalRealCategory, totalActiveCategory, totalInactiveCategory, totalPages, nil
 }
 
 func (c *CategoryUseCase) Update(ctx *fiber.Ctx, request *model.UpdateCategoryRequest) (*model.CategoryResponse, error) {

@@ -187,7 +187,7 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 	return converter.ProductToResponse(newProduct), nil
 }
 
-func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, search string, categoryId uint64, sortingColumn string, sortBy string) (*[]model.ProductResponse, int64, int, error) {
+func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, search string, categoryId uint64, sortingColumn string, sortBy string) (*[]model.ProductResponse, int64, int64, int64, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -214,10 +214,10 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 
 	if !allowedColumns[newPagination.Column] {
 		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
-		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
 	}
-	
-	products, totalProduct, err := repository.Paginate(tx, &entity.Product{}, newPagination, func(d *gorm.DB) *gorm.DB {
+
+	products, totalCurrentProduct, totalRealProduct, totalActiveProduct, totalInactiveProduct, err := repository.Paginate(tx, &entity.Product{}, newPagination, func(d *gorm.DB) *gorm.DB {
 		return d.Joins("JOIN categories ON categories.id = products.category_id").
 			Preload("Category").
 			Preload("Images").Where("products.name LIKE ?", "%"+search+"%")
@@ -225,17 +225,17 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 
 	if err != nil {
 		c.Log.Warnf("failed to paginate category : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate category : %+v", err))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate category : %+v", err))
 	}
 
 	// Hitung total halaman
 	var totalPages int = 0
-	totalPages = int(totalProduct / int64(perPage))
-	if totalProduct%int64(perPage) > 0 {
+	totalPages = int(totalCurrentProduct / int64(perPage))
+	if totalCurrentProduct%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.ProductsToResponse(&products), totalProduct, totalPages, nil
+	return converter.ProductsToResponse(&products), totalCurrentProduct, totalRealProduct, totalActiveProduct, totalInactiveProduct, totalPages, nil
 }
 
 func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, request *model.UpdateProductRequest, newImageFiles []*multipart.FileHeader, newImagePositions []string, updateCurrentImages model.UpdateImagesRequest, deletedImages model.DeleteImagesRequest) (*model.ProductResponse, error) {

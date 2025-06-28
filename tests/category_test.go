@@ -370,7 +370,7 @@ func TestGetAllCategoryPagination(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 10, len(*responseBody.Data))
-	assert.Equal(t, int64(25), responseBody.TotalDatas)
+	assert.Equal(t, int64(25), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 3, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	assert.Equal(t, 10, responseBody.DataPerPages)
@@ -428,7 +428,7 @@ func TestGetAllCategoryPaginationSearchNotFound(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 0, len(*responseBody.Data))
-	assert.Equal(t, int64(0), responseBody.TotalDatas)
+	assert.Equal(t, int64(0), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 0, responseBody.TotalPages)
 	assert.Equal(t, 1, responseBody.CurrentPages)
 	assert.Equal(t, 10, responseBody.DataPerPages)
@@ -486,7 +486,7 @@ func TestGetAllCategoryPaginationSortingColumnDesc(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 10, len(*responseBody.Data))
-	assert.Equal(t, int64(25), responseBody.TotalDatas)
+	assert.Equal(t, int64(25), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 3, responseBody.TotalPages)
 	assert.Equal(t, 1, responseBody.CurrentPages)
 	assert.Equal(t, 10, responseBody.DataPerPages)
@@ -548,7 +548,7 @@ func TestGetAllCategoryPaginationSortingColumnAsc(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 10, len(*responseBody.Data))
-	assert.Equal(t, int64(25), responseBody.TotalDatas)
+	assert.Equal(t, int64(25), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 3, responseBody.TotalPages)
 	assert.Equal(t, 1, responseBody.CurrentPages)
 	assert.Equal(t, 10, responseBody.DataPerPages)

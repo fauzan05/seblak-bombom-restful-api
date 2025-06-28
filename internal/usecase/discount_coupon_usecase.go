@@ -78,7 +78,7 @@ func (c *DiscountCouponUseCase) Add(ctx context.Context, request *model.CreateDi
 	return converter.DiscountCouponToResponse(newDiscount), nil
 }
 
-func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, status bool) (*[]model.DiscountCouponResponse, int64, int, error) {
+func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, status bool) (*[]model.DiscountCouponResponse, int64, int64, int64, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -104,10 +104,10 @@ func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage in
 
 	if !allowedColumns[newPagination.Column] {
 		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
-		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
 	}
 
-	discountCoupons, totalDiscountCoupon, err := repository.Paginate(tx, &entity.DiscountCoupon{}, newPagination, func(d *gorm.DB) *gorm.DB {
+	discountCoupons, totalCurrentDiscountCoupon, totalRealDiscountCoupon, totalActiveDiscountCoupon, totalInactiveDiscountCoupon, err := repository.Paginate(tx, &entity.DiscountCoupon{}, newPagination, func(d *gorm.DB) *gorm.DB {
 		return d.Where(
 			d.Where("discount_coupons.name LIKE ?", "%"+search+"%").
 				Or("discount_coupons.code LIKE ?", "%"+search+"%").
@@ -117,17 +117,17 @@ func (c *DiscountCouponUseCase) GetAll(ctx context.Context, page int, perPage in
 
 	if err != nil {
 		c.Log.Warnf("failed to paginate discount coupons : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate discount coupons : %+v", err))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate discount coupons : %+v", err))
 	}
 
 	// Hitung total halaman
 	var totalPages int = 0
-	totalPages = int(totalDiscountCoupon / int64(perPage))
-	if totalDiscountCoupon%int64(perPage) > 0 {
+	totalPages = int(totalCurrentDiscountCoupon / int64(perPage))
+	if totalCurrentDiscountCoupon%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.DiscountCouponsToResponse(&discountCoupons), totalDiscountCoupon, totalPages, nil
+	return converter.DiscountCouponsToResponse(&discountCoupons), totalCurrentDiscountCoupon, totalRealDiscountCoupon, totalActiveDiscountCoupon, totalInactiveDiscountCoupon, totalPages, nil
 }
 
 func (c *DiscountCouponUseCase) GetById(ctx context.Context, request *model.GetDiscountCouponRequest) (*model.DiscountCouponResponse, error) {

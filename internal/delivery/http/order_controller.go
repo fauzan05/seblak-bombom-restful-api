@@ -149,20 +149,23 @@ func (c *OrderController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalOrders, totalPages, err := c.UseCase.GetAllPaginate(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, auth)
+	response, totalCurrentOrders, totalRealOrders, totalActiveOrders, totalInactiveOrders, totalPages, err := c.UseCase.GetAllPaginate(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, auth)
 	if err != nil {
 		c.Log.Warnf("failed to get all orders by current user : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.OrderResponse]{
-		Code:         200,
-		Status:       "success to get all orders by current user",
-		Data:         response,
-		TotalDatas:   totalOrders,
-		TotalPages:   totalPages,
-		CurrentPages: page,
-		DataPerPages: perPage,
+		Code:               200,
+		Status:             "success to get all orders by current user",
+		Data:               response,
+		TotalRealDatas:     totalRealOrders,
+		TotalCurrentDatas:  totalCurrentOrders,
+		TotalActiveDatas:   totalActiveOrders,
+		TotalInactiveDatas: totalInactiveOrders,
+		TotalPages:         totalPages,
+		CurrentPages:       page,
+		DataPerPages:       perPage,
 	})
 }
 

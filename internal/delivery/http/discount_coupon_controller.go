@@ -71,20 +71,23 @@ func (c *DiscountCouponController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'status' parameter : %+v", err))
 	}
 
-	response, totalDiscountCoupons, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, status)
+	response, totalCurrentDiscountCoupons, totalRealDiscountCoupon, totalActiveDiscountCoupon, totalInactiveDiscountCoupon, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, status)
 	if err != nil {
 		c.Log.Warnf("failed to get all discounts : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.DiscountCouponResponse]{
-		Code:   200,
-		Status: "success to get all discounts",
-		Data:   response,
-		TotalDatas: totalDiscountCoupons,
-		TotalPages: totalPages,
-		CurrentPages: page,
-		DataPerPages: perPage,
+		Code:               200,
+		Status:             "success to get all discounts",
+		Data:               response,
+		TotalRealDatas:     totalRealDiscountCoupon,
+		TotalCurrentDatas:  totalCurrentDiscountCoupons,
+		TotalActiveDatas:   totalActiveDiscountCoupon,
+		TotalInactiveDatas: totalInactiveDiscountCoupon,
+		TotalPages:         totalPages,
+		CurrentPages:       page,
+		DataPerPages:       perPage,
 	})
 }
 
@@ -139,20 +142,20 @@ func (c *DiscountCouponController) Update(ctx *fiber.Ctx) error {
 	})
 }
 
-func(c *DiscountCouponController) Delete(ctx *fiber.Ctx) error {
+func (c *DiscountCouponController) Delete(ctx *fiber.Ctx) error {
 	idsParam := ctx.Query("ids")
 	if idsParam == "" {
 		c.Log.Warnf("parameter 'ids' is required")
 		return fiber.NewError(fiber.StatusBadRequest, "parameter 'ids' is required")
 	}
-	
+
 	// Pisahkan string menjadi array menggunakan koma sebagai delimiter
 	idStrings := strings.Split(idsParam, ",")
 	var discountCouponIds []uint64
 
 	// Konversi setiap elemen menjadi integer
 	for _, idStr := range idStrings {
-		if (idStr != "") {
+		if idStr != "" {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
 				c.Log.Warnf("invalid discount coupon ID : %s", err)

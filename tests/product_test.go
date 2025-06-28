@@ -1681,7 +1681,7 @@ func TestGetProductPagination(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 5, len(*responseBody.Data))
-	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, int64(27), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 6, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	assert.Equal(t, 5, responseBody.DataPerPages)
@@ -1709,7 +1709,7 @@ func TestGetProductPaginationSortingDesc(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 5, len(*responseBody.Data))
-	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, int64(27), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 6, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	assert.Equal(t, 5, responseBody.DataPerPages)
@@ -1771,7 +1771,7 @@ func TestGetProductPaginationSortingAsc(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 5, len(*responseBody.Data))
-	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, int64(27), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 6, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	assert.Equal(t, 5, responseBody.DataPerPages)
@@ -1809,7 +1809,7 @@ func TestGetProductPaginationSearchEmptyResult(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 0, len(*responseBody.Data))
-	assert.Equal(t, int64(0), responseBody.TotalDatas)
+	assert.Equal(t, int64(0), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 0, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	assert.Equal(t, 5, responseBody.DataPerPages)
@@ -1988,7 +1988,7 @@ func TestDeleteProduct(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 0, len(*responseBodyPagination.Data))
-	assert.Equal(t, int64(5), responseBodyPagination.TotalDatas)
+	assert.Equal(t, int64(5), responseBodyPagination.TotalCurrentDatas)
 	assert.Equal(t, 1, responseBodyPagination.TotalPages)
 	assert.Equal(t, 2, responseBodyPagination.CurrentPages)
 	assert.Equal(t, 5, responseBodyPagination.DataPerPages)

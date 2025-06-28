@@ -23,7 +23,7 @@ func NewDeliveryController(useCase *usecase.DeliveryUseCase, logger *logrus.Logg
 	}
 }
 
-func (c *DeliveryController) Create(ctx  *fiber.Ctx) error {
+func (c *DeliveryController) Create(ctx *fiber.Ctx) error {
 	request := new(model.CreateDeliveryRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
@@ -65,24 +65,27 @@ func (c *DeliveryController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalDeliveries, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
+	response, totalCurrentDeliveries, totalRealDeliveries, totalActiveDeliveries, totalInactiveDeliveries, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("failed to get a delivery setting data : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.DeliveryResponse]{
-		Code:   200,
-		Status: "success to get a delivery settings",
-		Data:   response,
-		TotalDatas: totalDeliveries,
-		TotalPages: totalPages,
-		CurrentPages: page,
-		DataPerPages: perPage,
+		Code:               200,
+		Status:             "success to get a delivery settings",
+		Data:               response,
+		TotalRealDatas:     totalRealDeliveries,
+		TotalCurrentDatas:  totalCurrentDeliveries,
+		TotalActiveDatas:   totalActiveDeliveries,
+		TotalInactiveDatas: totalInactiveDeliveries,
+		TotalPages:         totalPages,
+		CurrentPages:       page,
+		DataPerPages:       perPage,
 	})
 }
 
-func (c *DeliveryController) Update(ctx  *fiber.Ctx) error {
+func (c *DeliveryController) Update(ctx *fiber.Ctx) error {
 	deliveryRequest := new(model.UpdateDeliveryRequest)
 	if err := ctx.BodyParser(deliveryRequest); err != nil {
 		c.Log.Warnf("cannot parse data : %+v", err)
@@ -122,7 +125,7 @@ func (c *DeliveryController) Remove(ctx *fiber.Ctx) error {
 
 	// Konversi setiap elemen menjadi integer
 	for _, idStr := range idStrings {
-		if (idStr != "") {
+		if idStr != "" {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
 				c.Log.Warnf("invalid delivery ID : %s", err)

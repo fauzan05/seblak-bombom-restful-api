@@ -46,7 +46,7 @@ func (c *ProductController) Create(ctx *fiber.Ctx) error {
 		c.Log.Warnf("invalid price : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid price : %+v", err))
 	}
-	
+
 	request.Price = float32(parsePrice64)
 	request.Stock, err = strconv.Atoi(form.Value["stock"][0])
 	if err != nil {
@@ -97,7 +97,7 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 	search := ctx.Query("search", "")
 	trimSearch := strings.TrimSpace(search)
 
-	getCategoryId := ctx.Query("category_id", "");
+	getCategoryId := ctx.Query("category_id", "")
 	var categoryId uint64
 	categoryId = 0
 	if getCategoryId != "" {
@@ -110,8 +110,8 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 	}
 
 	// ambil data sorting
-	getColumn := ctx.Query("column", "");
-	getSortBy := ctx.Query("sort_by", "desc");
+	getColumn := ctx.Query("column", "")
+	getSortBy := ctx.Query("sort_by", "desc")
 
 	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
 	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
@@ -127,20 +127,23 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, categoryId, getColumn, getSortBy)
+	response, totalCurrentProducts, totalRealProducts, totalActiveProducts, totalInactiveProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, categoryId, getColumn, getSortBy)
 	if err != nil {
 		c.Log.Warnf("failed to find all products : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.ProductResponse]{
-		Code:   200,
-		Status: "success to get all products",
-		Data:   response,
-		TotalDatas: totalProducts,
-		TotalPages: totalPages,
-		CurrentPages: page,
-		DataPerPages: perPage,
+		Code:               200,
+		Status:             "success to get all products",
+		Data:               response,
+		TotalRealDatas:     totalRealProducts,
+		TotalCurrentDatas:  totalCurrentProducts,
+		TotalActiveDatas:   totalActiveProducts,
+		TotalInactiveDatas: totalInactiveProducts,
+		TotalPages:         totalPages,
+		CurrentPages:       page,
+		DataPerPages:       perPage,
 	})
 }
 
@@ -178,7 +181,7 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 		c.Log.Warnf("invalid price : %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid price : %+v", err))
 	}
-	
+
 	request.Price = float32(parsePrice64)
 	request.Stock, err = strconv.Atoi(form.Value["stock"][0])
 	if err != nil {
@@ -259,7 +262,7 @@ func (c *ProductController) Remove(ctx *fiber.Ctx) error {
 
 	// Konversi setiap elemen menjadi integer
 	for _, idStr := range idStrings {
-		if (idStr != "") {
+		if idStr != "" {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
 				c.Log.Warnf("invalid product ID : %+v", err)

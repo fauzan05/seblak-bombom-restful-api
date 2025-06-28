@@ -1126,7 +1126,7 @@ func TestGetAllOrderPagination(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
-	assert.Equal(t, int64(20), responseBody.TotalDatas)
+	assert.Equal(t, int64(20), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 4, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	for _, order := range *responseBody.Data {
@@ -1177,7 +1177,7 @@ func TestGetAllOrderPaginationSortingColumnDesc(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
-	assert.Equal(t, int64(20), responseBody.TotalDatas)
+	assert.Equal(t, int64(20), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 4, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	for _, order := range *responseBody.Data {
@@ -1274,7 +1274,7 @@ func TestGetAllOrderPaginationSomeProductDeleted(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
-	assert.Equal(t, int64(20), responseBody.TotalDatas)
+	assert.Equal(t, int64(20), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 4, responseBody.TotalPages)
 	assert.Equal(t, 2, responseBody.CurrentPages)
 	for _, order := range *responseBody.Data {
@@ -1325,7 +1325,7 @@ func TestGetAllOrderPaginationSearchProduct(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
-	assert.Equal(t, int64(20), responseBody.TotalDatas)
+	assert.Equal(t, int64(20), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 2, responseBody.TotalPages)
 	assert.Equal(t, 1, responseBody.CurrentPages)
 	for _, order := range *responseBody.Data {
@@ -1376,7 +1376,7 @@ func TestGetAllOrderPaginationSearchProductNotFound(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
-	assert.Equal(t, int64(0), responseBody.TotalDatas)
+	assert.Equal(t, int64(0), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 0, responseBody.TotalPages)
 	assert.Equal(t, 1, responseBody.CurrentPages)
 	for _, order := range *responseBody.Data {
@@ -1432,7 +1432,7 @@ func TestGetAllCurrentUserOrderPagination(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, response.StatusCode)
-	assert.Equal(t, int64(5), responseBody.TotalDatas)
+	assert.Equal(t, int64(5), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 1, responseBody.TotalPages)
 	assert.Equal(t, 1, responseBody.CurrentPages)
 	for _, order := range *responseBody.Data {

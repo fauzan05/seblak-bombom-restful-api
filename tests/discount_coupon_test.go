@@ -150,7 +150,7 @@ func TestGetDiscountCouponPagination(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, 3, responseBody.CurrentPages)
 	assert.Equal(t, 5, len(*responseBody.Data))
-	assert.Equal(t, int64(27), responseBody.TotalDatas)
+	assert.Equal(t, int64(27), responseBody.TotalCurrentDatas)
 	assert.Equal(t, 5, responseBody.DataPerPages)
 	assert.Equal(t, 6, responseBody.TotalPages)
 }

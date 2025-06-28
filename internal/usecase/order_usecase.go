@@ -598,7 +598,7 @@ func (c *OrderUseCase) GetOrderById(ctx context.Context, orderId uint64, current
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find order by id : %+v", err))
 	}
 
-	if currentUser.Role != enum_state.ADMIN && newOrders.UserId != currentUser.ID{
+	if currentUser.Role != enum_state.ADMIN && newOrders.UserId != currentUser.ID {
 		c.Log.Warnf("cannot access another order except admin!")
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "cannot access another order except admin")
 	}
@@ -606,7 +606,7 @@ func (c *OrderUseCase) GetOrderById(ctx context.Context, orderId uint64, current
 	return converter.OrderToResponse(newOrders), nil
 }
 
-func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, currentUser *model.UserResponse) (*[]model.OrderResponse, int64, int, error) {
+func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int, search string, sortingColumn string, sortBy string, currentUser *model.UserResponse) (*[]model.OrderResponse, int64, int64, int64, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -652,10 +652,10 @@ func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int
 
 	if !allowedColumns[newPagination.Column] {
 		c.Log.Warnf("invalid sort column : %s", newPagination.Column)
-		return nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid sort column : %s", newPagination.Column))
 	}
 
-	orders, totalOrder, err := repository.Paginate(tx, &entity.Order{}, newPagination, func(d *gorm.DB) *gorm.DB {
+	orders, totalCurrentOrder, totalRealOrder, totalActiveCurrentOrder, totalInactiveCurrentOrder, err := repository.Paginate(tx, &entity.Order{}, newPagination, func(d *gorm.DB) *gorm.DB {
 		result := d.Joins("JOIN order_products ON order_products.order_id = orders.id").
 			Preload("OrderProducts").
 			Preload("OrderProducts.Product.Images").
@@ -668,17 +668,17 @@ func (c *OrderUseCase) GetAllPaginate(ctx context.Context, page int, perPage int
 
 	if err != nil {
 		c.Log.Warnf("failed to paginate orders : %+v", err)
-		return nil, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate orders : %+v", err))
+		return nil, 0, 0, 0, 0, 0, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to paginate orders : %+v", err))
 	}
 
 	// Hitung total halaman
 	var totalPages int = 0
-	totalPages = int(totalOrder / int64(perPage))
-	if totalOrder%int64(perPage) > 0 {
+	totalPages = int(totalCurrentOrder / int64(perPage))
+	if totalCurrentOrder%int64(perPage) > 0 {
 		totalPages++
 	}
 
-	return converter.OrdersToResponse(&orders), totalOrder, totalPages, nil
+	return converter.OrdersToResponse(&orders), totalCurrentOrder, totalRealOrder, totalActiveCurrentOrder, totalInactiveCurrentOrder, totalPages, nil
 }
 
 func (c *OrderUseCase) EditOrderStatus(ctx context.Context, request *model.UpdateOrderRequest, currentUser *model.UserResponse) (*model.OrderResponse, error) {

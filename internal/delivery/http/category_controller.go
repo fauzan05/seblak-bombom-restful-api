@@ -103,20 +103,23 @@ func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, isActive)
+	response, totalCurrentCategories, totalRealCategories, totalActiveCategories, totalInactiveCategories, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, getColumn, getSortBy, isActive)
 	if err != nil {
 		c.Log.Warnf("failed to find all categories : %+v", err)
 		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(model.ApiResponsePagination[*[]model.CategoryResponse]{
-		Code:   200,
-		Status: "success to get all category",
-		Data:   response,
-		TotalDatas: totalProducts,
-		TotalPages: totalPages,
-		CurrentPages: page,
-		DataPerPages: perPage,
+		Code:               200,
+		Status:             "success to get all category",
+		Data:               response,
+		TotalRealDatas:     totalRealCategories,
+		TotalActiveDatas:   totalActiveCategories,
+		TotalInactiveDatas: totalInactiveCategories,
+		TotalCurrentDatas:  totalCurrentCategories,
+		TotalPages:         totalPages,
+		CurrentPages:       page,
+		DataPerPages:       perPage,
 	})
 }
 
@@ -173,7 +176,7 @@ func (c *CategoryController) Remove(ctx *fiber.Ctx) error {
 
 	// Konversi setiap elemen menjadi integer
 	for _, idStr := range idStrings {
-		if (idStr != "") {
+		if idStr != "" {
 			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
 			if err != nil {
 				c.Log.Warnf("invalid category ID : %s", err)
