@@ -13,6 +13,7 @@ func CategoryToResponse(category *entity.Category) *model.CategoryResponse {
 		Description:   category.Description,
 		ImageFilename: category.ImageFilename,
 		IsActive:      true,
+		Products:      *ProductsToResponse(&category.Products),
 		CreatedAt:     helper_others.TimeRFC3339(category.CreatedAt),
 		UpdatedAt:     helper_others.TimeRFC3339(category.UpdatedAt),
 	}

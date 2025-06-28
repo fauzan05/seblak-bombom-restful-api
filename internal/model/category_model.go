@@ -11,6 +11,7 @@ type CategoryResponse struct {
 	Description   string                    `json:"description"`
 	ImageFilename string                    `json:"image_filename"`
 	IsActive      bool                      `json:"is_active"`
+	Products      []ProductResponse         `json:"products"`
 	CreatedAt     helper_others.TimeRFC3339 `json:"created_at"`
 	UpdatedAt     helper_others.TimeRFC3339 `json:"updated_at"`
 }

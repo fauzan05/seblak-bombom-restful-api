@@ -128,7 +128,7 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, page int, perPage int, sea
 	}
 
 	categories, totalCurrentCategory, totalRealCategory, totalActiveCategory, totalInactiveCategory, err := repository.Paginate(tx, &entity.Category{}, newPagination, func(d *gorm.DB) *gorm.DB {
-		query := d.Where("categories.name LIKE ?", "%"+search+"%")
+		query := d.Preload("Products").Where("categories.name LIKE ?", "%"+search+"%")
 		if isActive == "active" {
 			query = query.Where("categories.deleted_at IS NULL")
 		} else if isActive == "inactive" {
