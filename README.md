@@ -64,7 +64,7 @@ go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 If mysql in migration has been installed, you must have to set GOPATH so it can be call the command with 'migrate' in terminal. You can check this post to understand how to add GOPATH :
 https://stackoverflow.com/questions/21499337/cannot-set-gopath-on-mac-osx
 
-After you typing 'migrate' without '', it will shown Database drivers : stub, mysql like below :
+After you typing ``` migrate ```, it will shown Database drivers : stub, mysql like below :
 ![alt text](<Screenshot 2024-03-26 at 20.38.04.png>)
 
 
