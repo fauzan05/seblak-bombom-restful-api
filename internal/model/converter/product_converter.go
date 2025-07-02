@@ -16,8 +16,13 @@ func ProductToResponse(product *entity.Product) *model.ProductResponse {
 		Description: product.Description,
 		Price:       product.Price,
 		Stock:       product.Stock,
+		IsActive:    true,
 		CreatedAt:   helper_others.TimeRFC3339(product.CreatedAt),
 		UpdatedAt:   helper_others.TimeRFC3339(product.UpdatedAt),
+	}
+
+	if product.DeletedAt.Valid {
+		response.IsActive = false
 	}
 
 	if product.Category != nil {

@@ -26,8 +26,8 @@ func NewProductController(useCase *usecase.ProductUseCase, logger *logrus.Logger
 
 func (c *ProductController) Create(ctx *fiber.Ctx) error {
 	// Buat direktori uploads jika belum ada
-	if _, err := os.Stat("../uploads/images/products/"); os.IsNotExist(err) {
-		os.MkdirAll("../uploads/images/products/", os.ModePerm)
+	if _, err := os.Stat("uploads/images/products/"); os.IsNotExist(err) {
+		os.MkdirAll("uploads/images/products/", os.ModePerm)
 	}
 
 	form, err := ctx.MultipartForm()
@@ -112,6 +112,7 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 	// ambil data sorting
 	getColumn := ctx.Query("column", "")
 	getSortBy := ctx.Query("sort_by", "desc")
+	isActive := ctx.Query("is_active", "")
 
 	// Ambil query parameter 'per_page' dengan default value 10 jika tidak disediakan
 	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
@@ -127,7 +128,7 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid 'page' parameter : %+v", err))
 	}
 
-	response, totalCurrentProducts, totalRealProducts, totalActiveProducts, totalInactiveProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, categoryId, getColumn, getSortBy)
+	response, totalCurrentProducts, totalRealProducts, totalActiveProducts, totalInactiveProducts, totalPages, err := c.UseCase.GetAll(ctx.Context(), page, perPage, trimSearch, categoryId, getColumn, getSortBy, isActive)
 	if err != nil {
 		c.Log.Warnf("failed to find all products : %+v", err)
 		return err
@@ -149,8 +150,8 @@ func (c *ProductController) GetAll(ctx *fiber.Ctx) error {
 
 func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 	// Buat direktori uploads jika belum ada
-	if _, err := os.Stat("../uploads/images/products/"); os.IsNotExist(err) {
-		os.MkdirAll("../uploads/images/products/", os.ModePerm)
+	if _, err := os.Stat("uploads/images/products/"); os.IsNotExist(err) {
+		os.MkdirAll("uploads/images/products/", os.ModePerm)
 	}
 
 	form, err := ctx.MultipartForm()

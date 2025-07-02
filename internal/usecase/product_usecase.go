@@ -130,7 +130,7 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		newImages[i].Position = position
 
 		// Simpan file ke direktori uploads
-		err := fiberContext.SaveFile(file, fmt.Sprintf("../uploads/images/products/%s", hashedFilename))
+		err := fiberContext.SaveFile(file, fmt.Sprintf("uploads/images/products/%s", hashedFilename))
 		if err != nil {
 			c.Log.Warnf("failed to save uploaded file : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save uploaded file : %+v", err))
@@ -187,7 +187,7 @@ func (c *ProductUseCase) Get(ctx context.Context, request *model.GetProductReque
 	return converter.ProductToResponse(newProduct), nil
 }
 
-func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, search string, categoryId uint64, sortingColumn string, sortBy string) (*[]model.ProductResponse, int64, int64, int64, int64, int, error) {
+func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, search string, categoryId uint64, sortingColumn string, sortBy string, isActive string) (*[]model.ProductResponse, int64, int64, int64, int64, int, error) {
 	tx := c.DB.WithContext(ctx)
 
 	if page <= 0 {
@@ -218,9 +218,16 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 	}
 
 	products, totalCurrentProduct, totalRealProduct, totalActiveProduct, totalInactiveProduct, err := repository.Paginate(tx, &entity.Product{}, newPagination, func(d *gorm.DB) *gorm.DB {
-		return d.Joins("JOIN categories ON categories.id = products.category_id").
+		query := d.Joins("JOIN categories ON categories.id = products.category_id").
 			Preload("Category").
 			Preload("Images").Where("products.name LIKE ?", "%"+search+"%")
+		
+		if isActive == "true" {
+			query = query.Where("products.deleted_at IS NULL")
+		} else if isActive == "false" {
+			query = query.Where("products.deleted_at IS NOT NULL")
+		}
+		return query
 	})
 
 	if err != nil {
@@ -272,28 +279,18 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 
 	newCategory := new(entity.Category)
 	newCategory.ID = request.CategoryId
-	count, err := c.CategoryRepository.FindAndCountById(tx, newCategory)
+	err = c.CategoryRepository.FindFirst(tx, newCategory)
 	if err != nil {
 		c.Log.Warnf("failed to find category from database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find category from database : %+v", err))
 	}
 
-	if count == 0 {
-		c.Log.Warnf("category is not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "category is not found!")
-	}
-
 	newProduct := new(entity.Product)
 	newProduct.ID = request.ID
-	count, err = c.ProductRepository.FindAndCountById(tx, newProduct)
+	err = c.ProductRepository.FindFirst(tx, newProduct)
 	if err != nil {
 		c.Log.Warnf("failed to find product from database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find product from database : %+v", err))
-	}
-
-	if count == 0 {
-		c.Log.Warnf("product is not found!")
-		return nil, fiber.NewError(fiber.StatusNotFound, "product is not found!")
 	}
 
 	newProduct.CategoryId = request.CategoryId
@@ -308,7 +305,6 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 	}
 
 	// Jika user menambahkan gambar baru
-	fmt.Println("GAMBAR BARU : ", newImageFiles)
 	if len(newImageFiles) > 0 {
 		newImages := make([]entity.Image, len(newImageFiles))
 
@@ -330,7 +326,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 			newImages[i].CreatedAt = time.Now()
 
 			// Simpan file ke direktori uploads
-			err := fiberContext.SaveFile(file, fmt.Sprintf("../uploads/images/products/%s", hashedFilename))
+			err := fiberContext.SaveFile(file, fmt.Sprintf("uploads/images/products/%s", hashedFilename))
 			if err != nil {
 				c.Log.Warnf("failed to save uploaded file : %+v", err)
 				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save uploaded file : %+v", err))
@@ -365,7 +361,7 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 	}
 
 	if len(deletedImages.Images) > 0 {
-		filePath := "../uploads/images/products/"
+		filePath := "uploads/images/products/"
 
 		for _, deletedImage := range deletedImages.Images {
 			deleteImage := entity.Image{
@@ -427,7 +423,7 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 			return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete product images in the database : %+v", err))
 		}
 
-		filePath := "../uploads/images/products/"
+		filePath := "uploads/images/products/"
 
 		// Hapus file gambar
 		for _, currentImage := range *currentImages {

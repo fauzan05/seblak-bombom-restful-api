@@ -5,16 +5,17 @@ import (
 )
 
 type ProductResponse struct {
-	ID          uint64                    `json:"id,omitempty"`
-	Category    CategoryResponse          `json:"category,omitempty"`
-	Name        string                    `json:"name,omitempty"`
-	Description string                    `json:"description,omitempty"`
-	Price       float32                   `json:"price,omitempty"`
-	Stock       int                       `json:"stock,omitempty"`
-	Images      []ImageResponse           `json:"images,omitempty"`
-	Reviews     []ProductReviewResponse   `json:"product_reviews,omitempty"`
-	CreatedAt   helper_others.TimeRFC3339 `json:"created_at,omitempty"`
-	UpdatedAt   helper_others.TimeRFC3339 `json:"updated_at,omitempty"`
+	ID          uint64                    `json:"id"`
+	Category    CategoryResponse          `json:"category"`
+	Name        string                    `json:"name"`
+	Description string                    `json:"description"`
+	Price       float32                   `json:"price"`
+	Stock       int                       `json:"stock"`
+	Images      []ImageResponse           `json:"images"`
+	Reviews     []ProductReviewResponse   `json:"product_reviews"`
+	IsActive    bool                      `json:"is_active"`
+	CreatedAt   helper_others.TimeRFC3339 `json:"created_at"`
+	UpdatedAt   helper_others.TimeRFC3339 `json:"updated_at"`
 }
 
 type CreateProductRequest struct {
