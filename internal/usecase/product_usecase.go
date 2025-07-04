@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
-	"os"
+	// "os"
 	"seblak-bombom-restful-api/internal/entity"
 	"seblak-bombom-restful-api/internal/helper"
 	"seblak-bombom-restful-api/internal/model"
 	"seblak-bombom-restful-api/internal/model/converter"
 	"seblak-bombom-restful-api/internal/repository"
 	"strconv"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -40,8 +39,8 @@ func NewProductUseCase(db *gorm.DB, log *logrus.Logger, validate *validator.Vali
 	}
 }
 
-func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, request *model.CreateProductRequest, files []*multipart.FileHeader, positions []string) (*model.ProductResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (c *ProductUseCase) Add(ctx *fiber.Ctx, request *model.CreateProductRequest, files []*multipart.FileHeader, positions []string) (*model.ProductResponse, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
 
 	err := c.Validate.Struct(request)
@@ -122,7 +121,11 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 
 		// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
 		hashedFilename := helper.HashFileName(file.Filename)
-		var position, _ = strconv.Atoi(positions[i])
+		var position, err = strconv.Atoi(positions[i])
+		if err != nil {
+			c.Log.Warnf("invalid position : %+v", err)
+			return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid position : %+v", err))
+		}
 		// Tambahkan data ke struct ImageAddRequest
 		newImages[i].ProductId = newProduct.ID
 		newImages[i].FileName = hashedFilename
@@ -130,8 +133,7 @@ func (c *ProductUseCase) Add(ctx context.Context, fiberContext *fiber.Ctx, reque
 		newImages[i].Position = position
 
 		// Simpan file ke direktori uploads
-		err := fiberContext.SaveFile(file, fmt.Sprintf("uploads/images/products/%s", hashedFilename))
-		if err != nil {
+		if err := ctx.SaveFile(file, fmt.Sprintf("uploads/images/products/%s", hashedFilename)); err != nil {
 			c.Log.Warnf("failed to save uploaded file : %+v", err)
 			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save uploaded file : %+v", err))
 		}
@@ -221,7 +223,7 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 		query := d.Joins("JOIN categories ON categories.id = products.category_id").
 			Preload("Category").
 			Preload("Images").Where("products.name LIKE ?", "%"+search+"%")
-		
+
 		if isActive == "true" {
 			query = query.Where("products.deleted_at IS NULL")
 		} else if isActive == "false" {
@@ -245,8 +247,8 @@ func (c *ProductUseCase) GetAll(ctx context.Context, page int, perPage int, sear
 	return converter.ProductsToResponse(&products), totalCurrentProduct, totalRealProduct, totalActiveProduct, totalInactiveProduct, totalPages, nil
 }
 
-func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, request *model.UpdateProductRequest, newImageFiles []*multipart.FileHeader, newImagePositions []string, updateCurrentImages model.UpdateImagesRequest, deletedImages model.DeleteImagesRequest) (*model.ProductResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (c *ProductUseCase) Update(ctx *fiber.Ctx, request *model.UpdateProductRequest, newImageFiles []*multipart.FileHeader, newImagePositions []string, updateCurrentImages model.UpdateImagesRequest) (*model.ProductResponse, error) {
+	tx := c.DB.WithContext(ctx.Context()).Begin()
 	defer tx.Rollback()
 
 	err := c.Validate.Struct(request)
@@ -304,43 +306,18 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed update product by id : %+v", err))
 	}
 
-	// Jika user menambahkan gambar baru
-	if len(newImageFiles) > 0 {
-		newImages := make([]entity.Image, len(newImageFiles))
-
-		for i, file := range newImageFiles {
-			err = helper.ValidateFile(1, file)
-			if err != nil {
-				c.Log.Warnf(err.Error())
-				return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
-			}
-
-			// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
-			hashedFilename := helper.HashFileName(file.Filename)
-			var position, _ = strconv.Atoi(newImagePositions[i])
-			// Tambahkan data ke struct ImageAddRequest
-			newImages[i].ProductId = newProduct.ID
-			newImages[i].FileName = hashedFilename
-			newImages[i].Type = file.Header.Get("Content-Type")
-			newImages[i].Position = position
-			newImages[i].CreatedAt = time.Now()
-
-			// Simpan file ke direktori uploads
-			err := fiberContext.SaveFile(file, fmt.Sprintf("uploads/images/products/%s", hashedFilename))
-			if err != nil {
-				c.Log.Warnf("failed to save uploaded file : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save uploaded file : %+v", err))
-			}
-		}
-
-		// Simpan gambar baru ke database
-		if err := c.ImageRepository.CreateInBatch(tx, &newImages); err != nil {
-			c.Log.Warnf("failed to save images file_name into database : %+v", err)
-			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save images file_name into database : %+v", err))
-		}
-	}
-
 	if len(updateCurrentImages.Images) > 0 {
+		var currentIds []uint64
+		for _, currentImage := range updateCurrentImages.Images {
+			currentIds = append(currentIds, currentImage.ID)
+		}
+
+		newImage := new(entity.Image)
+		if err := c.ImageRepository.DeleteImages(tx, newImage, currentIds, newProduct.ID); err != nil {
+			c.Log.Warnf("failed to delete current images deleted from database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete current images deleted from database : %+v", err))
+		}
+
 		for _, updateCurrentImage := range updateCurrentImages.Images {
 			updateImage := entity.Image{
 				ID: updateCurrentImage.ID,
@@ -360,29 +337,42 @@ func (c *ProductUseCase) Update(ctx context.Context, fiberContext *fiber.Ctx, re
 		}
 	}
 
-	if len(deletedImages.Images) > 0 {
-		filePath := "uploads/images/products/"
+	// Jika user menambahkan gambar baru
+	if len(newImageFiles) > 0 {
+		newImages := make([]entity.Image, len(newImageFiles))
 
-		for _, deletedImage := range deletedImages.Images {
-			deleteImage := entity.Image{
-				ID: deletedImage.ID,
-			}
-
-			if err := c.ImageRepository.FindById(tx, &deleteImage); err != nil {
-				c.Log.Warnf("failed to find current image data in the database : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to find current image data in the database : %+v", err))
-			}
-
-			if err := c.ImageRepository.Delete(tx, &deleteImage); err != nil {
-				c.Log.Warnf("failed to delete current image data in the database : %+v", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete current image data in the database : %+v", err))
-			}
-
-			err = os.Remove(filePath + deleteImage.FileName)
+		for i, file := range newImageFiles {
+			err = helper.ValidateFile(1, file)
 			if err != nil {
-				fmt.Printf("failed to delete image file : %v\n", err)
-				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete image file : %v\n", err))
+				c.Log.Warnf(err.Error())
+				return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 			}
+
+			// fmt.Printf("File #%d: %s\n", i+1, file.Filename)
+			hashedFilename := helper.HashFileName(file.Filename)
+			var position, err = strconv.Atoi(newImagePositions[i])
+			if err != nil {
+				c.Log.Warnf("invalid position : %+v", err)
+				return nil, fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid position : %+v", err))
+			}
+
+			// Tambahkan data ke struct ImageAddRequest
+			newImages[i].ProductId = newProduct.ID
+			newImages[i].FileName = hashedFilename
+			newImages[i].Type = file.Header.Get("Content-Type")
+			newImages[i].Position = position
+			fmt.Println("INDEX: ", i)
+			// Simpan file ke direktori uploads
+			if err := ctx.SaveFile(file, fmt.Sprintf("uploads/images/products/%s", hashedFilename)); err != nil {
+				c.Log.Warnf("failed to save uploaded file : %+v", err)
+				return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save uploaded file : %+v", err))
+			}
+		}
+
+		// Simpan gambar baru ke database
+		if err := c.ImageRepository.CreateInBatch(tx, &newImages); err != nil {
+			c.Log.Warnf("failed to save images file_name into database : %+v", err)
+			return nil, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to save images file_name into database : %+v", err))
 		}
 	}
 
@@ -423,18 +413,18 @@ func (c *ProductUseCase) Delete(ctx context.Context, request *model.DeleteProduc
 			return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete product images in the database : %+v", err))
 		}
 
-		filePath := "uploads/images/products/"
+		// filePath := "uploads/images/products/"
 
-		// Hapus file gambar
-		for _, currentImage := range *currentImages {
-			if currentImage.FileName != "" {
-				err = os.Remove(filePath + currentImage.FileName)
-				if err != nil {
-					fmt.Printf("failed to delete image file : %v\n", err)
-					return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete image file : %v\n", err))
-				}
-			}
-		}
+		// // Hapus file gambar
+		// for _, currentImage := range *currentImages {
+		// 	if currentImage.FileName != "" {
+		// 		err = os.Remove(filePath + currentImage.FileName)
+		// 		if err != nil {
+		// 			fmt.Printf("failed to delete image file : %v\n", err)
+		// 			return false, fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete image file : %v\n", err))
+		// 		}
+		// 	}
+		// }
 	}
 
 	// hapus semua produk

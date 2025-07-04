@@ -24,8 +24,11 @@ func (r *Repository[T]) Create(db *gorm.DB, entity *T) error {
 	return db.Create(&entity).Error
 }
 
-func (r *Repository[T]) CreateInBatch(db *gorm.DB, entity *[]T) error {
-	return db.CreateInBatches(&entity, len(*entity)).Error
+func (r *Repository[T]) CreateInBatch(db *gorm.DB, entities *[]T) error {
+	if len(*entities) == 0 {
+		return nil
+	}
+	return db.CreateInBatches(*entities, len(*entities)).Error
 }
 
 func (r *Repository[T]) Update(db *gorm.DB, entity *T) error {
@@ -203,6 +206,10 @@ func (r *Repository[T]) DeleteByProductId(db *gorm.DB, entity *T, productId uint
 
 func (r *Repository[T]) FindById(db *gorm.DB, entity *T) error {
 	return db.First(&entity).Error
+}
+
+func (r *Repository[T]) DeleteImages(db *gorm.DB, entity *T, ids []uint64, productId uint64) error {
+	return db.Where("id NOT IN ?", ids).Where("product_id = ?", productId).Delete(&entity).Error
 }
 
 func (r *Repository[T]) FindAddressById(db *gorm.DB, entity *T) error {

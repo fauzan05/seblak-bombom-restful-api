@@ -57,7 +57,7 @@ func (c *ProductController) Create(ctx *fiber.Ctx) error {
 	files := form.File["images"]
 	positions := form.Value["positions"]
 
-	response, err := c.UseCase.Add(ctx.Context(), ctx, request, files, positions)
+	response, err := c.UseCase.Add(ctx, request, files, positions)
 	if err != nil {
 		c.Log.Warnf("failed to create a new product : %+v", err)
 		return err
@@ -220,24 +220,7 @@ func (c *ProductController) Edit(ctx *fiber.Ctx) error {
 		updateImagesRequest.Images = append(updateImagesRequest.Images, currentImage)
 	}
 
-	// Inisialisasi DELETED IMAGES
-	deleteImagesRequest := model.DeleteImagesRequest{}
-	if len(form.Value["images_deleted"]) > 0 {
-		// imagesDeleted := strings.Split(form.Value["images_deleted"][0], ",")
-		for _, imageId := range form.Value["images_deleted"] {
-			imageId, err := strconv.ParseUint(imageId, 10, 64)
-			if err != nil {
-				c.Log.Warnf("invalid image ID : %+v", err)
-				return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("invalid image ID : %+v", err))
-			}
-			deleteImage := model.DeleteImageRequest{
-				ID: imageId,
-			}
-			deleteImagesRequest.Images = append(deleteImagesRequest.Images, deleteImage)
-		}
-	}
-
-	response, err := c.UseCase.Update(ctx.Context(), ctx, request, newImageFiles, newImagePositions, updateImagesRequest, deleteImagesRequest)
+	response, err := c.UseCase.Update(ctx, request, newImageFiles, newImagePositions, updateImagesRequest)
 	if err != nil {
 		c.Log.Warnf("failed to update an product by id : %+v", err)
 		return err
