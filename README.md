@@ -120,7 +120,7 @@ docker-compose logs -f
 If you're not using Docker, simply run **go run main.go** in the app directory. Beforehand, make sure the database is running and the database is created according to the configuration in the config.json file in the root directory. Once done, perform operations on the API by referring to api-specs.json to understand the request and response of each endpoint.
 <br>
 
-For testing purposes on the Midtrans endpoint, I recommend using Ngrok because Xendit Callback Notification, after the user completes the payment, requires the redirection settings to be an active URL (endpoint) accessible over the internet. For example, by exposing a URL like this and entering it in the finish URL section:
+For testing purposes on the payment endpoints, I recommend using Ngrok because Xendit Callback Notification, after the user completes the payment, requires the redirection settings to be an active URL (endpoint) accessible over the internet. For example, by exposing a URL like this and entering it in the finish URL section:
 
 **https://6901-180-243-9-232.ngrok-free.app/api/xendits/payment-request/notifications/callback**
 

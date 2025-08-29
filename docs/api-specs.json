@@ -3337,87 +3337,6 @@
                 }
             }
         },
-        "/api/midtrans/snap/order": {
-            "post": {
-                "tags": [
-                    "Midtrans API"
-                ],
-                "description": "Create midtrans snap order (just only order have payment method = online state)",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "order_id": {
-                                        "type": "integer"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Success create midtrans snap order (just only order have payment method = online state)",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "code": {
-                                            "type": "integer"
-                                        },
-                                        "status": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/MidtransSnapOrder"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "Authorization": []
-                    }
-                ]
-            }
-        },
-        "/api/midtrans/snap/order/notification": {
-            "get": {
-                "tags": [
-                    "Midtrans API"
-                ],
-                "description": "Get midtrans snap order notification",
-                "responses": {
-                    "200": {
-                        "description": "Success get midtrans snap order notification",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "code": {
-                                            "type": "integer"
-                                        },
-                                        "status": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/OrderResponse"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/applications": {
             "post": {
                 "tags": [
@@ -3769,9 +3688,6 @@
                     "latitude": {
                         "type": "number"
                     },
-                    "midtrans_snap_order": {
-                        "$ref": "#/components/schemas/MidtransSnapOrder"
-                    },
                     "note": {
                         "type": "string"
                     },
@@ -3872,29 +3788,6 @@
                     },
                     "quantity": {
                         "type": "integer"
-                    }
-                }
-            },
-            "MidtransSnapOrder": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "order_id": {
-                        "type": "integer"
-                    },
-                    "token": {
-                        "type": "string"
-                    },
-                    "redirect_url": {
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "type": "string"
-                    },
-                    "updated_at": {
-                        "type": "string"
                     }
                 }
             },
