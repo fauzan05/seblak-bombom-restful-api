@@ -36,6 +36,11 @@
                                     },
                                     "password": {
                                         "type": "string"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": ["customer", "admin"],
+                                        "description": "User role - requires X-Admin-Key header if set to admin"
                                     }
                                 },
                                 "required": [
@@ -48,6 +53,17 @@
                         }
                     }
                 },
+                "parameters": [
+                    {
+                        "name": "X-Admin-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Admin creation key - required when registering admin users"
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "Success register new user",
@@ -1860,6 +1876,42 @@
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "Authorization": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/{invoiceId}/invoice": {
+            "get": {
+                "tags": [
+                    "Order API"
+                ],
+                "description": "Show invoice by order ID",
+                "parameters": [
+                    {
+                        "name": "invoiceId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success show invoice",
+                        "content": {
+                            "text/html": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "HTML invoice page"
                                 }
                             }
                         }
