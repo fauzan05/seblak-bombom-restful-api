@@ -117,7 +117,22 @@ This command is used to run the configurations that have been set up in the Dock
 docker-compose logs -f
 
 
-If you're not using Docker, simply run **go run main.go** in the app directory. Beforehand, make sure the database is running and the database is created according to the configuration in the config.json file in the root directory. Once done, perform operations on the API by referring to api-specs.json to understand the request and response of each endpoint.
+If you're not using Docker, simply run **go run main.go** in the app directory. Beforehand, make sure the database is running and the database is created according to the configuration in the config.json file in the root directory. 
+
+## 📚 API Documentation
+
+Complete documentation is available in the `docs/` directory:
+
+- **[📖 Complete API Guide](docs/API.md)** - Comprehensive documentation with detailed examples, authentication, and usage patterns
+- **[📋 API Reference](docs/API_REFERENCE.md)** - Quick reference guide with all endpoints, parameters, and response formats
+- **[🧪 API Testing Guide](docs/API_TESTING.md)** - Testing examples, Postman setup, and common scenarios
+- **[⚙️ OpenAPI Specification](docs/api-specs.json)** - OpenAPI 3.0 specification for automated tooling and API clients
+
+### Quick Start
+1. Use demo accounts: Customer (`cust1@email.com` / `Cust1Testing#`) or Admin (`admin1@email.com` / `Admin1Testing#`)
+2. Base URL: `https://api.fznh-dev.my.id/api`
+3. Authentication: Cookie-based JWT (automatically handled after login)
+4. Check the [API Testing Guide](docs/API_TESTING.md) for curl examples and Postman setup
 <br>
 
 For testing purposes on the Midtrans endpoint, I recommend using Ngrok because Xendit Callback Notification, after the user completes the payment, requires the redirection settings to be an active URL (endpoint) accessible over the internet. For example, by exposing a URL like this and entering it in the finish URL section:

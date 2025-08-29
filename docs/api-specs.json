@@ -2,11 +2,22 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Seblak Bombom Restful API",
-        "version": "1.0"
+        "description": "A comprehensive REST API for Seblak Bombom food delivery service with payment integration via Xendit",
+        "version": "1.0.0",
+        "contact": {
+            "name": "API Support",
+            "url": "https://seblak.fznh-dev.my.id",
+            "email": "admin@fznh-dev.my.id"
+        }
     },
     "servers": [
         {
-            "url": "https://localhost:8000"
+            "url": "https://api.fznh-dev.my.id/api",
+            "description": "Production server"
+        },
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Development server"
         }
     ],
     "paths": {
